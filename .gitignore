@@ -1,0 +1,23 @@
+# Node.js
+backend/node_modules/
+frontend/node_modules/
+backend/.env
+frontend/.env
+
+# Database SQLite
+backend/academic_dashboard.db
+*.db
+
+# Build artifacts
+build/
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
