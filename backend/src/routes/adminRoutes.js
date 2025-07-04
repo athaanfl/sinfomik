@@ -19,12 +19,18 @@ router.put('/ta-semester/set-active/:id', adminController.setActiveTASemester);
 
 router.get('/kelas', adminController.getAllKelas); // Bisa filter by id_ta_semester
 router.post('/kelas', adminController.addKelas);
+router.put('/kelas/:id', adminController.updateKelas); // Endpoint UPDATE kelas
+router.delete('/kelas/:id', adminController.deleteKelas); // Endpoint DELETE kelas
 
 router.get('/mapel', adminController.getAllMataPelajaran);
 router.post('/mapel', adminController.addMataPelajaran);
+router.put('/mapel/:id', adminController.updateMataPelajaran); // Endpoint UPDATE mapel
+router.delete('/mapel/:id', adminController.deleteMataPelajaran); // Endpoint DELETE mapel
 
 router.get('/tipe-nilai', adminController.getAllTipeNilai);
 router.post('/tipe-nilai', adminController.addTipeNilai);
+router.put('/tipe-nilai/:id', adminController.updateTipeNilai); // Endpoint UPDATE tipe nilai
+router.delete('/tipe-nilai/:id', adminController.deleteTipeNilai); // Endpoint DELETE tipe nilai
 
 // Endpoint Guru (sudah disesuaikan dengan /teachers)
 router.get('/teachers', adminController.getAllTeachers);
@@ -39,5 +45,11 @@ router.post('/guru-mapel-kelas', adminController.assignGuruToMapelKelas);
 router.get('/guru-mapel-kelas/:id_ta_semester', adminController.getGuruMapelKelasAssignments); // Mengambil penugasan guru
 
 router.post('/promote-students', adminController.promoteStudents); // Endpoint untuk kenaikan kelas
+
+// --- Capaian Pembelajaran (CP) ---
+router.get('/cp', adminController.getAllCapaianPembelajaran); // Mengambil semua CP (bisa filter by mapel)
+router.post('/cp', adminController.addCapaianPembelajaran); // Menambah CP baru
+router.put('/cp/:id', adminController.updateCapaianPembelajaran); // Mengupdate CP
+router.delete('/cp/:id', adminController.deleteCapaianPembelajaran); // Menghapus CP
 
 module.exports = router;

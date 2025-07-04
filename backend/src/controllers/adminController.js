@@ -71,11 +71,17 @@ exports.deleteStudent = (req, res) => { // Fungsi DELETE siswa
             if (row.count > 0) {
                 return res.status(409).json({ message: 'Tidak dapat menghapus siswa. Siswa masih memiliki data nilai.' });
             }
+            db.get("SELECT COUNT(*) AS count FROM SiswaCapaianPembelajaran WHERE id_siswa = ?", [id], (err, row) => {
+                if (err) return res.status(500).json({ message: err.message });
+                if (row.count > 0) {
+                    return res.status(409).json({ message: 'Tidak dapat menghapus siswa. Siswa masih memiliki data capaian pembelajaran.' });
+                }
 
-            db.run("DELETE FROM Siswa WHERE id_siswa = ?", [id], function(err) {
-                if (err) return res.status(400).json({ message: err.message });
-                if (this.changes === 0) return res.status(404).json({ message: 'Siswa tidak ditemukan.' });
-                res.json({ message: 'Siswa berhasil dihapus.' });
+                db.run("DELETE FROM Siswa WHERE id_siswa = ?", [id], function(err) {
+                    if (err) return res.status(400).json({ message: err.message });
+                    if (this.changes === 0) return res.status(404).json({ message: 'Siswa tidak ditemukan.' });
+                    res.json({ message: 'Siswa berhasil dihapus.' });
+                });
             });
         });
     });
@@ -152,11 +158,17 @@ exports.deleteTeacher = (req, res) => { // Fungsi DELETE guru
                 if (row.count > 0) {
                     return res.status(409).json({ message: 'Tidak dapat menghapus guru. Guru masih memiliki data nilai yang diinput.' });
                 }
+            db.get("SELECT COUNT(*) AS count FROM SiswaCapaianPembelajaran WHERE id_guru = ?", [id], (err, row) => {
+                if (err) return res.status(500).json({ message: err.message });
+                if (row.count > 0) {
+                    return res.status(409).json({ message: 'Tidak dapat menghapus guru. Guru masih memiliki data capaian pembelajaran yang diinput.' });
+                }
 
-                db.run("DELETE FROM Guru WHERE id_guru = ?", [id], function(err) {
-                    if (err) return res.status(400).json({ message: err.message });
-                    if (this.changes === 0) return res.status(404).json({ message: 'Guru tidak ditemukan.' });
-                    res.json({ message: 'Guru berhasil dihapus.' });
+                    db.run("DELETE FROM Guru WHERE id_guru = ?", [id], function(err) {
+                        if (err) return res.status(400).json({ message: err.message });
+                        if (this.changes === 0) return res.status(404).json({ message: 'Guru tidak ditemukan.' });
+                        res.json({ message: 'Guru berhasil dihapus.' });
+                    });
                 });
             });
         });
@@ -245,6 +257,53 @@ exports.addKelas = (req, res) => {
     );
 };
 
+exports.updateKelas = (req, res) => { // Fungsi UPDATE kelas
+    const { id } = req.params; // id_kelas
+    const { nama_kelas, id_wali_kelas } = req.body; // id_ta_semester tidak diupdate di sini karena itu bagian dari unique key
+    const db = getDb();
+
+    db.run("UPDATE Kelas SET nama_kelas = ?, id_wali_kelas = ? WHERE id_kelas = ?",
+        [nama_kelas, id_wali_kelas, id],
+        function(err) {
+            if (err) return res.status(400).json({ message: err.message });
+            if (this.changes === 0) return res.status(404).json({ message: 'Kelas tidak ditemukan atau tidak ada perubahan.' });
+            res.json({ message: 'Kelas berhasil diperbarui.' });
+        }
+    );
+};
+
+exports.deleteKelas = (req, res) => { // Fungsi DELETE kelas
+    const { id } = req.params; // id_kelas
+    const db = getDb();
+
+    // Cek ketergantungan
+    db.get("SELECT COUNT(*) AS count FROM SiswaKelas WHERE id_kelas = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (row.count > 0) {
+            return res.status(409).json({ message: 'Tidak dapat menghapus kelas. Kelas masih memiliki siswa terdaftar.' });
+        }
+        db.get("SELECT COUNT(*) AS count FROM GuruMataPelajaranKelas WHERE id_kelas = ?", [id], (err, row) => {
+            if (err) return res.status(500).json({ message: err.message });
+            if (row.count > 0) {
+                return res.status(409).json({ message: 'Tidak dapat menghapus kelas. Kelas masih memiliki penugasan guru.' });
+            }
+            db.get("SELECT COUNT(*) AS count FROM Nilai WHERE id_kelas = ?", [id], (err, row) => {
+                if (err) return res.status(500).json({ message: err.message });
+                if (row.count > 0) {
+                    return res.status(409).json({ message: 'Tidak dapat menghapus kelas. Kelas masih memiliki data nilai.' });
+                }
+
+                db.run("DELETE FROM Kelas WHERE id_kelas = ?", [id], function(err) {
+                    if (err) return res.status(400).json({ message: err.message });
+                    if (this.changes === 0) return res.status(404).json({ message: 'Kelas tidak ditemukan.' });
+                    res.json({ message: 'Kelas berhasil dihapus.' });
+                });
+            });
+        });
+    });
+};
+
+
 // --- Manajemen Mata Pelajaran ---
 exports.getAllMataPelajaran = (req, res) => {
     const db = getDb();
@@ -269,6 +328,52 @@ exports.addMataPelajaran = (req, res) => {
             res.status(201).json({ message: 'Mata Pelajaran berhasil ditambahkan.', id: this.lastID });
         }
     );
+};
+
+exports.updateMataPelajaran = (req, res) => { // Fungsi UPDATE mapel
+    const { id } = req.params; // id_mapel
+    const { nama_mapel } = req.body;
+    const db = getDb();
+
+    db.run("UPDATE MataPelajaran SET nama_mapel = ? WHERE id_mapel = ?",
+        [nama_mapel, id],
+        function(err) {
+            if (err) return res.status(400).json({ message: err.message });
+            if (this.changes === 0) return res.status(404).json({ message: 'Mata Pelajaran tidak ditemukan atau tidak ada perubahan.' });
+            res.json({ message: 'Mata Pelajaran berhasil diperbarui.' });
+        }
+    );
+};
+
+exports.deleteMataPelajaran = (req, res) => { // Fungsi DELETE mapel
+    const { id } = req.params; // id_mapel
+    const db = getDb();
+
+    // Cek ketergantungan
+    db.get("SELECT COUNT(*) AS count FROM GuruMataPelajaranKelas WHERE id_mapel = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (row.count > 0) {
+            return res.status(409).json({ message: 'Tidak dapat menghapus mata pelajaran. Masih memiliki penugasan guru.' });
+        }
+        db.get("SELECT COUNT(*) AS count FROM Nilai WHERE id_mapel = ?", [id], (err, row) => {
+            if (err) return res.status(500).json({ message: err.message });
+            if (row.count > 0) {
+                return res.status(409).json({ message: 'Tidak dapat menghapus mata pelajaran. Masih memiliki data nilai.' });
+            }
+            db.get("SELECT COUNT(*) AS count FROM CapaianPembelajaran WHERE id_mapel = ?", [id], (err, row) => {
+                if (err) return res.status(500).json({ message: err.message });
+                if (row.count > 0) {
+                    return res.status(409).json({ message: 'Tidak dapat menghapus mata pelajaran. Masih memiliki capaian pembelajaran terkait.' });
+                }
+
+                db.run("DELETE FROM MataPelajaran WHERE id_mapel = ?", [id], function(err) {
+                    if (err) return res.status(400).json({ message: err.message });
+                    if (this.changes === 0) return res.status(404).json({ message: 'Mata Pelajaran tidak ditemukan.' });
+                    res.json({ message: 'Mata Pelajaran berhasil dihapus.' });
+                });
+            });
+        });
+    });
 };
 
 // --- Manajemen Tipe Nilai ---
@@ -296,6 +401,41 @@ exports.addTipeNilai = (req, res) => {
         }
     );
 };
+
+exports.updateTipeNilai = (req, res) => { // Fungsi UPDATE tipe nilai
+    const { id } = req.params; // id_tipe_nilai
+    const { nama_tipe, deskripsi } = req.body;
+    const db = getDb();
+
+    db.run("UPDATE TipeNilai SET nama_tipe = ?, deskripsi = ? WHERE id_tipe_nilai = ?",
+        [nama_tipe, deskripsi, id],
+        function(err) {
+            if (err) return res.status(400).json({ message: err.message });
+            if (this.changes === 0) return res.status(404).json({ message: 'Tipe Nilai tidak ditemukan atau tidak ada perubahan.' });
+            res.json({ message: 'Tipe Nilai berhasil diperbarui.' });
+        }
+    );
+};
+
+exports.deleteTipeNilai = (req, res) => { // Fungsi DELETE tipe nilai
+    const { id } = req.params; // id_tipe_nilai
+    const db = getDb();
+
+    // Cek ketergantungan
+    db.get("SELECT COUNT(*) AS count FROM Nilai WHERE id_tipe_nilai = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (row.count > 0) {
+            return res.status(409).json({ message: 'Tidak dapat menghapus tipe nilai. Masih digunakan dalam data nilai.' });
+        }
+
+        db.run("DELETE FROM TipeNilai WHERE id_tipe_nilai = ?", [id], function(err) {
+            if (err) return res.status(400).json({ message: err.message });
+            if (this.changes === 0) return res.status(404).json({ message: 'Tipe Nilai tidak ditemukan.' });
+            res.json({ message: 'Tipe Nilai berhasil dihapus.' });
+        });
+    });
+};
+
 
 // --- Penugasan Siswa ke Kelas ---
 exports.assignSiswaToKelas = (req, res) => {
@@ -364,6 +504,79 @@ exports.getGuruMapelKelasAssignments = (req, res) => {
     `, [id_ta_semester], (err, rows) => {
         if (err) return res.status(500).json({ message: err.message });
         res.json(rows);
+    });
+};
+
+// --- Capaian Pembelajaran (CP) ---
+exports.getAllCapaianPembelajaran = (req, res) => {
+    const { id_mapel } = req.query; // Filter by mapel if provided
+    const db = getDb();
+    let query = `
+        SELECT cp.id_cp, cp.kode_cp, cp.deskripsi_cp, mp.nama_mapel
+        FROM CapaianPembelajaran cp
+        JOIN MataPelajaran mp ON cp.id_mapel = mp.id_mapel
+    `;
+    let params = [];
+    if (id_mapel) {
+        query += ` WHERE cp.id_mapel = ?`;
+        params.push(id_mapel);
+    }
+    query += ` ORDER BY mp.nama_mapel, cp.kode_cp`;
+
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ message: err.message });
+        res.json(rows);
+    });
+};
+
+exports.addCapaianPembelajaran = (req, res) => {
+    const { id_mapel, kode_cp, deskripsi_cp } = req.body;
+    const db = getDb();
+    db.run("INSERT INTO CapaianPembelajaran (id_mapel, kode_cp, deskripsi_cp) VALUES (?, ?, ?)",
+        [id_mapel, kode_cp, deskripsi_cp],
+        function(err) {
+            if (err) {
+                if (err.message.includes('UNIQUE constraint failed')) {
+                    return res.status(409).json({ message: 'Kode CP ini sudah ada untuk mata pelajaran ini.' });
+                }
+                return res.status(400).json({ message: err.message });
+            }
+            res.status(201).json({ message: 'Capaian Pembelajaran berhasil ditambahkan.', id: this.lastID });
+        }
+    );
+};
+
+exports.updateCapaianPembelajaran = (req, res) => {
+    const { id } = req.params; // id_cp
+    const { id_mapel, kode_cp, deskripsi_cp } = req.body;
+    const db = getDb();
+
+    db.run("UPDATE CapaianPembelajaran SET id_mapel = ?, kode_cp = ?, deskripsi_cp = ? WHERE id_cp = ?",
+        [id_mapel, kode_cp, deskripsi_cp, id],
+        function(err) {
+            if (err) return res.status(400).json({ message: err.message });
+            if (this.changes === 0) return res.status(404).json({ message: 'Capaian Pembelajaran tidak ditemukan atau tidak ada perubahan.' });
+            res.json({ message: 'Capaian Pembelajaran berhasil diperbarui.' });
+        }
+    );
+};
+
+exports.deleteCapaianPembelajaran = (req, res) => {
+    const { id } = req.params; // id_cp
+    const db = getDb();
+
+    // Cek ketergantungan
+    db.get("SELECT COUNT(*) AS count FROM SiswaCapaianPembelajaran WHERE id_cp = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (row.count > 0) {
+            return res.status(409).json({ message: 'Tidak dapat menghapus Capaian Pembelajaran. Masih ada data pencapaian siswa terkait.' });
+        }
+
+        db.run("DELETE FROM CapaianPembelajaran WHERE id_cp = ?", [id], function(err) {
+            if (err) return res.status(400).json({ message: err.message });
+            if (this.changes === 0) return res.status(404).json({ message: 'Capaian Pembelajaran tidak ditemukan.' });
+            res.json({ message: 'Capaian Pembelajaran berhasil dihapus.' });
+        });
     });
 };
 

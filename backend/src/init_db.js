@@ -11,7 +11,7 @@ function hashPasswordPythonStyle(password) {
 function initializeDatabase() {
     const db = getDb();
 
-    // SQL untuk membuat tabel (sama seperti sebelumnya)
+    // SQL untuk membuat tabel (sama seperti sebelumnya, ditambah tabel CP)
     const createTablesSQL = `
         CREATE TABLE IF NOT EXISTS Admin (
             id_admin INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -106,6 +106,33 @@ function initializeDatabase() {
             FOREIGN KEY (id_kelas) REFERENCES Kelas(id_kelas),
             FOREIGN KEY (id_ta_semester) REFERENCES TahunAjaranSemester(id_ta_semester),
             FOREIGN KEY (id_tipe_nilai) REFERENCES TipeNilai(id_tipe_nilai)
+        );
+
+        -- Tabel Baru: Capaian Pembelajaran (CP)
+        CREATE TABLE IF NOT EXISTS CapaianPembelajaran (
+            id_cp INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_mapel INTEGER NOT NULL,
+            kode_cp TEXT, -- Contoh: MTK-1.1
+            deskripsi_cp TEXT NOT NULL,
+            FOREIGN KEY (id_mapel) REFERENCES MataPelajaran(id_mapel),
+            UNIQUE (id_mapel, kode_cp) -- CP unik per mata pelajaran
+        );
+
+        -- Tabel Baru: Siswa Capaian Pembelajaran (Pencapaian Siswa pada CP)
+        CREATE TABLE IF NOT EXISTS SiswaCapaianPembelajaran (
+            id_siswa_cp INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_siswa INTEGER NOT NULL,
+            id_cp INTEGER NOT NULL,
+            id_guru INTEGER NOT NULL, -- Guru yang menilai capaian
+            id_ta_semester INTEGER NOT NULL,
+            status_capaian TEXT NOT NULL, -- Contoh: 'Tercapai', 'Belum Tercapai', 'Perlu Bimbingan'
+            tanggal_penilaian TEXT NOT NULL,
+            catatan TEXT,
+            FOREIGN KEY (id_siswa) REFERENCES Siswa(id_siswa),
+            FOREIGN KEY (id_cp) REFERENCES CapaianPembelajaran(id_cp),
+            FOREIGN KEY (id_guru) REFERENCES Guru(id_guru),
+            FOREIGN KEY (id_ta_semester) REFERENCES TahunAjaranSemester(id_ta_semester),
+            UNIQUE (id_siswa, id_cp, id_ta_semester) -- Siswa hanya punya satu status CP per semester
         );
     `;
 
@@ -230,6 +257,7 @@ async function insertDummyData(db) {
         // --- 6. Tahun Ajaran & Semester ---
         const taSemesterCount = (await getQuery("SELECT COUNT(*) AS count FROM TahunAjaranSemester")).count;
         let activeTASemesterId = null;
+        let allTASemesters = []; // Definisikan di sini agar scope-nya luas
         if (taSemesterCount === 0) {
             const taSemesters = [
                 { tahun_ajaran: '2023/2024', semester: 'Ganjil', is_aktif: 0 },
@@ -243,8 +271,10 @@ async function insertDummyData(db) {
                     [tas.tahun_ajaran, tas.semester, tas.is_aktif]);
                 if (tas.is_aktif) activeTASemesterId = id;
             }
+            allTASemesters = await allQuery("SELECT id_ta_semester, tahun_ajaran, semester FROM TahunAjaranSemester"); // Fetch setelah insert
             console.log(`${taSemesters.length} Tahun Ajaran & Semester dummy ditambahkan.`);
         } else {
+            allTASemesters = await allQuery("SELECT id_ta_semester, tahun_ajaran, semester FROM TahunAjaranSemester"); // Fetch jika sudah ada
             const activeTAS = await getQuery("SELECT id_ta_semester FROM TahunAjaranSemester WHERE is_aktif = 1");
             if (activeTAS) activeTASemesterId = activeTAS.id_ta_semester;
             console.log("Table TahunAjaranSemester already contains data. Skipping dummy data insertion.");
@@ -254,7 +284,7 @@ async function insertDummyData(db) {
         const kelasCount = (await getQuery("SELECT COUNT(*) AS count FROM Kelas")).count;
         if (kelasCount === 0) {
             const allTeachers = await allQuery("SELECT id_guru, nama_guru FROM Guru");
-            const allTASemesters = await allQuery("SELECT id_ta_semester, tahun_ajaran, semester FROM TahunAjaranSemester");
+            // const allTASemesters = await allQuery("SELECT id_ta_semester, tahun_ajaran, semester FROM TahunAjaranSemester"); // Sudah di-fetch di atas
 
             const kelasNames = ['X A', 'X B', 'XI IPA 1', 'XI IPA 2', 'XI IPS 1', 'XI IPS 2', 'XII IPA 1', 'XII IPA 2', 'XII IPS 1', 'XII IPS 2'];
             let kelasMap = new Map(); // Map untuk menyimpan id_kelas berdasarkan nama dan semester
@@ -280,11 +310,11 @@ async function insertDummyData(db) {
 
             // Untuk setiap siswa, tugaskan ke satu kelas per semester
             for (const student of allStudents) {
-                const currentYear = new Date().getFullYear();
+                // const currentYear = new Date().getFullYear(); // Tidak digunakan langsung di sini
                 
                 // Asumsikan siswa dimulai dari kelas X di tahun ajaran awal dummy data (misal 2023/2024 Ganjil)
                 // Dan naik kelas setiap tahun
-                for (const tas of allTASemesters) {
+                for (const tas of allTASemesters) { // Gunakan allTASemesters yang sudah di-fetch
                     let targetKelasName = '';
                     if (tas.tahun_ajaran === '2023/2024' && tas.semester === 'Ganjil') {
                         targetKelasName = 'X A'; // Asumsi semua siswa masuk X A di awal
@@ -356,14 +386,17 @@ async function insertDummyData(db) {
             const allStudents = await allQuery("SELECT id_siswa FROM Siswa");
             const allGuruMapelKelas = await allQuery("SELECT id_guru, id_mapel, id_kelas, id_ta_semester FROM GuruMataPelajaranKelas");
             const allTipeNilai = await allQuery("SELECT id_tipe_nilai FROM TipeNilai");
+            const allKelas = await allQuery("SELECT id_kelas, id_ta_semester FROM Kelas"); // Perlu ini untuk filter SiswaKelas
 
             // Untuk setiap siswa, berikan beberapa nilai acak dari penugasan guru yang ada
             for (const student of allStudents) {
-                const relevantAssignments = allGuruMapelKelas.filter(gmpk => 
-                    allKelas.some(k => k.id_kelas === gmpk.id_kelas && 
-                        allStudents.some(s => s.id_siswa === student.id_siswa && 
-                            allKelas.find(kl => kl.id_kelas === gmpk.id_kelas && kl.id_ta_semester === gmpk.id_ta_semester) // Pastikan kelas ada di semester itu
-                        )
+                // Filter penugasan guru yang relevan dengan kelas siswa di semester tersebut
+                const relevantAssignments = allGuruMapelKelas.filter(gmpk =>
+                    allKelas.some(k => k.id_kelas === gmpk.id_kelas &&
+                        // Pastikan siswa terdaftar di kelas itu untuk semester itu
+                        (allStudents.some(s => s.id_siswa === student.id_siswa &&
+                            allKelas.find(kl => kl.id_kelas === gmpk.id_kelas && kl.id_ta_semester === gmpk.id_ta_semester)
+                        ))
                     )
                 );
 
@@ -403,6 +436,81 @@ async function insertDummyData(db) {
             }
             console.log(`Nilai dummy ditambahkan untuk beberapa siswa.`);
         } else { console.log("Table Nilai already contains data. Skipping dummy data insertion."); }
+
+        // --- 11. Capaian Pembelajaran (CP) ---
+        const cpCount = (await getQuery("SELECT COUNT(*) AS count FROM CapaianPembelajaran")).count;
+        if (cpCount === 0) {
+            const allSubjects = await allQuery("SELECT id_mapel, nama_mapel FROM MataPelajaran");
+            const cpsData = [];
+            
+            for (const subject of allSubjects) {
+                if (subject.nama_mapel === 'Matematika') {
+                    cpsData.push({ id_mapel: subject.id_mapel, kode_cp: 'MTK-1.1', deskripsi_cp: 'Memahami konsep bilangan bulat dan operasinya.' });
+                    cpsData.push({ id_mapel: subject.id_mapel, kode_cp: 'MTK-1.2', deskripsi_cp: 'Menerapkan rumus luas dan keliling bangun datar.' });
+                } else if (subject.nama_mapel === 'Fisika') {
+                    cpsData.push({ id_mapel: subject.id_mapel, kode_cp: 'FIS-1.1', deskripsi_cp: 'Memahami hukum Newton tentang gerak.' });
+                    cpsData.push({ id_mapel: subject.id_mapel, kode_cp: 'FIS-1.2', deskripsi_cp: 'Menganalisis konsep energi dan perubahannya.' });
+                } else if (subject.nama_mapel === 'Bahasa Indonesia') {
+                    cpsData.push({ id_mapel: subject.id_mapel, kode_cp: 'BHS-1.1', deskripsi_cp: 'Menulis teks deskripsi dengan struktur yang benar.' });
+                    cpsData.push({ id_mapel: subject.id_mapel, kode_cp: 'BHS-1.2', deskripsi_cp: 'Memahami gagasan pokok dan gagasan pendukung dalam teks.' });
+                }
+            }
+
+            for (const cp of cpsData) {
+                await runQuery("INSERT INTO CapaianPembelajaran (id_mapel, kode_cp, deskripsi_cp) VALUES (?, ?, ?)",
+                    [cp.id_mapel, cp.kode_cp, cp.deskripsi_cp]);
+            }
+            console.log(`${cpsData.length} Capaian Pembelajaran dummy ditambahkan.`);
+        } else { console.log("Table CapaianPembelajaran already contains data. Skipping dummy data insertion."); }
+
+        // --- 12. Siswa Capaian Pembelajaran (Pencapaian Siswa pada CP) ---
+        const siswaCpCount = (await getQuery("SELECT COUNT(*) AS count FROM SiswaCapaianPembelajaran")).count;
+        if (siswaCpCount === 0) {
+            const allStudents = await allQuery("SELECT id_siswa FROM Siswa");
+            const allCps = await allQuery("SELECT id_cp, id_mapel FROM CapaianPembelajaran");
+            const allTeachers = await allQuery("SELECT id_guru FROM Guru");
+            const allTASemesters = await allQuery("SELECT id_ta_semester FROM TahunAjaranSemester WHERE is_aktif = 1"); // Hanya untuk semester aktif
+
+            if (allStudents.length > 0 && allCps.length > 0 && allTeachers.length > 0 && allTASemesters.length > 0) {
+                const activeTASemesterId = allTASemesters[0].id_ta_semester;
+                const statusOptions = ['Tercapai', 'Belum Tercapai', 'Perlu Bimbingan', 'Sangat Baik'];
+
+                for (const student of allStudents) {
+                    // Untuk setiap siswa, berikan status acak untuk beberapa CP
+                    const assignedCps = new Set();
+                    for (let i = 0; i < Math.min(allCps.length, 5); i++) { // Maksimal 5 CP per siswa
+                        const randomCp = allCps[Math.floor(Math.random() * allCps.length)];
+                        if (!assignedCps.has(randomCp.id_cp)) {
+                            assignedCps.add(randomCp.id_cp);
+                            const randomTeacher = allTeachers[Math.floor(Math.random() * allTeachers.length)];
+                            const randomStatus = statusOptions[Math.floor(Math.random() * statusOptions.length)];
+                            const penilaianDate = format(addDays(new Date(), -Math.floor(Math.random() * 60)), 'yyyy-MM-dd HH:mm:ss');
+
+                            try {
+                                await runQuery(`
+                                    INSERT INTO SiswaCapaianPembelajaran (id_siswa, id_cp, id_guru, id_ta_semester, status_capaian, tanggal_penilaian, catatan)
+                                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                                `, [
+                                    student.id_siswa,
+                                    randomCp.id_cp,
+                                    randomTeacher.id_guru,
+                                    activeTASemesterId,
+                                    randomStatus,
+                                    penilaianDate,
+                                    `Catatan dummy untuk CP ${randomCp.id_cp}`
+                                ]);
+                            } catch (e) {
+                                // console.warn(`Gagal memasukkan SiswaCapaianPembelajaran untuk siswa ${student.id_siswa} CP ${randomCp.id_cp}: ${e.message}`);
+                            }
+                        }
+                    }
+                }
+                console.log(`Siswa Capaian Pembelajaran dummy ditambahkan.`);
+            } else {
+                console.log("Not enough data to insert SiswaCapaianPembelajaran dummy data.");
+            }
+        } else { console.log("Table SiswaCapaianPembelajaran already contains data. Skipping dummy data insertion."); }
+
 
     } catch (error) {
         console.error("Error inserting dummy data:", error);

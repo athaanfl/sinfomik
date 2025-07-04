@@ -13,5 +13,9 @@ router.get('/students-in-class/:id_kelas/:id_ta_semester', guruController.getStu
 router.post('/grades', guruController.addOrUpdateGrade);
 router.get('/grades/rekap/:id_guru/:id_mapel/:id_kelas/:id_ta_semester', guruController.getRekapNilai);
 
+// --- Capaian Pembelajaran untuk Guru ---
+router.get('/cp/mapel/:id_mapel', guruController.getCapaianPembelajaranByMapel); // Mengambil CP berdasarkan Mata Pelajaran
+router.get('/siswa-cp/:id_guru/:id_mapel/:id_kelas/:id_ta_semester', guruController.getSiswaCapaianPembelajaran); // Mengambil status CP siswa
+router.post('/siswa-cp', guruController.addOrUpdateSiswaCapaianPembelajaran); // Menambah/Memperbarui status CP siswa
 
 module.exports = router;

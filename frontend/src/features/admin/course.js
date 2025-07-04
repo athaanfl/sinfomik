@@ -2,6 +2,59 @@
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 
+// Komponen Modal Edit Mata Pelajaran
+const EditMataPelajaranModal = ({ mapel, onClose, onSave }) => {
+  const [editedMapelName, setEditedMapelName] = useState(mapel.nama_mapel);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    setMessageType('');
+    try {
+      const response = await adminApi.updateMataPelajaran(mapel.id_mapel, editedMapelName);
+      setMessage(response.message);
+      setMessageType('success');
+      onSave(); // Panggil onSave untuk refresh data
+      // onClose(); // Tutup modal setelah simpan
+    } catch (err) {
+      setMessage(err.message);
+      setMessageType('error');
+    }
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h3>Edit Mata Pelajaran: {mapel.nama_mapel}</h3>
+        {message && <div className={`message ${messageType}`}>{message}</div>}
+        <form onSubmit={handleSubmit} className="form-container-small">
+          <div className="form-group">
+            <label>ID Mata Pelajaran (Tidak bisa diubah):</label>
+            <input type="text" value={mapel.id_mapel} disabled />
+          </div>
+          <div className="form-group">
+            <label>Nama Mata Pelajaran:</label>
+            <input
+              type="text"
+              name="nama_mapel"
+              value={editedMapelName}
+              onChange={(e) => setEditedMapelName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="modal-actions">
+            <button type="submit" className="submit-button">Simpan Perubahan</button>
+            <button type="button" onClick={onClose} className="cancel-button">Batal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+
 const MataPelajaranManagement = () => {
   const [mataPelajaran, setMataPelajaran] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,6 +62,8 @@ const MataPelajaranManagement = () => {
   const [newMapelName, setNewMapelName] = useState('');
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedMapel, setSelectedMapel] = useState(null);
 
   const fetchMataPelajaran = async () => {
     setLoading(true);
@@ -43,6 +98,27 @@ const MataPelajaranManagement = () => {
     }
   };
 
+  const handleEditClick = (mapel) => {
+    setSelectedMapel(mapel);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteClick = async (id_mapel, nama_mapel) => {
+    if (window.confirm(`Apakah Anda yakin ingin menghapus mata pelajaran ${nama_mapel} (ID: ${id_mapel})? Tindakan ini tidak dapat dibatalkan.`)) {
+      setMessage('');
+      setMessageType('');
+      try {
+        const response = await adminApi.deleteMataPelajaran(id_mapel);
+        setMessage(response.message);
+        setMessageType('success');
+        fetchMataPelajaran(); // Refresh daftar
+      } catch (err) {
+        setMessage(err.message);
+        setMessageType('error');
+      }
+    }
+  };
+
   if (loading) return <p>Memuat Mata Pelajaran...</p>;
   if (error) return <p className="message error">Error: {error}</p>;
 
@@ -72,6 +148,7 @@ const MataPelajaranManagement = () => {
             <tr>
               <th>ID</th>
               <th>Nama Mata Pelajaran</th>
+              <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -79,12 +156,24 @@ const MataPelajaranManagement = () => {
               <tr key={mapel.id_mapel}>
                 <td>{mapel.id_mapel}</td>
                 <td>{mapel.nama_mapel}</td>
+                <td>
+                  <button onClick={() => handleEditClick(mapel)} className="action-button edit-button">Edit</button>
+                  <button onClick={() => handleDeleteClick(mapel.id_mapel, mapel.nama_mapel)} className="action-button delete-button">Hapus</button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       ) : (
         <p>Belum ada mata pelajaran yang terdaftar.</p>
+      )}
+
+      {showEditModal && selectedMapel && (
+        <EditMataPelajaranModal
+          mapel={selectedMapel}
+          onClose={() => setShowEditModal(false)}
+          onSave={fetchMataPelajaran}
+        />
       )}
     </div>
   );

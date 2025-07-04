@@ -1,4 +1,7 @@
-import { getTipeNilai } from './admin';
+// Import ini harus di bagian paling atas file
+import { getTipeNilai, getMataPelajaran } from './admin'; // getMataPelajaran juga dibutuhkan
+export { getTipeNilai, getMataPelajaran }; // Ekspor ulang agar bisa digunakan oleh modul lain
+
 // frontend/src/api/guru.js
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
@@ -33,14 +36,6 @@ export const getStudentsInClass = async (id_kelas, id_ta_semester) => {
   return fetchData(`${API_BASE_URL}/api/guru/students-in-class/${id_kelas}/${id_ta_semester}`);
 };
 
-// --- API untuk Mendapatkan Tipe Nilai (dari Admin API, karena guru juga butuh) ---
-// Ini bisa diimpor dari admin.js jika Anda ingin menghindari duplikasi,
-// tapi untuk kemudahan, kita bisa buat ulang di sini atau impor langsung.
-// Untuk saat ini, kita akan impor dari admin.js
-
-export { getTipeNilai };
-
-
 // --- API untuk Menambah/Memperbarui Nilai ---
 export const addOrUpdateGrade = async (gradeData) => {
   return fetchData(`${API_BASE_URL}/api/guru/grades`, {
@@ -56,4 +51,27 @@ export const getRekapNilai = async (id_guru, id_mapel, id_kelas, id_ta_semester)
     throw new Error("Semua ID diperlukan untuk mengambil rekap nilai.");
   }
   return fetchData(`${API_BASE_URL}/api/guru/grades/rekap/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`);
+};
+
+// --- API Capaian Pembelajaran untuk Guru ---
+export const getCapaianPembelajaranByMapel = async (id_mapel) => {
+  if (!id_mapel) {
+    throw new Error("ID Mata Pelajaran diperlukan untuk mengambil Capaian Pembelajaran.");
+  }
+  return fetchData(`${API_BASE_URL}/api/guru/cp/mapel/${id_mapel}`);
+};
+
+export const getSiswaCapaianPembelajaran = async (id_guru, id_mapel, id_kelas, id_ta_semester) => {
+  if (!id_guru || !id_mapel || !id_kelas || !id_ta_semester) {
+    throw new Error("Semua ID diperlukan untuk mengambil Siswa Capaian Pembelajaran.");
+  }
+  return fetchData(`${API_BASE_URL}/api/guru/siswa-cp/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`);
+};
+
+export const addOrUpdateSiswaCapaianPembelajaran = async (siswaCpData) => {
+  return fetchData(`${API_BASE_URL}/api/guru/siswa-cp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(siswaCpData),
+  });
 };

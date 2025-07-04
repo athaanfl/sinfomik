@@ -50,7 +50,7 @@ export const addStudent = async (studentData) => {
   });
 };
 
-export const updateStudent = async (id_siswa, studentData) => { // Fungsi baru
+export const updateStudent = async (id_siswa, studentData) => {
   return fetchData(`${API_BASE_URL}/api/admin/students/${id_siswa}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -58,7 +58,7 @@ export const updateStudent = async (id_siswa, studentData) => { // Fungsi baru
   });
 };
 
-export const deleteStudent = async (id_siswa) => { // Fungsi baru
+export const deleteStudent = async (id_siswa) => {
   return fetchData(`${API_BASE_URL}/api/admin/students/${id_siswa}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
@@ -67,18 +67,18 @@ export const deleteStudent = async (id_siswa) => { // Fungsi baru
 
 // --- API untuk Guru ---
 export const getTeachers = async () => {
-  return fetchData(`${API_BASE_URL}/api/admin/teachers`); // Endpoint sudah disesuaikan
+  return fetchData(`${API_BASE_URL}/api/admin/teachers`);
 };
 
 export const addTeacher = async (teacherData) => {
-  return fetchData(`${API_BASE_URL}/api/admin/teachers`, { // Endpoint sudah disesuaikan
+  return fetchData(`${API_BASE_URL}/api/admin/teachers`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(teacherData),
   });
 };
 
-export const updateTeacher = async (id_guru, teacherData) => { // Fungsi baru
+export const updateTeacher = async (id_guru, teacherData) => {
   return fetchData(`${API_BASE_URL}/api/admin/teachers/${id_guru}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -86,7 +86,7 @@ export const updateTeacher = async (id_guru, teacherData) => { // Fungsi baru
   });
 };
 
-export const deleteTeacher = async (id_guru) => { // Fungsi baru
+export const deleteTeacher = async (id_guru) => {
   return fetchData(`${API_BASE_URL}/api/admin/teachers/${id_guru}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
@@ -107,6 +107,21 @@ export const addKelas = async (kelasData) => {
   });
 };
 
+export const updateKelas = async (id_kelas, kelasData) => {
+  return fetchData(`${API_BASE_URL}/api/admin/kelas/${id_kelas}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(kelasData),
+  });
+};
+
+export const deleteKelas = async (id_kelas) => {
+  return fetchData(`${API_BASE_URL}/api/admin/kelas/${id_kelas}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 // --- API untuk Mata Pelajaran ---
 export const getMataPelajaran = async () => {
   return fetchData(`${API_BASE_URL}/api/admin/mapel`);
@@ -120,6 +135,21 @@ export const addMataPelajaran = async (nama_mapel) => {
   });
 };
 
+export const updateMataPelajaran = async (id_mapel, nama_mapel) => {
+  return fetchData(`${API_BASE_URL}/api/admin/mapel/${id_mapel}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nama_mapel }),
+  });
+};
+
+export const deleteMataPelajaran = async (id_mapel) => {
+  return fetchData(`${API_BASE_URL}/api/admin/mapel/${id_mapel}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
+};
+
 // --- API untuk Tipe Nilai ---
 export const getTipeNilai = async () => {
   return fetchData(`${API_BASE_URL}/api/admin/tipe-nilai`);
@@ -130,6 +160,21 @@ export const addTipeNilai = async (tipeNilaiData) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(tipeNilaiData),
+  });
+};
+
+export const updateTipeNilai = async (id_tipe_nilai, tipeNilaiData) => {
+  return fetchData(`${API_BASE_URL}/api/admin/tipe-nilai/${id_tipe_nilai}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(tipeNilaiData),
+  });
+};
+
+export const deleteTipeNilai = async (id_tipe_nilai) => {
+  return fetchData(`${API_BASE_URL}/api/admin/tipe-nilai/${id_tipe_nilai}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
   });
 };
 
@@ -157,6 +202,35 @@ export const assignGuruToMapelKelas = async (assignmentData) => {
 
 export const getGuruMapelKelasAssignments = async (id_ta_semester) => {
   return fetchData(`${API_BASE_URL}/api/admin/guru-mapel-kelas/${id_ta_semester}`);
+};
+
+// --- API untuk Capaian Pembelajaran (CP) ---
+export const getCapaianPembelajaran = async (id_mapel = '') => { // Bisa filter by mapel
+  const url = id_mapel ? `${API_BASE_URL}/api/admin/cp?id_mapel=${id_mapel}` : `${API_BASE_URL}/api/admin/cp`;
+  return fetchData(url);
+};
+
+export const addCapaianPembelajaran = async (cpData) => {
+  return fetchData(`${API_BASE_URL}/api/admin/cp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cpData),
+  });
+};
+
+export const updateCapaianPembelajaran = async (id_cp, cpData) => {
+  return fetchData(`${API_BASE_URL}/api/admin/cp/${id_cp}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cpData),
+  });
+};
+
+export const deleteCapaianPembelajaran = async (id_cp) => {
+  return fetchData(`${API_BASE_URL}/api/admin/cp/${id_cp}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+  });
 };
 
 // --- API untuk Kenaikan Kelas ---

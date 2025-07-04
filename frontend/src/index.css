@@ -510,6 +510,37 @@ code {
   background-color: #5a6268;
 }
 
+/* Styles for CP input grid */
+.cp-grid {
+  grid-template-columns: 200px repeat(auto-fit, minmax(150px, 1fr)); /* Kolom lebih lebar untuk CP */
+}
+
+.cp-header {
+  white-space: normal; /* Allow text to wrap */
+  word-break: break-word; /* Break long words */
+  font-size: 13px; /* Ukuran font lebih kecil untuk header CP */
+}
+
+.cp-status-select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 5px; /* Jarak antara select dan textarea */
+  box-sizing: border-box;
+}
+
+.cp-catatan-textarea {
+  width: 100%;
+  min-height: 60px; /* Tinggi minimum */
+  padding: 5px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  resize: vertical; /* Hanya bisa diresize vertikal */
+  box-sizing: border-box;
+  font-size: 13px;
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -560,6 +591,10 @@ code {
   .grades-input-grid {
     grid-template-columns: 120px repeat(auto-fit, minmax(80px, 1fr)); /* Kolom lebih kecil di mobile */
     overflow-x: auto; /* Tambah scroll horizontal */
+  }
+
+  .cp-grid {
+    grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr)); /* Kolom lebih kecil untuk CP di mobile */
   }
 
   .modal-content {
