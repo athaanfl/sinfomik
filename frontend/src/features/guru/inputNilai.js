@@ -1,5 +1,5 @@
-// frontend/src/features/guru/InputNilai.js
-import React, { useState, useEffect } from 'react';
+// frontend/src/features/guru/inputNilai.js
+import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import * as guruApi from '../../api/guru'; // Import API guru
 import * as adminApi from '../../api/admin'; // Perlu getTipeNilai dari adminApi
 
@@ -14,7 +14,8 @@ const InputNilai = ({ activeTASemester, userId }) => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
 
-  const fetchData = async () => {
+  // Wrap fetchData with useCallback to prevent re-creation on every render
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -37,16 +38,16 @@ const InputNilai = ({ activeTASemester, userId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTASemester, userId, selectedAssignment]); // Add selectedAssignment to dependencies
 
   useEffect(() => {
     fetchData();
-  }, [activeTASemester, userId]);
+  }, [fetchData]); // Now fetchData is a stable dependency
 
   useEffect(() => {
     const fetchStudents = async () => {
       if (selectedAssignment && activeTASemester) {
-        const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+        const [kelasId] = selectedAssignment.split('-').map(Number); // mapelId removed as it's unused
         try {
           const studentsData = await guruApi.getStudentsInClass(kelasId, activeTASemester.id_ta_semester);
           setStudentsInClass(studentsData);
@@ -164,14 +165,17 @@ const InputNilai = ({ activeTASemester, userId }) => {
           <h3>Input Nilai untuk {currentAssignment.nama_mapel} di Kelas {currentAssignment.nama_kelas}</h3>
           {studentsInClass.length > 0 && tipeNilai.length > 0 ? (
             <form onSubmit={handleSubmitGrades} className="form-container-small">
-              <div className="grades-input-grid">
-                <div className="grid-header-item">Nama Siswa</div>
-                {tipeNilai.map(tipe => (
-                  <div key={tipe.id_tipe_nilai} className="grid-header-item">{tipe.nama_tipe}</div>
-                ))}
+              {/* Mengubah struktur grid */}
+              <div className="grades-table-wrapper"> {/* Wrapper baru untuk tabel grid */}
+                <div className="grades-grid-header"> {/* Baris header grid */}
+                  <div className="grid-header-item">Nama Siswa</div>
+                  {tipeNilai.map(tipe => (
+                    <div key={tipe.id_tipe_nilai} className="grid-header-item">{tipe.nama_tipe}</div>
+                  ))}
+                </div>
                 
                 {studentsInClass.map(student => (
-                  <React.Fragment key={student.id_siswa}>
+                  <div key={student.id_siswa} className="grades-grid-row"> {/* Setiap baris siswa adalah baris grid */}
                     <div className="grid-cell-item student-name">{student.nama_siswa}</div>
                     {tipeNilai.map(tipe => (
                       <div key={`${student.id_siswa}-${tipe.id_tipe_nilai}`} className="grid-cell-item">
@@ -186,9 +190,9 @@ const InputNilai = ({ activeTASemester, userId }) => {
                         />
                       </div>
                     ))}
-                  </React.Fragment>
+                  </div>
                 ))}
-              </div>
+              </div> {/* Akhir grades-table-wrapper */}
               <button type="submit" className="submit-button">Simpan Semua Nilai</button>
             </form>
           ) : (

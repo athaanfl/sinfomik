@@ -1,5 +1,5 @@
-// frontend/src/features/guru/PenilaianCapaianPembelajaran.js
-import React, { useState, useEffect } from 'react';
+// frontend/src/features/guru/cp.js
+import React, { useState, useEffect, useCallback } from 'react';
 import * as guruApi from '../../api/guru'; // Import API guru
 import * as adminApi from '../../api/admin'; // Perlu getMataPelajaran dari adminApi jika guruApi tidak mengekspornya
 
@@ -18,7 +18,7 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
 
   const statusOptions = ['Tercapai', 'Belum Tercapai', 'Perlu Bimbingan', 'Sangat Baik'];
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -37,9 +37,9 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTASemester, userId, selectedAssignment]);
 
-  const fetchCpsAndStudentsStatus = async () => {
+  const fetchCpsAndStudentsStatus = useCallback(async () => {
     if (selectedAssignment && activeTASemester && userId) {
       const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
       try {
@@ -76,15 +76,15 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
       setSiswaCapaianStatus({});
       setSiswaCapaianCatatan({});
     }
-  };
+  }, [selectedAssignment, activeTASemester, userId]);
 
   useEffect(() => {
     fetchData();
-  }, [activeTASemester, userId]);
+  }, [fetchData]);
 
   useEffect(() => {
     fetchCpsAndStudentsStatus();
-  }, [selectedAssignment, activeTASemester, userId]);
+  }, [fetchCpsAndStudentsStatus]);
 
   const handleStatusChange = (studentId, cpId, value) => {
     setSiswaCapaianStatus(prev => ({
@@ -194,17 +194,19 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
           <h3>Penilaian CP untuk {currentAssignment.nama_mapel} di Kelas {currentAssignment.nama_kelas}</h3>
           {capaianPembelajaran.length > 0 && studentsInClass.length > 0 ? (
             <form onSubmit={handleSubmitCapaian} className="form-container-small">
-              <div className="grades-input-grid cp-grid"> {/* Gunakan grid yang sama, tambah kelas cp-grid */}
-                <div className="grid-header-item">Nama Siswa</div>
-                {capaianPembelajaran.map(cp => (
-                  <div key={cp.id_cp} className="grid-header-item cp-header">
-                    {cp.kode_cp ? `${cp.kode_cp}: ` : ''}{cp.deskripsi_cp}
-                  </div>
-                ))}
-                <div className="grid-header-item">Catatan Umum</div> {/* Kolom catatan umum */}
+              {/* Mengubah struktur grid */}
+              <div className="grades-table-wrapper cp-table-wrapper"> {/* Wrapper baru untuk tabel grid */}
+                <div className="grades-grid-header cp-grid-header"> {/* Baris header grid */}
+                  <div className="grid-header-item">Nama Siswa</div>
+                  {capaianPembelajaran.map(cp => (
+                    <div key={cp.id_cp} className="grid-header-item cp-header">
+                      {cp.kode_cp ? `${cp.kode_cp}: ` : ''}{cp.deskripsi_cp}
+                    </div>
+                  ))}
+                </div>
                 
                 {studentsInClass.map(student => (
-                  <React.Fragment key={student.id_siswa}>
+                  <div key={student.id_siswa} className="grades-grid-row cp-grid-row"> {/* Setiap baris siswa adalah baris grid */}
                     <div className="grid-cell-item student-name">{student.nama_siswa}</div>
                     {capaianPembelajaran.map(cp => (
                       <div key={`${student.id_siswa}-${cp.id_cp}`} className="grid-cell-item">
@@ -226,13 +228,9 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
                         />
                       </div>
                     ))}
-                    <div className="grid-cell-item">
-                        {/* Catatan umum per siswa, atau bisa dihilangkan jika terlalu banyak kolom */}
-                        {/* <textarea placeholder="Catatan umum siswa" className="cp-catatan-textarea"/> */}
-                    </div>
-                  </React.Fragment>
+                  </div>
                 ))}
-              </div>
+              </div> {/* Akhir grades-table-wrapper */}
               <button type="submit" className="submit-button">Simpan Capaian Pembelajaran</button>
             </form>
           ) : (

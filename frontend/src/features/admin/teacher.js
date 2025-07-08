@@ -1,4 +1,4 @@
-// frontend/src/features/admin/GuruManagement.js
+// frontend/src/features/admin/teacher.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 

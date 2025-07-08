@@ -1,4 +1,4 @@
-// frontend/src/features/admin/SiswaKelasAssignment.js
+// frontend/src/features/admin/studentClassEnroll.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 

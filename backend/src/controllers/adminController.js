@@ -1,6 +1,7 @@
 // backend/src/controllers/adminController.js
 const { getDb } = require('../config/db');
 const { createHash } = require('crypto'); // Untuk hashing SHA256 (sesuai data dummy Python)
+const { format } = require('date-fns'); // Untuk format tanggal
 
 // Helper untuk hashing password (sesuai dengan yang digunakan di Python)
 function hashPasswordPythonStyle(password) {
@@ -10,19 +11,56 @@ function hashPasswordPythonStyle(password) {
 // --- Manajemen Siswa ---
 exports.getAllStudents = (req, res) => {
     const db = getDb();
-    db.all("SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin FROM Siswa", [], (err, rows) => {
-        if (err) return res.status(500).json({ message: err.message });
+    // Ambil id_ta_semester aktif dari query parameter jika ada, atau cari yang aktif
+    const activeTASemesterId = req.query.active_ta_semester_id;
+
+    let query = `
+        SELECT
+            s.id_siswa,
+            s.nama_siswa,
+            s.tanggal_lahir,
+            s.jenis_kelamin,
+            s.password_hash,
+            s.tahun_ajaran_masuk,
+            k.id_kelas AS kelas_aktif_id,
+            k.nama_kelas AS kelas_aktif_nama,
+            tas_k.tahun_ajaran AS kelas_aktif_tahun_ajaran,
+            tas_k.semester AS kelas_aktif_semester
+        FROM Siswa s
+        LEFT JOIN SiswaKelas sk ON s.id_siswa = sk.id_siswa
+        LEFT JOIN Kelas k ON sk.id_kelas = k.id_kelas
+        LEFT JOIN TahunAjaranSemester tas_k ON k.id_ta_semester = tas_k.id_ta_semester
+    `;
+    let params = [];
+
+    if (activeTASemesterId) {
+        // Jika ada active_ta_semester_id, filter siswa_kelas berdasarkan itu
+        query += ` WHERE sk.id_ta_semester = ? OR sk.id_ta_semester IS NULL`; // Siswa tanpa kelas juga ditampilkan
+        params.push(activeTASemesterId);
+    } else {
+        // Jika tidak ada active_ta_semester_id dari frontend, coba cari yang aktif di DB
+        query += ` LEFT JOIN TahunAjaranSemester tas_active ON tas_active.is_aktif = 1
+                   WHERE sk.id_ta_semester = tas_active.id_ta_semester OR sk.id_ta_semester IS NULL`;
+    }
+
+    query += ` ORDER BY s.nama_siswa`;
+
+    db.all(query, params, (err, rows) => {
+        if (err) {
+            console.error("Error fetching all students:", err.message);
+            return res.status(500).json({ message: err.message });
+        }
         res.json(rows);
     });
 };
 
 exports.addStudent = (req, res) => {
-    const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password } = req.body;
+    const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password, tahun_ajaran_masuk } = req.body;
     const db = getDb();
-    const password_hash = hashPasswordPythonStyle(password); // Hash password dengan cara yang sama seperti di Python
+    const password_hash = hashPasswordPythonStyle(password);
 
-    db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash) VALUES (?, ?, ?, ?, ?)",
-        [id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash],
+    db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?, ?)",
+        [id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk],
         function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
@@ -35,17 +73,17 @@ exports.addStudent = (req, res) => {
     );
 };
 
-exports.updateStudent = (req, res) => { // Fungsi UPDATE siswa
-    const { id } = req.params; // id_siswa
-    const { nama_siswa, tanggal_lahir, jenis_kelamin, password } = req.body;
+exports.updateStudent = (req, res) => {
+    const { id } = req.params;
+    const { nama_siswa, tanggal_lahir, jenis_kelamin, password, tahun_ajaran_masuk } = req.body;
     const db = getDb();
-    let query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ? WHERE id_siswa = ?";
-    let params = [nama_siswa, tanggal_lahir, jenis_kelamin, id];
+    let query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, tahun_ajaran_masuk = ? WHERE id_siswa = ?";
+    let params = [nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk, id];
 
-    if (password) { // Jika password disertakan, update juga hash password
+    if (password) {
         const password_hash = hashPasswordPythonStyle(password);
-        query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, password_hash = ? WHERE id_siswa = ?";
-        params = [nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, id];
+        query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, password_hash = ?, tahun_ajaran_masuk = ? WHERE id_siswa = ?";
+        params = [nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk, id];
     }
 
     db.run(query, params, function(err) {
@@ -55,12 +93,10 @@ exports.updateStudent = (req, res) => { // Fungsi UPDATE siswa
     });
 };
 
-exports.deleteStudent = (req, res) => { // Fungsi DELETE siswa
-    const { id } = req.params; // id_siswa
+exports.deleteStudent = (req, res) => {
+    const { id } = req.params;
     const db = getDb();
 
-    // Cek ketergantungan sebelum menghapus (opsional tapi disarankan)
-    // Misalnya, cek di tabel SiswaKelas atau Nilai
     db.get("SELECT COUNT(*) AS count FROM SiswaKelas WHERE id_siswa = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ message: err.message });
         if (row.count > 0) {
@@ -118,14 +154,14 @@ exports.addTeacher = (req, res) => {
     );
 };
 
-exports.updateTeacher = (req, res) => { // Fungsi UPDATE guru
-    const { id } = req.params; // id_guru
+exports.updateTeacher = (req, res) => {
+    const { id } = req.params;
     const { username, password, nama_guru, email } = req.body;
     const db = getDb();
     let query = "UPDATE Guru SET username = ?, nama_guru = ?, email = ? WHERE id_guru = ?";
     let params = [username, nama_guru, email, id];
 
-    if (password) { // Jika password disertakan, update juga hash password
+    if (password) {
         const password_hash = hashPasswordPythonStyle(password);
         query = "UPDATE Guru SET username = ?, nama_guru = ?, email = ?, password_hash = ? WHERE id_guru = ?";
         params = [username, nama_guru, email, password_hash, id];
@@ -138,11 +174,10 @@ exports.updateTeacher = (req, res) => { // Fungsi UPDATE guru
     });
 };
 
-exports.deleteTeacher = (req, res) => { // Fungsi DELETE guru
-    const { id } = req.params; // id_guru
+exports.deleteTeacher = (req, res) => {
+    const { id } = req.params;
     const db = getDb();
 
-    // Cek ketergantungan sebelum menghapus
     db.get("SELECT COUNT(*) AS count FROM Kelas WHERE id_wali_kelas = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ message: err.message });
         if (row.count > 0) {
@@ -172,6 +207,36 @@ exports.deleteTeacher = (req, res) => { // Fungsi DELETE guru
                 });
             });
         });
+    });
+};
+
+// --- API Tambahan: Get Teacher Details for Admin ---
+exports.getTeacherDetailsForAdmin = (req, res) => {
+    const db = getDb();
+    const query = `
+        SELECT
+            g.id_guru,
+            g.username,
+            g.nama_guru,
+            g.email,
+            GROUP_CONCAT(DISTINCT k_wali.nama_kelas || ' (' || tas_wali.tahun_ajaran || ' ' || tas_wali.semester || ')', '; ') AS wali_kelas_di,
+            GROUP_CONCAT(DISTINCT mp.nama_mapel || ' di ' || k_ampu.nama_kelas || ' (' || tas_ampu.tahun_ajaran || ' ' || tas_ampu.semester || ')', '; ') AS mengampu_pelajaran_di
+        FROM Guru g
+        LEFT JOIN Kelas k_wali ON g.id_guru = k_wali.id_wali_kelas
+        LEFT JOIN TahunAjaranSemester tas_wali ON k_wali.id_ta_semester = tas_wali.id_ta_semester
+        LEFT JOIN GuruMataPelajaranKelas gmpk ON g.id_guru = gmpk.id_guru
+        LEFT JOIN MataPelajaran mp ON gmpk.id_mapel = mp.id_mapel
+        LEFT JOIN Kelas k_ampu ON gmpk.id_kelas = k_ampu.id_kelas
+        LEFT JOIN TahunAjaranSemester tas_ampu ON gmpk.id_ta_semester = tas_ampu.id_ta_semester
+        GROUP BY g.id_guru
+        ORDER BY g.nama_guru;
+    `;
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error("Error fetching teacher details for admin:", err.message);
+            return res.status(500).json({ message: err.message });
+        }
+        res.json(rows);
     });
 };
 
@@ -413,8 +478,7 @@ exports.updateTipeNilai = (req, res) => { // Fungsi UPDATE tipe nilai
             if (err) return res.status(400).json({ message: err.message });
             if (this.changes === 0) return res.status(404).json({ message: 'Tipe Nilai tidak ditemukan atau tidak ada perubahan.' });
             res.json({ message: 'Tipe Nilai berhasil diperbarui.' });
-        }
-    );
+        });
 };
 
 exports.deleteTipeNilai = (req, res) => { // Fungsi DELETE tipe nilai
@@ -445,7 +509,6 @@ exports.assignSiswaToKelas = (req, res) => {
         [id_siswa, id_kelas, id_ta_semester],
         function(err) {
             if (err) {
-                // Handle unique constraint error
                 if (err.message.includes('UNIQUE constraint failed')) {
                     return res.status(409).json({ message: 'Siswa sudah terdaftar di kelas ini untuk semester ini.' });
                 }
@@ -577,6 +640,64 @@ exports.deleteCapaianPembelajaran = (req, res) => {
             if (this.changes === 0) return res.status(404).json({ message: 'Capaian Pembelajaran tidak ditemukan.' });
             res.json({ message: 'Capaian Pembelajaran berhasil dihapus.' });
         });
+    });
+};
+
+// --- Manajemen Nilai Siswa (Admin) ---
+exports.getAllGrades = (req, res) => { // Fungsi baru: Admin melihat semua nilai
+    const db = getDb();
+    // Query untuk mengambil semua nilai dengan detail siswa, guru, mapel, kelas, tipe nilai, TA/Semester
+    const query = `
+        SELECT
+            n.id_nilai,
+            s.nama_siswa,
+            g.nama_guru,
+            mp.nama_mapel,
+            k.nama_kelas,
+            tas.tahun_ajaran,
+            tas.semester,
+            tn.nama_tipe,
+            n.nilai,
+            n.tanggal_input,
+            n.keterangan,
+            n.id_guru, -- Tambahkan id_guru untuk keperluan request perubahan
+            n.id_siswa,
+            n.id_mapel,
+            n.id_kelas,
+            n.id_ta_semester,
+            n.id_tipe_nilai
+        FROM Nilai n
+        JOIN Siswa s ON n.id_siswa = s.id_siswa
+        JOIN Guru g ON n.id_guru = g.id_guru
+        JOIN MataPelajaran mp ON n.id_mapel = mp.id_mapel
+        JOIN Kelas k ON n.id_kelas = k.id_kelas
+        JOIN TahunAjaranSemester tas ON n.id_ta_semester = tas.id_ta_semester
+        JOIN TipeNilai tn ON n.id_tipe_nilai = tn.id_tipe_nilai
+        ORDER BY tas.tahun_ajaran DESC, tas.semester DESC, k.nama_kelas, s.nama_siswa, mp.nama_mapel, tn.nama_tipe
+    `;
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error("Error fetching all grades for admin:", err.message);
+            return res.status(500).json({ message: err.message });
+        }
+        res.json(rows);
+    });
+};
+
+exports.createGradeChangeRequest = (req, res) => { // Fungsi baru: Admin membuat permintaan perubahan nilai
+    const { id_nilai, id_admin_requestor, id_guru_approver, nilai_lama, nilai_baru, catatan_admin } = req.body;
+    const db = getDb();
+    const tanggal_request = format(new Date(), 'yyyy-MM-dd HH:mm:ss');
+
+    db.run(`
+        INSERT INTO GradeChangeRequest (id_nilai, id_admin_requestor, id_guru_approver, nilai_lama, nilai_baru, tanggal_request, status_request, catatan_admin)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [id_nilai, id_admin_requestor, id_guru_approver, nilai_lama, nilai_baru, tanggal_request, 'Pending', catatan_admin], function(err) {
+        if (err) {
+            console.error("Error creating grade change request:", err.message);
+            return res.status(400).json({ message: err.message });
+        }
+        res.status(201).json({ message: 'Permintaan perubahan nilai berhasil diajukan.', id: this.lastID });
     });
 };
 

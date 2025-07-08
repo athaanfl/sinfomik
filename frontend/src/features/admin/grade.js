@@ -1,4 +1,4 @@
-// frontend/src/features/admin/TipeNilaiManagement.js
+// frontend/src/features/admin/grade.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 

@@ -9,13 +9,14 @@ import Course from '../features/admin/course';
 import GradeType from '../features/admin/grade';
 import StudentClassEnroll from '../features/admin/studentClassEnroll';
 import TeacherClassEnroll from '../features/admin/teacherClassEnroll';
-import ClassPromote from '../features/admin/classPromote';
+import ClassPromote from '../features/admin/classPromote'; // Corrected import name to match the file
 import CapaianPembelajaranManagement from '../features/admin/capaianPembelajaranManagement';
 
 // Import komponen fitur guru
 import InputNilai from '../features/guru/inputNilai';
 import RekapNilai from '../features/guru/rekapNilai';
 import PenilaianCapaianPembelajaran from '../features/guru/cp'; // Import komponen CP Guru baru
+import WaliKelasGradeView from '../features/guru/WaliKelasGradeView'; // Import komponen baru
 
 import * as adminApi from '../api/admin'; // Untuk fetch activeTASemester di sidebar utama
 
@@ -63,7 +64,8 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
   const guruMenuItems = [
     { name: "Input Nilai", key: "input-nilai", component: InputNilai },
     { name: "Rekap Nilai", key: "rekap-nilai", component: RekapNilai },
-    { name: "Penilaian CP", key: "penilaian-cp", component: PenilaianCapaianPembelajaran }, // Menu baru untuk guru
+    { name: "Penilaian CP", key: "penilaian-cp", component: PenilaianCapaianPembelajaran },
+    { name: "Nilai Kelas Wali", key: "nilai-kelas-wali", component: WaliKelasGradeView }, // Menu baru
   ];
 
   const siswaMenuItems = [
@@ -94,6 +96,10 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
     if (userRole === 'admin') {
       const selectedAdminItem = adminMenuItems.find(item => item.key === activeMenuItem);
       ActiveComponent = selectedAdminItem ? selectedAdminItem.component : null;
+      // Add adminId prop to GradeManagementAdmin
+      if (activeMenuItem === 'manajemen-nilai') { // Assuming 'manajemen-nilai' is the key for GradeManagementAdmin
+        componentProps.adminId = userId; // Pass admin's userId
+      }
       if (!ActiveComponent) {
         return <p>Pilih menu di sidebar untuk mengelola data Admin.</p>;
       }

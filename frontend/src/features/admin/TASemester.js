@@ -1,4 +1,4 @@
-// frontend/src/features/admin/TASemesterManagement.js
+// frontend/src/features/admin/TASemester.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 

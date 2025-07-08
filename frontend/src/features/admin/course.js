@@ -1,4 +1,4 @@
-// frontend/src/features/admin/MataPelajaranManagement.js
+// frontend/src/features/admin/course.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 

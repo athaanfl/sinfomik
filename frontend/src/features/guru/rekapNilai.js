@@ -1,4 +1,4 @@
-// frontend/src/features/guru/RekapNilai.js
+// frontend/src/features/guru/rekapNilai.js
 import React, { useState, useEffect } from 'react';
 import * as guruApi from '../../api/guru';
 import * as adminApi from '../../api/admin'; // Perlu getTipeNilai dari adminApi

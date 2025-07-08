@@ -75,3 +75,11 @@ export const addOrUpdateSiswaCapaianPembelajaran = async (siswaCpData) => {
     body: JSON.stringify(siswaCpData),
   });
 };
+
+// --- New: Get Wali Kelas Grades ---
+export const getWaliKelasGrades = async (id_guru, id_ta_semester) => {
+  if (!id_guru || !id_ta_semester) {
+    throw new Error("ID Guru dan ID TA/Semester diperlukan untuk mengambil nilai kelas wali.");
+  }
+  return fetchData(`${API_BASE_URL}/api/guru/wali-kelas-grades/${id_guru}/${id_ta_semester}`);
+};

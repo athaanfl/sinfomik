@@ -18,4 +18,7 @@ router.get('/cp/mapel/:id_mapel', guruController.getCapaianPembelajaranByMapel);
 router.get('/siswa-cp/:id_guru/:id_mapel/:id_kelas/:id_ta_semester', guruController.getSiswaCapaianPembelajaran); // Mengambil status CP siswa
 router.post('/siswa-cp', guruController.addOrUpdateSiswaCapaianPembelajaran); // Menambah/Memperbarui status CP siswa
 
+// --- New: Wali Kelas Grades ---
+router.get('/wali-kelas-grades/:id_guru/:id_ta_semester', guruController.getWaliKelasGrades);
+
 module.exports = router;

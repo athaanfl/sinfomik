@@ -258,38 +258,53 @@ code {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  border-radius: 8px; /* Tambahkan border-radius ke tabel */
+  overflow: hidden; /* Penting agar border-radius terlihat */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Tambah shadow */
 }
 
 .data-table th,
 .data-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
+  border: 1px solid #e0e0e0; /* Warna border lebih lembut */
+  padding: 12px 15px; /* Padding lebih besar */
   text-align: left;
 }
 
 .data-table th {
-  background-color: #f2f2f2;
+  background-color: #e9ecef; /* Warna header lebih jelas */
   font-weight: bold;
   color: #333;
+  text-transform: uppercase; /* Huruf kapital untuk header */
+  font-size: 14px;
 }
 
 .data-table tbody tr:nth-child(even) {
-  background-color: #f9f9f9;
+  background-color: #f8f9fa; /* Warna striping lebih lembut */
 }
 
 .data-table tbody tr:hover {
-  background-color: #e9e9e9;
+  background-color: #e2e6ea; /* Hover state yang lebih jelas */
 }
 
 .action-button {
-  padding: 6px 12px;
+  padding: 8px 15px; /* Padding lebih besar */
   background-color: #28a745; /* Green for default/edit */
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px; /* Rounded corner lebih besar */
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-right: 5px; /* Jarak antar tombol aksi */
+  transition: background-color 0.3s ease, transform 0.2s ease; /* Tambah transform */
+  margin-right: 8px; /* Jarak antar tombol aksi */
+  font-size: 14px;
+}
+
+.action-button:last-child {
+    margin-right: 0; /* Hapus margin kanan pada tombol terakhir */
+}
+
+.action-button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px); /* Efek angkat sedikit */
 }
 
 .action-button.edit-button {
@@ -308,13 +323,10 @@ code {
   background-color: #c82333;
 }
 
-.action-button:hover {
-  opacity: 0.9;
-}
-
 .action-button:disabled {
   background-color: #cccccc;
   cursor: not-allowed;
+  transform: none; /* Hapus efek transform saat disabled */
 }
 
 /* New styles for student checkbox list */
@@ -384,70 +396,106 @@ code {
   padding-bottom: 10px;
 }
 
-/* New styles for grades input grid */
-.grades-input-grid {
-  display: grid;
-  /* Kolom pertama untuk nama siswa, sisanya untuk nilai */
-  grid-template-columns: 200px repeat(auto-fit, minmax(100px, 1fr));
-  gap: 1px; /* Garis tipis antar cell */
-  border: 1px solid #ddd;
+/* New wrapper for the entire grid table structure */
+.grades-table-wrapper {
+  border: 1px solid #c0c0c0; /* Border grid yang lebih jelas */
   border-radius: 8px;
   overflow: hidden; /* Pastikan border-radius terlihat */
   margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Tambah shadow pada grid */
+  width: 100%; /* Pastikan wrapper mengambil lebar penuh */
+  overflow-x: auto; /* Tambah scroll horizontal untuk tabel lebar */
 }
 
+/* Styles for the grid header row */
+.grades-grid-header {
+  display: grid;
+  /* grid-template-columns will be set dynamically by JS */
+  background-color: #e9ecef; /* Warna header lebih jelas */
+  color: #343a40; /* Warna teks header lebih gelap */
+  font-weight: bold; /* Bolder text for headers */
+  font-size: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid #e0e0e0; /* Border bawah header */
+}
+
+/* Styles for each individual grid row (student data) */
+.grades-grid-row {
+  display: grid;
+  /* grid-template-columns will be set dynamically by JS */
+  border-bottom: 1px solid #e0e0e0; /* Border antar baris data */
+}
+
+.grades-grid-row:last-child {
+  border-bottom: none; /* Hapus border bawah pada baris terakhir */
+}
+
+/* Striping for data rows */
+.grades-grid-row:nth-child(odd) {
+  background-color: #f8f9fa; /* Warna striping lebih lembut */
+}
+
+.grades-grid-row:nth-child(even) {
+  background-color: #ffffff; /* Warna striping lebih lembut */
+}
+
+/* Hover effect for data rows */
+.grades-grid-row:hover {
+  background-color: #e2e6ea; /* Hover state yang lebih jelas */
+}
+
+
+/* Gaya untuk setiap item di dalam grid (baik header maupun sel data) */
 .grid-header-item,
 .grid-cell-item {
-  padding: 10px;
-  background-color: #f8f8f8;
-  border-bottom: 1px solid #eee;
-  border-right: 1px solid #eee;
+  padding: 12px 8px; /* Padding lebih besar */
+  border-right: 1px solid #e0e0e0; /* Border kanan antar sel */
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-weight: bold;
-  color: #555;
+  font-weight: normal; /* Default normal, header akan override */
+  color: #333; /* Warna teks lebih gelap */
   box-sizing: border-box; /* Include padding in width/height */
 }
 
-.grid-header-item {
-  background-color: #e9ecef;
-  color: #333;
-  font-size: 14px;
-  position: sticky; /* Sticky header */
-  top: 0;
-  z-index: 1; /* Pastikan di atas konten */
+.grid-header-item:last-child,
+.grid-cell-item:last-child {
+  border-right: none; /* Hapus border kanan pada sel terakhir di setiap baris */
 }
 
-.grid-cell-item {
-  background-color: #ffffff;
-  font-weight: normal;
-  color: #333;
-}
-
-.grid-cell-item:nth-child(odd) { /* Untuk baris siswa, kolom nama siswa */
-  background-color: #fdfdfd;
-}
-
+/* Gaya khusus untuk kolom nama siswa */
 .student-name {
   font-weight: bold;
   text-align: left;
   justify-content: flex-start;
-  background-color: #f2f2f2; /* Warna berbeda untuk nama siswa */
+  background-color: #eef2f5; /* Warna berbeda untuk nama siswa */
   position: sticky; /* Sticky column */
   left: 0;
   z-index: 2; /* Di atas header jika perlu */
+  padding-left: 15px; /* Padding kiri untuk nama siswa */
 }
 
+/* Gaya untuk input field di dalam sel grid */
 .grade-input-field {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  width: calc(100% - 10px); /* Kurangi sedikit untuk padding visual */
+  padding: 8px; /* Padding lebih besar */
+  border: 1px solid #c0c0c0; /* Border lebih solid */
+  border-radius: 5px; /* Rounded corners */
   text-align: center;
   box-sizing: border-box;
+  font-size: 14px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
+
+.grade-input-field:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
 
 /* --- Modal Styles --- */
 .modal-overlay {
@@ -510,35 +558,100 @@ code {
   background-color: #5a6268;
 }
 
-/* Styles for CP input grid */
-.cp-grid {
-  grid-template-columns: 200px repeat(auto-fit, minmax(150px, 1fr)); /* Kolom lebih lebar untuk CP */
+/* Styles for CP input grid (using the new structure) */
+.cp-table-wrapper {
+  /* Inherits from .grades-table-wrapper */
 }
 
+.cp-grid-header {
+  grid-template-columns: minmax(150px, 1fr) repeat(auto-fit, minmax(180px, 1fr)); /* Kolom lebih lebar untuk CP */
+}
+
+.cp-grid-row {
+  grid-template-columns: minmax(150px, 1fr) repeat(auto-fit, minmax(180px, 1fr)); /* Kolom lebih lebar untuk CP */
+}
+
+/* Gaya khusus untuk header CP */
 .cp-header {
-  white-space: normal; /* Allow text to wrap */
-  word-break: break-word; /* Break long words */
+  white-space: normal; /* Izinkan teks membungkus */
+  word-break: break-word; /* Pecah kata panjang */
   font-size: 13px; /* Ukuran font lebih kecil untuk header CP */
+  padding: 10px 5px; /* Sesuaikan padding */
 }
 
+/* Gaya untuk select status CP */
 .cp-status-select {
   width: 100%;
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 8px; /* Padding lebih besar */
+  border: 1px solid #c0c0c0;
+  border-radius: 5px;
   margin-bottom: 5px; /* Jarak antara select dan textarea */
   box-sizing: border-box;
+  font-size: 14px;
 }
 
+/* Gaya untuk textarea catatan CP */
 .cp-catatan-textarea {
   width: 100%;
-  min-height: 60px; /* Tinggi minimum */
-  padding: 5px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  min-height: 70px; /* Tinggi minimum lebih besar */
+  padding: 8px; /* Padding lebih besar */
+  border: 1px solid #c0c0c0;
+  border-radius: 5px;
   resize: vertical; /* Hanya bisa diresize vertikal */
   box-sizing: border-box;
   font-size: 13px;
+}
+
+/* New styles for charts */
+.charts-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.chart-card {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  flex: 1; /* Allow cards to grow and shrink */
+  min-width: 350px; /* Minimum width for chart cards */
+  max-width: 500px; /* Max width for chart cards */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-card h5 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #555;
+  text-align: center;
+}
+
+/* Specific headers for Wali Kelas Grade View table */
+.grades-subject-header,
+.grades-type-header {
+  white-space: nowrap; /* Prevent wrapping for subject/type headers */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Add ellipsis if text overflows */
+}
+
+.grades-average {
+  font-weight: bold;
+  background-color: #eef2f5; /* Highlight average column */
+}
+
+/* Styling for sortable headers */
+.sortable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sortable:hover {
+  background-color: #dbe2e7; /* Lighter hover for sortable headers */
 }
 
 
@@ -588,17 +701,37 @@ code {
     padding: 15px; /* Kurangi padding konten fitur di mobile */
   }
 
-  .grades-input-grid {
-    grid-template-columns: 120px repeat(auto-fit, minmax(80px, 1fr)); /* Kolom lebih kecil di mobile */
-    overflow-x: auto; /* Tambah scroll horizontal */
+  /* Responsive for the new grid structure */
+  .grades-table-wrapper {
+    overflow-x: auto; /* Ensure horizontal scroll on small screens */
   }
 
-  .cp-grid {
+  /* grid-template-columns will be set dynamically by JS for comprehensive table */
+  /* For input/CP tables, minmax(150px, 1fr) repeat(auto-fit, minmax(100px, 1fr)); */
+  .grades-grid-header,
+  .grades-grid-row {
+    /* Default for smaller screens, overridden by inline style if dynamic columns are calculated */
+    grid-template-columns: minmax(120px, 1fr) repeat(auto-fit, minmax(80px, 1fr));
+  }
+
+  .cp-grid-header,
+  .cp-grid-row {
     grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr)); /* Kolom lebih kecil untuk CP di mobile */
   }
 
-  .modal-content {
-    padding: 20px;
-    width: 95%;
+  .charts-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .chart-card {
+    min-width: unset; /* Reset min-width for mobile */
+    width: 100%; /* Take full width on mobile */
+  }
+
+  /* Adjust padding for grid items on smaller screens */
+  .grid-header-item,
+  .grid-cell-item {
+    padding: 8px 5px;
   }
 }

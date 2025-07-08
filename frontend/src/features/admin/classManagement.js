@@ -1,4 +1,4 @@
-// frontend/src/features/admin/KelasManagement.js
+// frontend/src/features/admin/classManagement.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 
