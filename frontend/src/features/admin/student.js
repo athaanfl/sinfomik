@@ -188,6 +188,7 @@ const StudentManagement = () => {
             type="number"
             value={newStudent.id_siswa}
             onChange={(e) => setNewStudent({ ...newStudent, id_siswa: e.target.value })}
+            placeholder="Contoh : 1234567890"
             required
           />
         </div>
@@ -197,6 +198,7 @@ const StudentManagement = () => {
             type="text"
             value={newStudent.nama_siswa}
             onChange={(e) => setNewStudent({ ...newStudent, nama_siswa: e.target.value })}
+            placeholder="Contoh : Atma Riski"
             required
           />
         </div>
