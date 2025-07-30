@@ -94,6 +94,11 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
         if (activeTASemester) {
             componentProps.activeTASemester = activeTASemester;
         }
+        
+        // Khusus untuk TASemester component, tambahkan setActiveTASemester
+        if (activeMenuItem === 'ta-semester') {
+            componentProps.setActiveTASemester = setActiveTASemester;
+        }
 
         return <ActiveComponent {...componentProps} />;
     };
