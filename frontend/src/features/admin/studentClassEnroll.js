@@ -12,6 +12,9 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAssigning, setIsAssigning] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -53,7 +56,17 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
 
   useEffect(() => {
     fetchStudentsInKelas(selectedKelasId, activeTASemester?.id_ta_semester);
-  }, [selectedKelasId, activeTASemester, students]); // Re-fetch when students list changes (after adding new student)
+  }, [selectedKelasId, activeTASemester, students]);
+
+  const showMessage = (text, type = 'success') => {
+    setMessage(text);
+    setMessageType(type);
+    
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 6000);
+  };
 
   const handleCheckboxChange = (studentId) => {
     setSelectedStudents(prevSelected => {
@@ -65,19 +78,28 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
     });
   };
 
+  const handleSelectAll = () => {
+    if (selectedStudents.length === filteredAvailableStudents.length) {
+      setSelectedStudents([]);
+    } else {
+      setSelectedStudents(filteredAvailableStudents.map(s => s.id_siswa));
+    }
+  };
+
   const handleAssignStudents = async () => {
     setMessage('');
     setMessageType('');
+    setIsAssigning(true);
+    
     if (!selectedKelasId || !activeTASemester || selectedStudents.length === 0) {
-      setMessage('Harap pilih kelas dan setidaknya satu siswa.');
-      setMessageType('error');
+      showMessage('Please select a class and at least one student.', 'error');
+      setIsAssigning(false);
       return;
     }
 
     let successCount = 0;
     let failCount = 0;
 
-    // Use a Promise.all to send all requests concurrently
     const assignmentPromises = selectedStudents.map(studentId => {
       return adminApi.assignSiswaToKelas({
         id_siswa: studentId,
@@ -88,10 +110,8 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
         successCount++;
       })
       .catch(err => {
-        // Log the specific error for debugging
         console.error(`Failed to assign student ${studentId}:`, err);
         failCount++;
-        // You might want to collect specific error messages for display
       });
     });
 
@@ -99,21 +119,18 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
       await Promise.all(assignmentPromises);
 
       if (successCount > 0) {
-        setMessage(`Berhasil menambahkan ${successCount} siswa ke kelas. ${failCount} gagal atau sudah ada.`);
-        setMessageType('success');
-        setSelectedStudents([]); // Clear selection
-        fetchStudentsInKelas(selectedKelasId, activeTASemester.id_ta_semester); // Refresh daftar siswa di kelas
+        showMessage(`Successfully assigned ${successCount} students to the class. ${failCount} failed or already enrolled.`, 'success');
+        setSelectedStudents([]);
+        fetchStudentsInKelas(selectedKelasId, activeTASemester.id_ta_semester);
       } else if (failCount > 0) {
-        setMessage(`Gagal menambahkan ${failCount} siswa. Mungkin sudah terdaftar atau ada kesalahan.`);
-        setMessageType('error');
+        showMessage(`Failed to assign ${failCount} students. They might already be enrolled or there was an error.`, 'error');
       } else {
-        setMessage('Tidak ada siswa yang ditambahkan.');
-        setMessageType('info');
+        showMessage('No students were assigned.', 'warning');
       }
     } catch (err) {
-      // This catch will only trigger if Promise.all itself fails, not for individual assignment errors
-      setMessage(`Terjadi kesalahan umum saat penugasan: ${err.message}`);
-      setMessageType('error');
+      showMessage(`General error during assignment: ${err.message}`, 'error');
+    } finally {
+      setIsAssigning(false);
     }
   };
 
@@ -121,76 +138,390 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
     !studentsInSelectedKelas.some(sisInKelas => sisInKelas.id_siswa === s.id_siswa)
   );
 
-  if (loading) return <p>Memuat data...</p>;
-  if (error) return <p className="message error">Error: {error}</p>;
+  const filteredAvailableStudents = availableStudents.filter(student =>
+    student.nama_siswa.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const selectedClass = kelas.find(k => k.id_kelas === selectedKelasId);
+
+  const renderStudentCard = (student, isSelected) => (
+    <div 
+      key={student.id_siswa}
+      className={`relative bg-white rounded-xl border-2 p-4 cursor-pointer transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg ${
+        isSelected 
+          ? 'border-violet-500 bg-violet-50 shadow-lg' 
+          : 'border-gray-200 hover:border-violet-300'
+      }`}
+      onClick={() => handleCheckboxChange(student.id_siswa)}
+    >
+      <div className="flex items-center space-x-3">
+        <div className={`relative w-10 h-10 rounded-full flex items-center justify-center ${
+          isSelected 
+            ? 'bg-violet-500 text-white' 
+            : 'bg-gradient-to-br from-indigo-400 to-purple-500 text-white'
+        }`}>
+          {isSelected ? (
+            <i className="fas fa-check text-sm"></i>
+          ) : (
+            <i className="fas fa-user text-sm"></i>
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-medium text-gray-900 truncate">{student.nama_siswa}</h4>
+          <p className="text-xs text-gray-500">ID: {student.id_siswa}</p>
+        </div>
+      </div>
+      {isSelected && (
+        <div className="absolute top-2 right-2">
+          <div className="w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
+            <i className="fas fa-check text-white text-xs"></i>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderStudentList = (student, isSelected) => (
+    <div 
+      key={student.id_siswa}
+      className={`flex items-center space-x-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+        isSelected 
+          ? 'bg-violet-50 border border-violet-200' 
+          : 'bg-white hover:bg-gray-50 border border-gray-200'
+      }`}
+      onClick={() => handleCheckboxChange(student.id_siswa)}
+    >
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+        isSelected 
+          ? 'bg-violet-500 text-white' 
+          : 'bg-gradient-to-br from-indigo-400 to-purple-500 text-white'
+      }`}>
+        {isSelected ? (
+          <i className="fas fa-check text-xs"></i>
+        ) : (
+          <i className="fas fa-user text-xs"></i>
+        )}
+      </div>
+      <div className="flex-1">
+        <h4 className="text-sm font-medium text-gray-900">{student.nama_siswa}</h4>
+        <p className="text-xs text-gray-500">Student ID: {student.id_siswa}</p>
+      </div>
+      {isSelected && (
+        <div className="w-5 h-5 bg-violet-500 rounded-full flex items-center justify-center">
+          <i className="fas fa-check text-white text-xs"></i>
+        </div>
+      )}
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-br from-violet-50 to-purple-100 min-h-screen flex items-center justify-center">
+        <div className="bg-white p-8 rounded-2xl shadow-xl">
+          <div className="flex items-center space-x-4">
+            <div className="w-8 h-8 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-lg font-medium text-gray-700">Loading class enrollment data...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-gradient-to-br from-violet-50 to-purple-100 min-h-screen p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+            <div className="flex items-center">
+              <i className="fas fa-exclamation-circle mr-2 text-xl"></i>
+              <span className="font-medium">Error: {error}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="feature-content">
-      <h2>Penugasan Siswa ke Kelas</h2>
-      {message && <div className={`message ${messageType}`}>{message}</div>}
-
-      {activeTASemester ? (
-        <p className="message info">Penugasan untuk Tahun Ajaran & Semester Aktif: <b>{activeTASemester.tahun_ajaran} {activeTASemester.semester}</b></p>
-      ) : (
-        <p className="message warning">Harap atur Tahun Ajaran & Semester aktif terlebih dahulu.</p>
-      )}
-
-      {kelas.length > 0 ? (
-        <>
-          <div className="form-group">
-            <label>Pilih Kelas:</label>
-            <select value={selectedKelasId} onChange={(e) => setSelectedKelasId(parseInt(e.target.value))}>
-              {kelas.map(k => (
-                <option key={k.id_kelas} value={k.id_kelas}>{k.nama_kelas}</option>
-              ))}
-            </select>
+    <div className="bg-gradient-to-br from-violet-50 to-purple-100 min-h-screen">
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-violet-500 to-purple-600 -m-6 mb-6 p-6 rounded-t-2xl">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-3xl font-bold text-white flex items-center">
+                  <i className="fas fa-users-class mr-3 text-4xl"></i>
+                  Student Class Enrollment
+                </h1>
+                <p className="text-violet-100 mt-2">Assign students to classes for the active academic term</p>
+              </div>
+              <div className="text-right">
+                <div className="bg-white/20 rounded-lg p-3">
+                  <p className="text-white text-sm">Selected Students</p>
+                  <p className="text-2xl font-bold text-white">{selectedStudents.length}</p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <h4>Daftar Siswa di Kelas {kelas.find(k => k.id_kelas === selectedKelasId)?.nama_kelas || ''}</h4>
-          {studentsInSelectedKelas.length > 0 ? (
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>ID Siswa</th>
-                  <th>Nama Siswa</th>
-                </tr>
-              </thead>
-              <tbody>
-                {studentsInSelectedKelas.map(s => (
-                  <tr key={s.id_siswa}>
-                    <td>{s.id_siswa}</td>
-                    <td>{s.nama_siswa}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>Tidak ada siswa di kelas ini untuk semester aktif.</p>
+          {/* Message Display */}
+          {message && (
+            <div className={`p-4 mb-6 rounded-lg transition-all duration-300 ease-in-out border-l-4 ${
+              messageType === 'success' 
+                ? 'bg-green-50 border-green-500 text-green-700' 
+                : messageType === 'error'
+                ? 'bg-red-50 border-red-500 text-red-700'
+                : messageType === 'warning'
+                ? 'bg-yellow-50 border-yellow-500 text-yellow-700'
+                : 'bg-blue-50 border-blue-500 text-blue-700'
+            }`}>
+              <i className={`fas ${
+                messageType === 'success' ? 'fa-check-circle' : 
+                messageType === 'error' ? 'fa-exclamation-circle' :
+                messageType === 'warning' ? 'fa-exclamation-triangle' :
+                'fa-info-circle'
+              } mr-2`}></i>
+              {message}
+            </div>
           )}
 
-          <h4>Tambahkan Siswa ke Kelas Ini</h4>
-          {availableStudents.length > 0 ? (
-            <div className="student-checkbox-list"> {/* New container for checkboxes */}
-              {availableStudents.map(s => (
-                <label key={s.id_siswa} className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    value={s.id_siswa}
-                    checked={selectedStudents.includes(s.id_siswa)}
-                    onChange={() => handleCheckboxChange(s.id_siswa)}
-                  />
-                  {s.nama_siswa}
-                </label>
-              ))}
-              <button onClick={handleAssignStudents} className="submit-button" disabled={!activeTASemester || selectedStudents.length === 0}>Tambahkan Siswa</button>
+          {/* Active Semester Info */}
+          {activeTASemester ? (
+            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-xl border border-indigo-200 mb-6">
+              <div className="flex items-center">
+                <div className="bg-indigo-500 p-3 rounded-full mr-4">
+                  <i className="fas fa-calendar-alt text-white text-xl"></i>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800">Active Academic Term</h3>
+                  <p className="text-indigo-600 font-medium">{activeTASemester.tahun_ajaran} - {activeTASemester.semester}</p>
+                </div>
+              </div>
             </div>
           ) : (
-            <p>Semua siswa sudah terdaftar di kelas ini atau tidak ada siswa yang tersedia.</p>
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 rounded-lg">
+              <div className="flex items-center">
+                <i className="fas fa-exclamation-triangle mr-2 text-xl"></i>
+                <span className="font-medium">Please set an active Academic Year & Semester first.</span>
+              </div>
+            </div>
           )}
-        </>
-      ) : (
-        <p className="message warning">Belum ada kelas yang terdaftar untuk Tahun Ajaran & Semester aktif ini.</p>
-      )}
+
+          {kelas.length > 0 ? (
+            <div className="space-y-8">
+              {/* Class Selection */}
+              <div className="bg-gradient-to-r from-violet-50 to-purple-50 p-6 rounded-xl border border-violet-100">
+                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <i className="fas fa-door-open mr-3 text-violet-500 text-2xl"></i>
+                  Select Target Class
+                </h3>
+                <div className="relative">
+                  <select 
+                    value={selectedKelasId} 
+                    onChange={(e) => setSelectedKelasId(parseInt(e.target.value))}
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 appearance-none"
+                  >
+                    {kelas.map(k => (
+                      <option key={k.id_kelas} value={k.id_kelas}>{k.nama_kelas}</option>
+                    ))}
+                  </select>
+                  <i className="fas fa-chevron-down absolute right-3 top-4 text-gray-400"></i>
+                </div>
+              </div>
+
+              {/* Current Students in Class */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <i className="fas fa-users mr-3 text-purple-500 text-2xl"></i>
+                  Students in {selectedClass?.nama_kelas || 'Selected Class'}
+                  <span className="ml-2 bg-purple-100 text-purple-600 px-2 py-1 rounded-full text-sm">
+                    {studentsInSelectedKelas.length}
+                  </span>
+                </h3>
+                
+                {studentsInSelectedKelas.length > 0 ? (
+                  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gradient-to-r from-purple-50 to-violet-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">Student ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">Student Name</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-purple-600 uppercase tracking-wider">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {studentsInSelectedKelas.map((s, index) => (
+                            <tr key={s.id_siswa} className={`hover:bg-gray-50 transition-colors duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">{s.id_siswa}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                <div className="flex items-center">
+                                  <div className="bg-gradient-to-br from-purple-400 to-violet-500 p-2 rounded-full mr-3">
+                                    <i className="fas fa-user text-white text-xs"></i>
+                                  </div>
+                                  <span className="font-medium">{s.nama_siswa}</span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                  <i className="fas fa-check-circle mr-1"></i>
+                                  Enrolled
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                    <div className="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                      <i className="fas fa-user-slash text-4xl text-gray-400"></i>
+                    </div>
+                    <h5 className="text-lg font-medium text-gray-700 mb-2">No Students Enrolled</h5>
+                    <p className="text-gray-500">This class has no students enrolled for the active semester.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Add Students Section */}
+              <div>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+                    <i className="fas fa-user-plus mr-3 text-violet-500 text-2xl"></i>
+                    Add Students to Class
+                    <span className="ml-2 bg-violet-100 text-violet-600 px-2 py-1 rounded-full text-sm">
+                      {filteredAvailableStudents.length} available
+                    </span>
+                  </h3>
+                  
+                  <div className="flex space-x-3 mt-3 md:mt-0">
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search students..." 
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500"
+                      />
+                      <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    
+                    <div className="flex bg-gray-100 rounded-lg p-1">
+                      <button 
+                        onClick={() => setViewMode('list')}
+                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'list' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-600'}`}
+                      >
+                        <i className="fas fa-list"></i>
+                      </button>
+                      <button 
+                        onClick={() => setViewMode('grid')}
+                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'grid' ? 'bg-white shadow-sm text-violet-600' : 'text-gray-600'}`}
+                      >
+                        <i className="fas fa-th"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {filteredAvailableStudents.length > 0 ? (
+                  <div className="space-y-6">
+                    {/* Select All & Action Buttons */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-violet-50 p-4 rounded-xl border border-violet-200">
+                      <div className="flex items-center space-x-4">
+                        <button 
+                          onClick={handleSelectAll}
+                          className="flex items-center space-x-2 text-violet-600 hover:text-violet-700 transition-colors duration-200"
+                        >
+                          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            selectedStudents.length === filteredAvailableStudents.length && filteredAvailableStudents.length > 0
+                              ? 'bg-violet-500 border-violet-500' 
+                              : selectedStudents.length > 0
+                              ? 'bg-violet-200 border-violet-400'
+                              : 'border-gray-300'
+                          }`}>
+                            {selectedStudents.length === filteredAvailableStudents.length && filteredAvailableStudents.length > 0 ? (
+                              <i className="fas fa-check text-white text-xs"></i>
+                            ) : selectedStudents.length > 0 ? (
+                              <i className="fas fa-minus text-violet-600 text-xs"></i>
+                            ) : null}
+                          </div>
+                          <span className="font-medium">
+                            {selectedStudents.length === filteredAvailableStudents.length && filteredAvailableStudents.length > 0
+                              ? 'Deselect All' 
+                              : 'Select All'}
+                          </span>
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          {selectedStudents.length} of {filteredAvailableStudents.length} selected
+                        </span>
+                      </div>
+                      
+                      <button 
+                        onClick={handleAssignStudents}
+                        disabled={!activeTASemester || selectedStudents.length === 0 || isAssigning}
+                        className="mt-3 sm:mt-0 flex items-center px-6 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-y-0.5 font-medium"
+                      >
+                        {isAssigning ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                            Assigning...
+                          </>
+                        ) : (
+                          <>
+                            <i className="fas fa-user-plus mr-2"></i>
+                            Assign {selectedStudents.length} Student{selectedStudents.length !== 1 ? 's' : ''}
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* Students Display */}
+                    {viewMode === 'grid' ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {filteredAvailableStudents.map(student => 
+                          renderStudentCard(student, selectedStudents.includes(student.id_siswa))
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {filteredAvailableStudents.map(student => 
+                          renderStudentList(student, selectedStudents.includes(student.id_siswa))
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                    <div className="inline-block p-6 bg-gray-100 rounded-full mb-4">
+                      <i className="fas fa-user-check text-4xl text-gray-400"></i>
+                    </div>
+                    <h5 className="text-lg font-medium text-gray-700 mb-2">
+                      {searchTerm ? 'No Students Match Search' : 'All Students Enrolled'}
+                    </h5>
+                    <p className="text-gray-500">
+                      {searchTerm 
+                        ? `No available students match your search for "${searchTerm}".`
+                        : 'All students are already enrolled in this class or no students are available.'
+                      }
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="inline-block p-6 bg-yellow-50 rounded-full mb-4">
+                <i className="fas fa-door-closed text-4xl text-yellow-400"></i>
+              </div>
+              <h5 className="text-lg font-medium text-gray-700 mb-2">No Classes Available</h5>
+              <p className="text-gray-500">No classes are registered for the active academic term.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

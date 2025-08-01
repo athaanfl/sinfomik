@@ -1,0 +1,310 @@
+:root {
+    --sidebar-width: 300px; 
+    --sidebar-width-collapsed: 88px; 
+    --primary-color: #4f46e5;
+    --secondary-color: #6366f1;
+    --accent-color: #10b981;
+    --dark-color: #1e293b;
+    --light-color: #f8fafc;
+    --sidebar-width: 280px;
+}
+
+body {
+    font-family: 'Inter', sans-serif; /* Pastikan font ini diimpor di index.html */
+    background-color: #f1f5f9;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* Ganti .sidebar dan .main-content dengan class dari komponen React */
+.dashboard-container {
+    display: flex;
+}
+
+.app-sidebar {
+    width: var(--sidebar-width);
+    background: linear-gradient(135deg, var(--dark-color), #0f172a);
+    color: white;
+    height: 100vh;
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
+    transform: translateX(-100%);
+}
+
+.main-content-area {
+    margin-left: 0;
+    width: 100%;
+    min-height: 100vh;
+    transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info {
+    padding: 1rem 1.5rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    margin: 1rem;
+    border-radius: 0.5rem;
+}
+
+.role-badge {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.active-ta {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-left: 4px solid var(--accent-color);
+    color: white; /* Pastikan teks tetap terlihat */
+    padding: 0.75rem 1.5rem;
+    margin: 0 1rem 1rem 1rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+}
+
+.app-nav-button {
+    width: calc(100% - 2rem);
+    text-align: left;
+    padding: 0.75rem 1.5rem;
+    margin: 0.25rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: none;
+    border: none;
+    color: white;
+    transform: translateX(0);
+}
+
+.app-nav-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+.app-nav-button.active {
+    background-color: var(--primary-color);
+    font-weight: 500;
+    transform: translateX(8px);
+    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+}
+
+.logout-btn {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 0.75rem 1.5rem;
+    margin: 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: calc(100% - 2rem);
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    margin-top: auto; /* Mendorong ke bawah */
+    transform: translateY(0);
+}
+
+.logout-btn:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+}
+
+.dashboard-header {
+    background-color: white;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dashboard-feature-content {
+    padding: 1.5rem;
+    margin: 1.5rem;
+    border-radius: 0.5rem;
+}
+
+.mobile-menu-btn {
+    display: block; /* Tampilkan untuk semua ukuran layar */
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1100;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    height: 40px;
+    width: 40px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-btn:hover {
+    background-color: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.mobile-menu-btn:active {
+    transform: scale(0.95);
+}
+
+/* Animasi rotasi untuk ikon hamburger */
+.mobile-menu-btn i {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-menu-btn.active i {
+    transform: rotate(90deg);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: block;
+    opacity: 0;
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Animasi fade in untuk overlay */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Animasi fade out untuk overlay */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+/* Animasi untuk sidebar terbuka */
+.app-sidebar.open {
+    transform: translateX(0);
+    box-shadow: 8px 0 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Animasi untuk elemen-elemen di dalam sidebar */
+.app-sidebar.open .sidebar-header,
+.app-sidebar.open .user-info,
+.app-sidebar.open .active-ta,
+.app-sidebar.open .app-nav-button,
+.app-sidebar.open .logout-btn {
+    animation: slideInFromLeft 0.4s ease-out forwards;
+}
+
+/* Delay animasi untuk setiap elemen agar terlihat berurutan */
+.app-sidebar.open .user-info {
+    animation-delay: 0.1s;
+}
+
+.app-sidebar.open .active-ta {
+    animation-delay: 0.15s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(2) {
+    animation-delay: 0.25s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(4) {
+    animation-delay: 0.35s;
+}
+.app-sidebar.open .app-nav-button:nth-child(5) {
+    animation-delay: 0.4s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(6) {
+    animation-delay: 0.45s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(7) {
+    animation-delay: 0.5s;
+}
+
+.app-sidebar.open .app-nav-button:nth-child(8) {
+    animation-delay: 0.55s;
+}
+.app-sidebar.open .app-nav-button:nth-child(9) {
+    animation-delay: 0.6s;
+}.app-sidebar.open .app-nav-button:nth-child(10) {
+    animation-delay: 0.65s;
+}
+
+.app-sidebar.open .logout-btn {
+    animation-delay: 0.4s;
+}
+
+/* Keyframe untuk animasi slide in dari kiri */
+@keyframes slideInFromLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.loading-spinner {
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top: 3px solid white;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.5rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
