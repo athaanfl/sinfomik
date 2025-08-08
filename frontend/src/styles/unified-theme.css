@@ -1,0 +1,253 @@
+/* Global Unified Color Theme for SINFOMIK */
+/* This file ensures consistent colors across the entire application */
+
+:root {
+  /* Primary Blue-Indigo Theme Colors */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+  
+  --secondary-50: #eef2ff;
+  --secondary-100: #e0e7ff;
+  --secondary-200: #c7d2fe;
+  --secondary-300: #a5b4fc;
+  --secondary-400: #818cf8;
+  --secondary-500: #6366f1;
+  --secondary-600: #4f46e5;
+  --secondary-700: #4338ca;
+  --secondary-800: #3730a3;
+  --secondary-900: #312e81;
+  
+  /* Status Colors */
+  --success-500: #10b981;
+  --warning-500: #f59e0b;
+  --error-500: #ef4444;
+  --info-500: var(--primary-500);
+  
+  /* Neutral Colors */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+}
+
+/* Utility Classes for Consistent Styling */
+.sinfomik-primary-gradient {
+  background: linear-gradient(to right, var(--primary-500), var(--secondary-600));
+}
+
+.sinfomik-primary-gradient-light {
+  background: linear-gradient(to right, var(--primary-50), var(--secondary-100));
+}
+
+.sinfomik-primary-gradient-bg {
+  background: linear-gradient(to bottom right, var(--primary-50), var(--secondary-100));
+}
+
+.sinfomik-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sinfomik-card:hover {
+  box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25);
+}
+
+.sinfomik-button-primary {
+  background: linear-gradient(to right, var(--primary-500), var(--secondary-600));
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.sinfomik-button-primary:hover {
+  background: linear-gradient(to right, var(--primary-600), var(--secondary-700));
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.sinfomik-button-secondary {
+  background: var(--gray-100);
+  color: var(--gray-600);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.sinfomik-button-secondary:hover {
+  background: var(--gray-200);
+  transform: translateY(-1px);
+}
+
+.sinfomik-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-300);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.sinfomik-input:focus {
+  outline: none;
+  border-color: var(--primary-500);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.sinfomik-text-primary {
+  background: linear-gradient(to right, var(--primary-600), var(--secondary-600));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Status Message Styles */
+.sinfomik-message {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border-left: 4px solid;
+  margin-bottom: 1rem;
+}
+
+.sinfomik-message.success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: var(--success-500);
+  color: #047857;
+}
+
+.sinfomik-message.error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: var(--error-500);
+  color: #dc2626;
+}
+
+.sinfomik-message.warning {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-color: var(--warning-500);
+  color: #d97706;
+}
+
+.sinfomik-message.info {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: var(--info-500);
+  color: #2563eb;
+}
+
+/* Loading and Interactive States */
+.sinfomik-loading {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary-600);
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+.sinfomik-spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Icon Colors */
+.sinfomik-icon-primary {
+  color: var(--primary-500);
+}
+
+.sinfomik-icon-secondary {
+  color: var(--secondary-500);
+}
+
+.sinfomik-icon-success {
+  color: var(--success-500);
+}
+
+.sinfomik-icon-warning {
+  color: var(--warning-500);
+}
+
+.sinfomik-icon-error {
+  color: var(--error-500);
+}
+
+/* Table Styles */
+.sinfomik-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sinfomik-table thead {
+  background: linear-gradient(to right, var(--primary-50), var(--secondary-50));
+}
+
+.sinfomik-table th,
+.sinfomik-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.sinfomik-table th {
+  font-weight: 600;
+  color: var(--gray-700);
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.05em;
+}
+
+.sinfomik-table tbody tr:hover {
+  background-color: var(--gray-50);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sinfomik-card {
+    margin: 0.5rem;
+    border-radius: 0.75rem;
+  }
+  
+  .sinfomik-button-primary,
+  .sinfomik-button-secondary {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}

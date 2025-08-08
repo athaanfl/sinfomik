@@ -1,6 +1,7 @@
 // frontend/src/features/admin/grade.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
+import { colorScheme, getStatusClasses, getButtonClasses, getCardClasses, getHeaderClasses } from '../../styles/colorScheme';
 
 // Komponen Modal Edit Tipe Nilai
 const EditTipeNilaiModal = ({ tipe, onClose, onSave }) => {
@@ -41,7 +42,7 @@ const EditTipeNilaiModal = ({ tipe, onClose, onSave }) => {
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-bold text-gray-800 flex items-center">
               <i className="fas fa-edit mr-3 text-blue-500 text-2xl"></i>
-              <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Edit Grade Type
               </span>
             </h3>
@@ -297,11 +298,11 @@ const TipeNilaiManagement = () => {
   );
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-purple-100 min-h-screen">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-purple-600 -m-6 mb-6 p-6 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 -m-6 mb-6 p-6 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center">
@@ -396,7 +397,7 @@ const TipeNilaiManagement = () => {
 
                     <button
                       type="submit"
-                      className="w-full md:w-auto flex justify-center items-center py-3 px-8 rounded-lg shadow-md text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
+                      className="w-full md:w-auto flex justify-center items-center py-3 px-8 rounded-lg shadow-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
                     >
                       <i className="fas fa-plus mr-2 text-lg"></i>
                       Add Grade Type
@@ -409,8 +410,8 @@ const TipeNilaiManagement = () => {
               <div>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <i className="fas fa-list-alt mr-3 text-purple-500 text-3xl"></i>
-                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                    <i className="fas fa-list-alt mr-3 text-indigo-500 text-3xl"></i>
+                    <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                       Grade Type Directory
                     </span>
                   </h2>

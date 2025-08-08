@@ -1,6 +1,7 @@
 // frontend/src/features/admin/teacherClassEnroll.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
+import { colorScheme, getStatusClasses, getButtonClasses, getCardClasses, getHeaderClasses } from '../../styles/colorScheme';
 
 const GuruMapelKelasAssignment = ({ activeTASemester }) => {
   const [teachers, setTeachers] = useState([]);
@@ -104,14 +105,14 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
 
   const getRandomColor = (index) => {
     const colors = [
-      'from-rose-400 to-pink-500',
-      'from-orange-400 to-amber-500', 
-      'from-emerald-400 to-cyan-500',
-      'from-blue-400 to-indigo-500',
-      'from-purple-400 to-violet-500',
-      'from-pink-400 to-rose-500',
-      'from-teal-400 to-green-500',
-      'from-indigo-400 to-blue-500'
+      'from-blue-400 to-indigo-400',
+      'from-indigo-400 to-blue-400', 
+      'from-blue-500 to-indigo-500',
+      'from-indigo-500 to-blue-500',
+      'from-blue-300 to-indigo-300',
+      'from-indigo-300 to-blue-300',
+      'from-blue-600 to-indigo-600',
+      'from-indigo-600 to-blue-600'
     ];
     return colors[index % colors.length];
   };
@@ -130,13 +131,13 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
   const renderAssignmentsTable = () => (
     <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gradient-to-r from-rose-50 to-pink-50">
+        <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-rose-600 uppercase tracking-wider">Teacher</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-rose-600 uppercase tracking-wider">Subject</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-rose-600 uppercase tracking-wider">Class</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-rose-600 uppercase tracking-wider">Academic Year</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-rose-600 uppercase tracking-wider">Semester</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Teacher</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Subject</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Class</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Academic Year</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Semester</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
@@ -144,7 +145,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
             <tr key={index} className={`hover:bg-gray-50 transition-all duration-200 ${index % 2 === 0 ? 'bg-white' : 'bg-gray-25'}`}>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                 <div className="flex items-center">
-                  <div className="bg-gradient-to-br from-rose-400 to-pink-500 p-2 rounded-full mr-3">
+                  <div className="bg-gradient-to-br from-purple-400 to-indigo-500 p-2 rounded-full mr-3">
                     <i className="fas fa-chalkboard-teacher text-white text-sm"></i>
                   </div>
                   <span className="font-medium">{assign.nama_guru}</span>
@@ -229,10 +230,10 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
 
   if (loading) {
     return (
-      <div className="bg-gradient-to-br from-rose-50 to-pink-100 min-h-screen flex items-center justify-center">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
         <div className="bg-white p-8 rounded-2xl shadow-xl">
           <div className="flex items-center space-x-4">
-            <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
             <span className="text-lg font-medium text-gray-700">Loading teacher assignment data...</span>
           </div>
         </div>
@@ -242,7 +243,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
 
   if (error) {
     return (
-      <div className="bg-gradient-to-br from-rose-50 to-pink-100 min-h-screen p-8">
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
             <div className="flex items-center">
@@ -256,18 +257,18 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
   }
 
   return (
-    <div className="bg-gradient-to-br from-rose-50 to-pink-100 min-h-screen">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-rose-500 to-pink-600 -m-6 mb-6 p-6 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 -m-6 mb-6 p-6 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center">
                   <i className="fas fa-user-tie mr-3 text-4xl"></i>
                   Teacher Assignment System
                 </h1>
-                <p className="text-rose-100 mt-2">Assign teachers to subjects and classes</p>
+                <p className="text-indigo-100 mt-2">Assign teachers to subjects and classes</p>
               </div>
               <div className="text-right">
                 <div className="bg-white/20 rounded-lg p-3">
@@ -280,10 +281,10 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-r from-rose-400 to-pink-500 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-rose-100 text-sm">Teachers</p>
+                  <p className="text-indigo-100 text-sm">Teachers</p>
                   <p className="text-2xl font-bold">{teachers.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -291,10 +292,10 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-orange-400 to-amber-500 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-indigo-400 to-indigo-500 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-100 text-sm">Subjects</p>
+                  <p className="text-indigo-100 text-sm">Subjects</p>
                   <p className="text-2xl font-bold">{mataPelajaran.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -302,10 +303,10 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-emerald-400 to-cyan-500 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-emerald-100 text-sm">Classes</p>
+                  <p className="text-indigo-100 text-sm">Classes</p>
                   <p className="text-2xl font-bold">{kelas.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -313,10 +314,10 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-blue-400 to-indigo-500 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm">Assignments</p>
+                  <p className="text-indigo-100 text-sm">Assignments</p>
                   <p className="text-2xl font-bold">{assignments.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -330,7 +331,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
           {message && (
             <div className={`p-4 mb-6 rounded-lg transition-all duration-300 ease-in-out border-l-4 ${
               messageType === 'success' 
-                ? 'bg-green-50 border-green-500 text-green-700' 
+                ? 'bg-indigo-50 border-indigo-500 text-indigo-700' 
                 : 'bg-red-50 border-red-500 text-red-700'
             }`}>
               <i className={`fas ${messageType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
@@ -363,10 +364,10 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
           {teachers.length > 0 && mataPelajaran.length > 0 && kelas.length > 0 ? (
             <div className="space-y-8">
               {/* Assignment Form */}
-              <div className="bg-gradient-to-r from-rose-50 to-pink-50 p-6 rounded-xl border border-rose-100">
+              <div className="bg-gradient-to-r from-indigo-50 to-indigo-100 p-6 rounded-xl border border-indigo-200">
                 <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                  <i className="fas fa-user-plus mr-3 text-rose-500 text-3xl"></i>
-                  <span className="bg-gradient-to-r from-rose-600 to-pink-600 bg-clip-text text-transparent">
+                  <i className="fas fa-user-plus mr-3 text-indigo-500 text-3xl"></i>
+                  <span className="bg-gradient-to-r from-indigo-600 to-indigo-700 bg-clip-text text-transparent">
                     Assign Teacher
                   </span>
                 </h3>
@@ -378,7 +379,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                       <select 
                         value={selectedGuruId} 
                         onChange={(e) => setSelectedGuruId(parseInt(e.target.value))}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 appearance-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
                       >
                         {teachers.map(t => (
                           <option key={t.id_guru} value={t.id_guru}>{t.nama_guru}</option>
@@ -395,7 +396,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                       <select 
                         value={selectedMapelId} 
                         onChange={(e) => setSelectedMapelId(parseInt(e.target.value))}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 appearance-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
                       >
                         {mataPelajaran.map(mp => (
                           <option key={mp.id_mapel} value={mp.id_mapel}>{mp.nama_mapel}</option>
@@ -412,7 +413,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                       <select 
                         value={selectedKelasId} 
                         onChange={(e) => setSelectedKelasId(parseInt(e.target.value))}
-                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500 appearance-none"
+                        className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none"
                       >
                         {kelas.map(k => (
                           <option key={k.id_kelas} value={k.id_kelas}>{k.nama_kelas}</option>
@@ -431,21 +432,21 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                       <h4 className="text-sm font-medium text-gray-700 mb-3">Assignment Preview:</h4>
                       <div className="flex flex-wrap items-center gap-4">
                         <div className="flex items-center">
-                          <div className="bg-gradient-to-br from-rose-400 to-pink-500 p-2 rounded-full mr-2">
+                          <div className="bg-gradient-to-br from-indigo-400 to-indigo-500 p-2 rounded-full mr-2">
                             <i className="fas fa-chalkboard-teacher text-white text-sm"></i>
                           </div>
                           <span className="text-sm font-medium">{selectedTeacher.nama_guru}</span>
                         </div>
                         <i className="fas fa-arrow-right text-gray-400"></i>
                         <div className="flex items-center">
-                          <div className="bg-gradient-to-br from-orange-400 to-amber-500 p-2 rounded-lg mr-2">
+                          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-2 rounded-lg mr-2">
                             <i className={`fas ${getSubjectIcon(selectedSubject.nama_mapel)} text-white text-sm`}></i>
                           </div>
                           <span className="text-sm font-medium">{selectedSubject.nama_mapel}</span>
                         </div>
                         <i className="fas fa-arrow-right text-gray-400"></i>
                         <div className="flex items-center">
-                          <div className="bg-gradient-to-br from-indigo-400 to-blue-500 p-2 rounded-lg mr-2">
+                          <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 p-2 rounded-lg mr-2">
                             <i className="fas fa-door-open text-white text-sm"></i>
                           </div>
                           <span className="text-sm font-medium">{selectedClass.nama_kelas}</span>
@@ -457,7 +458,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                   <button
                     type="submit"
                     disabled={!activeTASemester || isAssigning}
-                    className="w-full md:w-auto flex items-center justify-center px-8 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-lg hover:from-rose-600 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-y-0.5 font-semibold shadow-lg"
+                    className="w-full md:w-auto flex items-center justify-center px-8 py-3 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-y-0.5 font-semibold shadow-lg"
                   >
                     {isAssigning ? (
                       <>
@@ -478,8 +479,8 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
               <div>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                   <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <i className="fas fa-list-check mr-3 text-pink-500 text-3xl"></i>
-                    <span className="bg-gradient-to-r from-pink-600 to-rose-600 bg-clip-text text-transparent">
+                    <i className="fas fa-list-check mr-3 text-indigo-500 text-3xl"></i>
+                    <span className="bg-gradient-to-r from-indigo-600 to-indigo-700 bg-clip-text text-transparent">
                       Teacher Assignments
                     </span>
                   </h3>
@@ -491,7 +492,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search assignments..." 
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500"
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                       />
                       <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     </div>
@@ -499,13 +500,13 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                     <div className="flex bg-gray-100 rounded-lg p-1">
                       <button 
                         onClick={() => setViewMode('table')}
-                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'table' ? 'bg-white shadow-sm text-rose-600' : 'text-gray-600'}`}
+                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'table' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-600'}`}
                       >
                         <i className="fas fa-table"></i>
                       </button>
                       <button 
                         onClick={() => setViewMode('card')}
-                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'card' ? 'bg-white shadow-sm text-rose-600' : 'text-gray-600'}`}
+                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'card' ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-600'}`}
                       >
                         <i className="fas fa-th-large"></i>
                       </button>

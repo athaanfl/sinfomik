@@ -1,4 +1,8 @@
 /* frontend/src/index.css */
+/* Import unified theme */
+@import './styles/unified-theme.css';
+@import './styles/animations.css';
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -560,7 +564,13 @@ code {
 
 /* Styles for CP input grid (using the new structure) */
 .cp-table-wrapper {
-  /* Inherits from .grades-table-wrapper */
+  border: 1px solid #c0c0c0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  overflow-x: auto;
 }
 
 .cp-grid-header {

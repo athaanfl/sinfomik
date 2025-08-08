@@ -1,6 +1,7 @@
 // frontend/src/features/admin/course.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
+import { colorScheme, getStatusClasses, getButtonClasses, getCardClasses, getHeaderClasses } from '../../styles/colorScheme';
 
 // Komponen Modal Edit Mata Pelajaran
 const EditMataPelajaranModal = ({ mapel, onClose, onSave }) => {
@@ -32,8 +33,8 @@ const EditMataPelajaranModal = ({ mapel, onClose, onSave }) => {
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-              <i className="fas fa-edit mr-3 text-emerald-500 text-2xl"></i>
-              <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+              <i className="fas fa-edit mr-3 text-blue-500 text-2xl"></i>
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Edit Subject
               </span>
             </h3>
@@ -76,10 +77,10 @@ const EditMataPelajaranModal = ({ mapel, onClose, onSave }) => {
                 value={editedMapelName}
                 onChange={(e) => setEditedMapelName(e.target.value)}
                 required
-                className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 peer"
+                className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
                 placeholder=" "
               />
-              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-emerald-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
                 Subject Name
               </label>
             </div>
@@ -94,7 +95,7 @@ const EditMataPelajaranModal = ({ mapel, onClose, onSave }) => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 text-white bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-lg hover:from-emerald-600 hover:to-cyan-700 transition-all duration-200 transform hover:-translate-y-0.5 font-medium shadow-lg flex items-center"
+                className="px-6 py-2 text-white bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 transform hover:-translate-y-0.5 font-medium shadow-lg flex items-center"
               >
                 <i className="fas fa-save mr-2"></i>
                 Save Changes
@@ -206,14 +207,14 @@ const MataPelajaranManagement = () => {
 
   const getSubjectColor = (index) => {
     const colors = [
-      'from-emerald-400 to-cyan-400',
-      'from-blue-400 to-indigo-400', 
-      'from-purple-400 to-pink-400',
-      'from-orange-400 to-red-400',
-      'from-yellow-400 to-orange-400',
-      'from-green-400 to-emerald-400',
-      'from-teal-400 to-cyan-400',
-      'from-indigo-400 to-purple-400'
+      'from-blue-400 to-indigo-400',
+      'from-indigo-400 to-blue-400', 
+      'from-blue-500 to-indigo-500',
+      'from-indigo-500 to-blue-500',
+      'from-blue-300 to-indigo-300',
+      'from-indigo-300 to-blue-300',
+      'from-blue-600 to-indigo-600',
+      'from-indigo-600 to-blue-600'
     ];
     return colors[index % colors.length];
   };
@@ -296,7 +297,7 @@ const MataPelajaranManagement = () => {
             <div className="flex space-x-2">
               <button 
                 onClick={() => handleEditClick(mapel)}
-                className="flex-1 py-2 px-3 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium"
+                className="flex-1 py-2 px-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-all duration-200 transform hover:-translate-y-0.5 text-sm font-medium"
               >
                 <i className="fas fa-edit mr-1"></i> Edit
               </button>
@@ -314,18 +315,18 @@ const MataPelajaranManagement = () => {
   );
 
   return (
-    <div className="bg-gradient-to-br from-emerald-50 to-cyan-100 min-h-screen">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl">
           {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-500 to-cyan-600 -m-6 mb-6 p-6 rounded-t-2xl">
+          <div className="bg-gradient-to-r from-blue-500 to-indigo-600 -m-6 mb-6 p-6 rounded-t-2xl">
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center">
                   <i className="fas fa-book-open mr-3 text-4xl"></i>
                   Subject Management System
                 </h1>
-                <p className="text-emerald-100 mt-2">Manage academic subjects and curriculum</p>
+                <p className="text-blue-100 mt-2">Manage academic subjects and curriculum</p>
               </div>
               <div className="flex space-x-2">
                 <button 
@@ -340,10 +341,10 @@ const MataPelajaranManagement = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-emerald-100 text-sm">Total Subjects</p>
+                  <p className="text-blue-100 text-sm">Total Subjects</p>
                   <p className="text-2xl font-bold">{mataPelajaran.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -362,10 +363,10 @@ const MataPelajaranManagement = () => {
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl p-6 text-white">
+            <div className="bg-gradient-to-r from-indigo-400 to-purple-400 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm">Categories</p>
+                  <p className="text-indigo-100 text-sm">Categories</p>
                   <p className="text-2xl font-bold">Academic</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -390,7 +391,7 @@ const MataPelajaranManagement = () => {
           {/* Loading State */}
           {loading && (
             <div className="text-center py-12">
-              <div className="inline-flex items-center px-6 py-3 rounded-full bg-emerald-50 text-emerald-600">
+              <div className="inline-flex items-center px-6 py-3 rounded-full bg-blue-50 text-blue-600">
                 <i className="fas fa-spinner animate-spin mr-3 text-xl"></i>
                 <span className="font-medium">Loading subjects...</span>
               </div>
@@ -412,12 +413,12 @@ const MataPelajaranManagement = () => {
               {/* Add Subject Form */}
               <div className="mb-10">
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                  <i className="fas fa-plus-circle mr-3 text-emerald-500 text-3xl"></i>
-                  <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
+                  <i className="fas fa-plus-circle mr-3 text-blue-500 text-3xl"></i>
+                  <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                     Add New Subject
                   </span>
                 </h2>
-                <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 p-6 rounded-xl border border-emerald-100">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
                   <form onSubmit={handleAddMataPelajaran} className="max-w-md space-y-6">
                     <div className="relative">
                       <input
@@ -425,17 +426,17 @@ const MataPelajaranManagement = () => {
                         value={newMapelName}
                         onChange={(e) => setNewMapelName(e.target.value)}
                         required
-                        className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 peer"
+                        className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
                         placeholder=" "
                       />
-                      <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-emerald-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+                      <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
                         Subject Name
                       </label>
                     </div>
 
                     <button
                       type="submit"
-                      className="w-full flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
+                      className="w-full flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
                     >
                       <i className="fas fa-plus mr-2 text-lg"></i>
                       Add Subject
@@ -444,12 +445,11 @@ const MataPelajaranManagement = () => {
                 </div>
               </div>
 
-              {/* Subjects List */}
               <div>
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <i className="fas fa-list-alt mr-3 text-cyan-500 text-3xl"></i>
-                    <span className="bg-gradient-to-r from-cyan-600 to-emerald-600 bg-clip-text text-transparent">
+                    <i className="fas fa-list-alt mr-3 text-indigo-500 text-3xl"></i>
+                    <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                       Subject Directory
                     </span>
                   </h2>
@@ -460,20 +460,20 @@ const MataPelajaranManagement = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         placeholder="Search subjects..." 
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                       <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                     </div>
                     <div className="flex bg-gray-100 rounded-lg p-1">
                       <button 
                         onClick={() => setViewMode('table')}
-                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'table' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
+                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'table' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600'}`}
                       >
                         <i className="fas fa-table"></i>
                       </button>
                       <button 
                         onClick={() => setViewMode('card')}
-                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'card' ? 'bg-white shadow-sm text-emerald-600' : 'text-gray-600'}`}
+                        className={`px-3 py-1 rounded-md transition-all duration-200 ${viewMode === 'card' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-600'}`}
                       >
                         <i className="fas fa-th-large"></i>
                       </button>
@@ -483,8 +483,8 @@ const MataPelajaranManagement = () => {
 
                 {filteredMataPelajaran.length === 0 && !loading && (
                   <div className="text-center py-12">
-                    <div className="inline-block p-6 bg-emerald-50 rounded-full mb-4">
-                      <i className="fas fa-book-open text-4xl text-emerald-400"></i>
+                    <div className="inline-block p-6 bg-blue-50 rounded-full mb-4">
+                      <i className="fas fa-book-open text-4xl text-blue-400"></i>
                     </div>
                     <h5 className="text-lg font-medium text-gray-700 mb-2">No Subjects Found</h5>
                     <p className="text-gray-500 max-w-md mx-auto">

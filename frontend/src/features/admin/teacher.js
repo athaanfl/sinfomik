@@ -1,6 +1,7 @@
 // frontend/src/features/admin/teacher.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
+import { colorScheme, getStatusClasses, getButtonClasses, getCardClasses, getHeaderClasses } from '../../styles/colorScheme';
 
 // Komponen Modal Edit Guru dengan Modern Design
 const EditTeacherModal = ({ teacher, onClose, onSave }) => {
@@ -82,10 +83,10 @@ const EditTeacherModal = ({ teacher, onClose, onSave }) => {
               value={editedTeacher.username}
               onChange={handleChange}
               required
-              className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 peer"
+              className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
               placeholder=" "
             />
-            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-indigo-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
               Username
             </label>
           </div>
@@ -97,10 +98,10 @@ const EditTeacherModal = ({ teacher, onClose, onSave }) => {
               value={editedTeacher.nama_guru}
               onChange={handleChange}
               required
-              className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 peer"
+              className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
               placeholder=" "
             />
-            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-indigo-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
               Full Name
             </label>
           </div>
@@ -111,10 +112,10 @@ const EditTeacherModal = ({ teacher, onClose, onSave }) => {
               name="email"
               value={editedTeacher.email || ''}
               onChange={handleChange}
-              className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 peer"
+              className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
               placeholder=" "
             />
-            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-indigo-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
               Email (optional)
             </label>
           </div>
@@ -125,10 +126,10 @@ const EditTeacherModal = ({ teacher, onClose, onSave }) => {
               name="password"
               value={editedTeacher.password || ''}
               onChange={handleChange}
-              className="block w-full px-4 py-3 pr-12 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 peer"
+              className="block w-full px-4 py-3 pr-12 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
               placeholder=" "
             />
-            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-indigo-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+            <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
               New Password (leave blank to keep current)
             </label>
             <button 
@@ -143,14 +144,14 @@ const EditTeacherModal = ({ teacher, onClose, onSave }) => {
           <div className="flex space-x-3 pt-4">
             <button 
               type="submit" 
-              className="flex-1 py-3 px-4 rounded-lg shadow-md text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg font-semibold"
+              className="flex-1 py-3 px-4 rounded-lg shadow-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-lg font-semibold"
             >
               Save Changes
             </button>
             <button 
               type="button" 
               onClick={onClose} 
-              className="flex-1 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5 font-semibold"
+              className="flex-1 py-3 px-4 border border-gray-300 rounded-lg shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-0.5 font-semibold"
             >
               Cancel
             </button>
@@ -256,7 +257,7 @@ const GuruManagement = () => {
   const renderTeachersTable = () => (
     <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm bg-white">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gradient-to-r from-indigo-50 to-purple-50">
+        <thead className="bg-gradient-to-r from-blue-50 to-indigo-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">ID</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Username</th>
@@ -346,15 +347,15 @@ const GuruManagement = () => {
           {/* Header */}
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-gray-800 flex items-center">
-              <i className="fas fa-chalkboard-teacher mr-3 text-indigo-600 text-4xl"></i>
-              <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              <i className="fas fa-chalkboard-teacher mr-3 text-blue-600 text-4xl"></i>
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                 Teacher Management System
               </span>
             </h2>
             <div className="flex space-x-2">
               <button 
                 onClick={fetchTeachers}
-                className="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors duration-200"
+                className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors duration-200"
               >
                 <i className="fas fa-sync-alt"></i>
               </button>
@@ -375,10 +376,10 @@ const GuruManagement = () => {
 
           {/* Add Teacher Form */}
           <div className="mb-10">
-            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border border-indigo-100">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
               <h4 className="text-xl font-semibold text-gray-700 mb-4 flex items-center">
-                <i className="fas fa-user-plus mr-2 text-indigo-600 text-2xl"></i>
-                <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                <i className="fas fa-user-plus mr-2 text-blue-600 text-2xl"></i>
+                <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   Register New Teacher
                 </span>
               </h4>
@@ -437,17 +438,17 @@ const GuruManagement = () => {
                     type="email"
                     value={newTeacher.email}
                     onChange={(e) => setNewTeacher({ ...newTeacher, email: e.target.value })}
-                    className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 peer"
+                    className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer"
                     placeholder=" "
                   />
-                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-indigo-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
+                  <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
                     Email (optional)
                   </label>
                 </div>
 
                 <button
                   type="submit"
-                  className="w-full flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
+                  className="w-full flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
                 >
                   <i className="fas fa-user-plus mr-2 text-lg"></i>
                   Register Teacher
@@ -460,8 +461,8 @@ const GuruManagement = () => {
           <div>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
               <h4 className="text-xl font-semibold text-gray-700 flex items-center">
-                <i className="fas fa-users mr-2 text-purple-600 text-2xl"></i>
-                <span className="bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                <i className="fas fa-users mr-2 text-indigo-600 text-2xl"></i>
+                <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
                   Teacher Directory
                 </span>
               </h4>

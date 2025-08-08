@@ -130,7 +130,7 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
 
                 <div className="user-info">
                     <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium truncate">{username}</span>
+                        <span className="font-medium username-full">{username}</span>
                         <span className="role-badge">
                             {userRole}
                         </span>

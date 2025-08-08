@@ -22,6 +22,7 @@ body {
     display: flex;
 }
 
+/* Sidebar responsive */
 .app-sidebar {
     width: var(--sidebar-width);
     background: linear-gradient(135deg, var(--dark-color), #0f172a);
@@ -35,13 +36,36 @@ body {
     z-index: 1000;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.1);
     transform: translateX(-100%);
+    left: 0;
+    top: 0;
+    max-width: 100vw;
+}
+
+@media (max-width: 768px) {
+  .app-sidebar {
+    width: 80vw;
+    min-width: 220px;
+    max-width: 90vw;
+    height: 100vh;
+    border-radius: 0 1.5rem 1.5rem 0;
+  }
+  .main-content-area {
+    margin-left: 0 !important;
+  }
 }
 
 .main-content-area {
-    margin-left: 0;
+    margin-left: var(--sidebar-width);
     width: 100%;
     min-height: 100vh;
     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* display: flex; flex-direction: column; align-items: center; dihapus agar konten lebih ke kiri */
+}
+
+@media (max-width: 768px) {
+  .main-content-area {
+    margin-left: 0;
+  }
 }
 
 .sidebar-header {
@@ -54,6 +78,24 @@ body {
     background-color: rgba(255, 255, 255, 0.05);
     margin: 1rem;
     border-radius: 0.5rem;
+    overflow: visible;
+}
+
+.user-info .username-full {
+    white-space: nowrap;
+    overflow: visible;
+    text-overflow: unset;
+    max-width: 100%;
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+  .user-info .username-full {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+  }
 }
 
 .role-badge {
@@ -141,12 +183,28 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: 100%;
+    max-width: 1200px;
+    margin: 2rem 1rem 2rem 2.5rem;
 }
 
 .dashboard-feature-content {
     padding: 1.5rem;
-    margin: 1.5rem;
+    margin: 0 auto 2rem auto;
     border-radius: 0.5rem;
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+    max-width: 1200px;
+    width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .dashboard-feature-content {
+    margin-left: 2.5rem;
+    margin-right: 2.5rem;
+    padding: 2rem 2.5rem;
+    max-width: 1200px;
+  }
 }
 
 .mobile-menu-btn {

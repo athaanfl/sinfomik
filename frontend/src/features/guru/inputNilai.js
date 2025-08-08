@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import * as guruApi from '../../api/guru'; // Import API guru
 import * as adminApi from '../../api/admin'; // Perlu getTipeNilai dari adminApi
+import { colorScheme, getStatusClasses, getButtonClasses, getCardClasses, getHeaderClasses } from '../../styles/colorScheme';
 
 const InputNilai = ({ activeTASemester, userId }) => {
   const [assignments, setAssignments] = useState([]);

@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as guruApi from '../../api/guru'; // Import API guru
 import * as adminApi from '../../api/admin'; // Perlu getMataPelajaran dari adminApi jika guruApi tidak mengekspornya
+import { colorScheme, getStatusClasses, getButtonClasses, getCardClasses, getHeaderClasses } from '../../styles/colorScheme';
 
 const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
   const [assignments, setAssignments] = useState([]); // Penugasan guru (kelas-mapel)
