@@ -19,6 +19,22 @@ exports.getGuruAssignments = (req, res) => {
     });
 };
 
+// --- Get Wali Kelas Assignments ---
+exports.getWaliKelasAssignments = (req, res) => {
+    const { id_guru, id_ta_semester } = req.params;
+    const db = getDb();
+    db.all(`
+        SELECT k.id_kelas, k.nama_kelas, 'Wali Kelas' as nama_mata_pelajaran
+        FROM Kelas k
+        WHERE k.id_wali_kelas = ? AND k.id_ta_semester = ?
+        ORDER BY k.nama_kelas
+    `, [id_guru, id_ta_semester], (err, rows) => {
+        if (err) return res.status(500).json({ message: err.message });
+        console.log(`Found ${rows.length} wali kelas assignments for guru ${id_guru}:`, rows.map(r => r.nama_kelas));
+        res.json(rows);
+    });
+};
+
 // --- Get Students in a Specific Class ---
 exports.getStudentsInClass = (req, res) => {
     const { id_kelas, id_ta_semester } = req.params;
@@ -176,25 +192,32 @@ exports.addOrUpdateSiswaCapaianPembelajaran = (req, res) => {
     });
 };
 
-// --- New: Get all grades for a class where the teacher is a homeroom teacher (wali kelas) ---
+// --- New: Get all grades for classes where the teacher is a homeroom teacher (wali kelas) ---
 exports.getWaliKelasGrades = (req, res) => {
     const { id_guru, id_ta_semester } = req.params;
     const db = getDb();
 
-    // First, find the class where this guru is the homeroom teacher for the given semester
-    db.get(`SELECT id_kelas, nama_kelas FROM Kelas WHERE id_wali_kelas = ? AND id_ta_semester = ?`,
-        [id_guru, id_ta_semester], (err, kelas) => {
+    // First, find ALL classes where this guru is the homeroom teacher for the given semester
+    db.all(`SELECT id_kelas, nama_kelas FROM Kelas WHERE id_wali_kelas = ? AND id_ta_semester = ? ORDER BY nama_kelas`,
+        [id_guru, id_ta_semester], (err, kelasArray) => {
             if (err) {
-                console.error("Error finding wali kelas class:", err.message);
+                console.error("Error finding wali kelas classes:", err.message);
                 return res.status(500).json({ message: err.message });
             }
-            if (!kelas) {
+            if (!kelasArray || kelasArray.length === 0) {
                 return res.status(404).json({ message: 'Guru ini bukan wali kelas untuk semester yang dipilih atau kelas tidak ditemukan.' });
             }
 
-            // If class found, fetch all grades for students in that class
+            console.log(`Found ${kelasArray.length} classes for wali kelas guru ID ${id_guru}:`, kelasArray.map(k => k.nama_kelas));
+
+            // If classes found, fetch all grades for students in ALL those classes
+            const kelasIds = kelasArray.map(k => k.id_kelas);
+            const placeholders = kelasIds.map(() => '?').join(',');
+            
             const query = `
                 SELECT
+                    n.id_kelas,
+                    k.nama_kelas,
                     s.id_siswa,
                     s.nama_siswa,
                     mp.nama_mapel,
@@ -202,22 +225,25 @@ exports.getWaliKelasGrades = (req, res) => {
                     n.nilai,
                     n.tanggal_input,
                     n.keterangan
-                FROM SiswaKelas sk
-                JOIN Siswa s ON sk.id_siswa = s.id_siswa
-                LEFT JOIN Nilai n ON s.id_siswa = n.id_siswa AND sk.id_kelas = n.id_kelas AND sk.id_ta_semester = n.id_ta_semester
-                LEFT JOIN MataPelajaran mp ON n.id_mapel = mp.id_mapel
-                LEFT JOIN TipeNilai tn ON n.id_tipe_nilai = tn.id_tipe_nilai
-                WHERE sk.id_kelas = ? AND sk.id_ta_semester = ?
-                ORDER BY s.nama_siswa, mp.nama_mapel, tn.nama_tipe;
+                FROM Nilai n
+                JOIN Kelas k ON n.id_kelas = k.id_kelas
+                JOIN Siswa s ON n.id_siswa = s.id_siswa
+                JOIN MataPelajaran mp ON n.id_mapel = mp.id_mapel
+                JOIN TipeNilai tn ON n.id_tipe_nilai = tn.id_tipe_nilai
+                WHERE n.id_kelas IN (${placeholders}) AND n.id_ta_semester = ?
+                ORDER BY k.nama_kelas, s.nama_siswa, mp.nama_mapel, tn.nama_tipe;
             `;
 
-            db.all(query, [kelas.id_kelas, id_ta_semester], (err, rows) => {
+            db.all(query, [...kelasIds, id_ta_semester], (err, rows) => {
                 if (err) {
                     console.error("Error fetching wali kelas grades:", err.message);
                     return res.status(500).json({ message: err.message });
                 }
+                
+                console.log(`Found ${rows.length} grade records for wali kelas`);
+                
                 res.json({
-                    classInfo: { id_kelas: kelas.id_kelas, nama_kelas: kelas.nama_kelas },
+                    classInfo: kelasArray, // Return all classes
                     grades: rows
                 });
             });

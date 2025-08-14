@@ -81,7 +81,7 @@ const EditMataPelajaranModal = ({ mapel, onClose, onSave }) => {
                 placeholder=" "
               />
               <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
-                Subject Name
+                Nama Mata Pelajaran
               </label>
             </div>
 
@@ -225,8 +225,8 @@ const MataPelajaranManagement = () => {
         <thead className="bg-gradient-to-r from-emerald-50 to-cyan-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-emerald-600 uppercase tracking-wider">ID</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-emerald-600 uppercase tracking-wider">Subject Name</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-emerald-600 uppercase tracking-wider">Category</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-emerald-600 uppercase tracking-wider">Nama Mata Pelajaran</th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-emerald-600 uppercase tracking-wider">Kategori</th>
             <th className="px-6 py-3 text-left text-xs font-medium text-emerald-600 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
@@ -324,9 +324,9 @@ const MataPelajaranManagement = () => {
               <div>
                 <h1 className="text-3xl font-bold text-white flex items-center">
                   <i className="fas fa-book-open mr-3 text-4xl"></i>
-                  Subject Management System
+                  Manajemen Mata Pelajaran
                 </h1>
-                <p className="text-blue-100 mt-2">Manage academic subjects and curriculum</p>
+                <p className="text-blue-100 mt-2">Mengelola Mata Pelajaran dan Kurikulum  </p>
               </div>
               <div className="flex space-x-2">
                 <button 
@@ -344,7 +344,7 @@ const MataPelajaranManagement = () => {
             <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm">Total Subjects</p>
+                  <p className="text-blue-100 text-sm">Total Mata Pelajaran </p>
                   <p className="text-2xl font-bold">{mataPelajaran.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -355,7 +355,7 @@ const MataPelajaranManagement = () => {
             <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-100 text-sm">Active Courses</p>
+                  <p className="text-blue-100 text-sm">Mata Pelajaran Aktif</p>
                   <p className="text-2xl font-bold">{mataPelajaran.length}</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
@@ -366,8 +366,8 @@ const MataPelajaranManagement = () => {
             <div className="bg-gradient-to-r from-indigo-400 to-purple-400 rounded-xl p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-indigo-100 text-sm">Categories</p>
-                  <p className="text-2xl font-bold">Academic</p>
+                  <p className="text-indigo-100 text-sm">Kategori</p>
+                  <p className="text-2xl font-bold">Akademik</p>
                 </div>
                 <div className="bg-white/20 p-3 rounded-full">
                   <i className="fas fa-tags text-2xl"></i>
@@ -393,7 +393,7 @@ const MataPelajaranManagement = () => {
             <div className="text-center py-12">
               <div className="inline-flex items-center px-6 py-3 rounded-full bg-blue-50 text-blue-600">
                 <i className="fas fa-spinner animate-spin mr-3 text-xl"></i>
-                <span className="font-medium">Loading subjects...</span>
+                <span className="font-medium">Loading Mata Pelajaran...</span>
               </div>
             </div>
           )}
@@ -415,7 +415,7 @@ const MataPelajaranManagement = () => {
                 <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
                   <i className="fas fa-plus-circle mr-3 text-blue-500 text-3xl"></i>
                   <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                    Add New Subject
+                    Tambah Mata Pelajaran
                   </span>
                 </h2>
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
@@ -430,7 +430,7 @@ const MataPelajaranManagement = () => {
                         placeholder=" "
                       />
                       <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-blue-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
-                        Subject Name
+                        Nama Mata Pelajaran
                       </label>
                     </div>
 
@@ -439,7 +439,7 @@ const MataPelajaranManagement = () => {
                       className="w-full flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
                     >
                       <i className="fas fa-plus mr-2 text-lg"></i>
-                      Add Subject
+                      Tambah Mata Pelajaran
                     </button>
                   </form>
                 </div>
@@ -450,7 +450,7 @@ const MataPelajaranManagement = () => {
                   <h2 className="text-2xl font-bold text-gray-800 flex items-center">
                     <i className="fas fa-list-alt mr-3 text-indigo-500 text-3xl"></i>
                     <span className="bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
-                      Subject Directory
+                      Mata Pelajaran
                     </span>
                   </h2>
                   <div className="flex space-x-3 mt-3 md:mt-0">

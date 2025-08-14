@@ -1,9 +1,9 @@
 // frontend/src/api/auth.js
 // Fungsi untuk melakukan panggilan API ke backend
 
-// Pastikan untuk mengganti ini dengan URL backend Node.js Anda
-// Jika Anda menjalankan backend secara lokal, ini mungkin 'http://localhost:5000'
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
+// API Base URL dengan fallback untuk development dan production
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
+  (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000');
 
 export const loginUser = async (username, password, userType) => {
   try {

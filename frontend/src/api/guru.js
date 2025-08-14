@@ -28,6 +28,14 @@ export const getGuruAssignments = async (id_guru, id_ta_semester) => {
   return fetchData(`${API_BASE_URL}/api/guru/assignments/${id_guru}/${id_ta_semester}`);
 };
 
+// --- API untuk Penugasan Wali Kelas ---
+export const getWaliKelasAssignments = async (id_guru, id_ta_semester) => {
+  if (!id_guru || !id_ta_semester) {
+    throw new Error("ID Guru dan ID TA/Semester diperlukan untuk mengambil penugasan wali kelas.");
+  }
+  return fetchData(`${API_BASE_URL}/api/guru/wali-kelas-assignments/${id_guru}/${id_ta_semester}`);
+};
+
 // --- API untuk Siswa di Kelas Tertentu ---
 export const getStudentsInClass = async (id_kelas, id_ta_semester) => {
   if (!id_kelas || !id_ta_semester) {

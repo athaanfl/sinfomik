@@ -9,6 +9,7 @@ const guruController = require('../controllers/guruController');
 
 // Untuk demo awal tanpa otorisasi JWT:
 router.get('/assignments/:id_guru/:id_ta_semester', guruController.getGuruAssignments);
+router.get('/wali-kelas-assignments/:id_guru/:id_ta_semester', guruController.getWaliKelasAssignments);
 router.get('/students-in-class/:id_kelas/:id_ta_semester', guruController.getStudentsInClass);
 router.post('/grades', guruController.addOrUpdateGrade);
 router.get('/grades/rekap/:id_guru/:id_mapel/:id_kelas/:id_ta_semester', guruController.getRekapNilai);

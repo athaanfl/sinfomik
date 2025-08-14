@@ -6,6 +6,8 @@ const { connectDb } = require('./config/db'); // Import fungsi koneksi DB
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const guruRoutes = require('./routes/guruRoutes');
+const predictionRoutes = require('./routes/predictionRoutes');
+const adminSupportRoutes = require('./routes/adminSupportRoutes');
 
 // Muat variabel lingkungan dari file .env
 dotenv.config();
@@ -20,10 +22,17 @@ app.use(express.json()); // Mengizinkan Express membaca body permintaan JSON
 // Koneksi ke database saat aplikasi dimulai
 connectDb();
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', message: 'Server is running' });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminSupportRoutes); // Routes tambahan untuk admin
 app.use('/api/guru', guruRoutes);
+app.use('/api/prediction', predictionRoutes);
 
 // Route dasar untuk menguji server
 app.get('/', (req, res) => {
