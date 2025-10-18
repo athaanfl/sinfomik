@@ -135,6 +135,23 @@ function initializeDatabase() {
             FOREIGN KEY (id_ta_semester) REFERENCES TahunAjaranSemester(id_ta_semester),
             UNIQUE (id_siswa, id_cp, id_ta_semester)
         );
+
+        CREATE TABLE IF NOT EXISTS KKM_Settings (
+            id_kkm INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_guru INTEGER NOT NULL,
+            id_mapel INTEGER NOT NULL,
+            id_kelas INTEGER NOT NULL,
+            id_ta_semester INTEGER NOT NULL,
+            jenis_nilai TEXT NOT NULL CHECK (jenis_nilai IN ('TP', 'UAS', 'FINAL')),
+            urutan_tp INTEGER,
+            nilai_kkm REAL NOT NULL,
+            tanggal_update TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (id_guru) REFERENCES Guru(id_guru),
+            FOREIGN KEY (id_mapel) REFERENCES MataPelajaran(id_mapel),
+            FOREIGN KEY (id_kelas) REFERENCES Kelas(id_kelas),
+            FOREIGN KEY (id_ta_semester) REFERENCES TahunAjaranSemester(id_ta_semester),
+            UNIQUE (id_guru, id_mapel, id_kelas, id_ta_semester, jenis_nilai, urutan_tp)
+        );
     `;
 
     db.exec(createTablesSQL, (err) => {

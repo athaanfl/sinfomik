@@ -186,3 +186,32 @@ export const importGradesFromExcel = async (file, id_guru, id_mapel, id_kelas, i
   });
 };
 
+// --- New: Save KKM Settings ---
+export const saveKkmSettings = async (id_guru, id_mapel, id_kelas, id_ta_semester, kkmSettings) => {
+  if (!id_guru || !id_mapel || !id_kelas || !id_ta_semester || !kkmSettings) {
+    throw new Error("Semua parameter diperlukan untuk menyimpan KKM.");
+  }
+  
+  return fetchData(`${API_BASE_URL}/api/kkm/save`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id_guru,
+      id_mapel,
+      id_kelas,
+      id_ta_semester,
+      kkmSettings
+    }),
+  });
+};
+
+// --- New: Get KKM Settings ---
+export const getKkmSettings = async (id_guru, id_mapel, id_kelas, id_ta_semester) => {
+  if (!id_guru || !id_mapel || !id_kelas || !id_ta_semester) {
+    throw new Error("Semua ID diperlukan untuk mengambil KKM.");
+  }
+  
+  return fetchData(`${API_BASE_URL}/api/kkm/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`);
+};
+
+
