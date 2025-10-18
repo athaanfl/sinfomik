@@ -62,7 +62,10 @@ const InputNilai = ({ activeTASemester, userId }) => {
           // 3. Load TP from ATP (this will set tpColumns)
           await loadTpFromAtp(mapelId, kelasId);
           
-          // 4. Then load existing grades (after TP columns are set)
+          // 4. Load KKM settings from database
+          await loadKkmFromDatabase(mapelId, kelasId);
+          
+          // 5. Then load existing grades (after TP columns are set)
           await loadExistingGrades(kelasId, mapelId);
         } catch (err) {
           setError(err.message);
@@ -244,6 +247,59 @@ const InputNilai = ({ activeTASemester, userId }) => {
     });
     setKkm(newKkm);
   }, [tpColumns]);
+
+  // Function to load KKM from database
+  const loadKkmFromDatabase = async (mapelId, kelasId) => {
+    try {
+      console.log(`Loading KKM settings for mapel ${mapelId}, kelas ${kelasId}`);
+      const response = await guruApi.getKkmSettings(
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester
+      );
+      
+      if (response.success && response.data && Object.keys(response.data).length > 0) {
+        console.log('KKM loaded from database:', response.data);
+        setKkm(response.data);
+        setMessage('✅ KKM settings berhasil dimuat dari database');
+        setMessageType('success');
+      } else {
+        console.log('No KKM settings found in database, using defaults');
+      }
+    } catch (err) {
+      console.log('Error loading KKM (will use defaults):', err.message);
+      // Don't show error to user, just use defaults
+    }
+  };
+
+  // Function to save KKM to database
+  const saveKkmToDatabase = async () => {
+    if (!selectedAssignment || !activeTASemester) {
+      setMessage('❌ Pilih assignment terlebih dahulu');
+      setMessageType('error');
+      return;
+    }
+
+    const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+    
+    try {
+      console.log('Saving KKM to database:', kkm);
+      const response = await guruApi.saveKkmSettings(
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester,
+        kkm
+      );
+      
+      setMessage(`✅ ${response.message}`);
+      setMessageType('success');
+    } catch (err) {
+      setMessage(`❌ Gagal menyimpan KKM: ${err.message}`);
+      setMessageType('error');
+    }
+  };
 
   // Function to update KKM
   const handleKkmChange = (column, value) => {
@@ -628,6 +684,18 @@ const InputNilai = ({ activeTASemester, userId }) => {
                 <p className="kkm-info">
                   <small>Nilai di bawah KKM akan ditampilkan dengan latar belakang merah. Kosongkan field KKM jika tidak ingin mengatur batas ketuntasan.</small>
                 </p>
+                <div className="kkm-actions">
+                  <button 
+                    type="button" 
+                    onClick={saveKkmToDatabase}
+                    className="save-kkm-button"
+                  >
+                    <i className="fas fa-save"></i> Simpan KKM ke Database
+                  </button>
+                  <small className="kkm-save-note">
+                    💡 <strong>Tips:</strong> KKM akan otomatis dimuat saat kembali ke halaman ini. Klik "Simpan KKM" untuk menyimpan perubahan.
+                  </small>
+                </div>
               </div>
             )}
           </div>

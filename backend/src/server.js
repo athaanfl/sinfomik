@@ -8,6 +8,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const guruRoutes = require('./routes/guruRoutes');
 const excelRoutes = require('./routes/excelRoutes');
 const gradeRoutes = require('./routes/gradeRoutes');
+const kkmRoutes = require('./routes/kkmRoutes');
 
 // Muat variabel lingkungan dari file .env
 dotenv.config();
@@ -31,6 +32,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/guru', guruRoutes);
 app.use('/api/excel', excelRoutes);
 app.use('/api/grades', gradeRoutes);
+app.use('/api/kkm', kkmRoutes);
 
 // Route dasar untuk menguji server
 app.get('/', (req, res) => {

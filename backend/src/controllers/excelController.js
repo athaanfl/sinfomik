@@ -32,8 +32,16 @@ exports.importCapaianPembelajaran = async (req, res) => {
         };
 
         // Baca judul di sel A2 (baris 2 kolom 1) -> data[1][0]
-        const titleRow = data[1][0]; // "CAPAIAN PEMBELAJARAN CITIZENSHIP"
-        const mapelName = titleRow.split(" ").slice(-1)[0]; 
+        const titleRow = data[1][0]; // "CAPAIAN PEMBELAJARAN CITIZENSHIP" or "CAPAIAN PEMBELAJARAN Life Skills"
+        
+        // Extract mapel name: remove "CAPAIAN PEMBELAJARAN " prefix
+        // Handle both single word (CITIZENSHIP) and multi-word (Life Skills) subjects
+        const mapelName = titleRow
+            .replace(/^CAPAIAN PEMBELAJARAN\s+/i, '') // Remove prefix (case insensitive)
+            .trim();
+        
+        console.log('Title Row:', titleRow);
+        console.log('Extracted Mapel Name:', mapelName); 
         
         // Dapatkan id_mapel
         try {

@@ -1122,6 +1122,47 @@ html, body, #root {
     font-style: italic;
 }
 
+.kkm-actions {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.save-kkm-button {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.save-kkm-button:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.save-kkm-button:active {
+    transform: translateY(0);
+}
+
+.kkm-save-note {
+    color: #6b7280;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
 /* Below KKM Styling */
 .grade-input-field.below-kkm {
     border-color: #ef4444 !important;
