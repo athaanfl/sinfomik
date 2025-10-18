@@ -587,6 +587,82 @@ html, body, #root {
     font-weight: 600;
 }
 
+.tp-management h5 {
+    margin: 0 0 0.5rem 0;
+    color: #475569;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Excel Tools Section */
+.excel-tools {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.excel-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+}
+
+.excel-button {
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.excel-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.export-button {
+    background: #10b981;
+    color: white;
+}
+
+.export-button:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.import-button {
+    background: #3b82f6;
+    color: white;
+}
+
+.import-button:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.excel-info {
+    margin: 0.5rem 0 0 0;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+}
+
+.excel-info small {
+    color: #475569;
+    line-height: 1.5;
+}
+
 .tp-controls {
     display: flex;
     align-items: center;

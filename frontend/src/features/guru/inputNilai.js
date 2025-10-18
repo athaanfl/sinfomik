@@ -16,6 +16,8 @@ const InputNilai = ({ activeTASemester, userId }) => {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   // Wrap fetchData with useCallback to prevent re-creation on every render
   const fetchData = useCallback(async () => {
@@ -394,6 +396,84 @@ const InputNilai = ({ activeTASemester, userId }) => {
     }
   };
 
+  // Export Excel Template
+  const handleExportTemplate = async () => {
+    if (!selectedAssignment || !activeTASemester) {
+      setMessage('Pilih assignment dan pastikan TA/Semester aktif');
+      setMessageType('error');
+      return;
+    }
+
+    const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+    
+    setIsExporting(true);
+    setMessage('Mengunduh template Excel...');
+    setMessageType('info');
+
+    try {
+      await guruApi.exportGradeTemplate(
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester
+      );
+      
+      setMessage('✅ Template Excel berhasil diunduh!');
+      setMessageType('success');
+    } catch (err) {
+      setMessage(`❌ Gagal mengunduh template: ${err.message}`);
+      setMessageType('error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Import from Excel
+  const handleImportFromExcel = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (!selectedAssignment || !activeTASemester) {
+      setMessage('Pilih assignment dan pastikan TA/Semester aktif');
+      setMessageType('error');
+      return;
+    }
+
+    const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+    
+    setIsImporting(true);
+    setMessage('Mengupload dan memproses file Excel...');
+    setMessageType('info');
+
+    try {
+      const result = await guruApi.importGradesFromExcel(
+        file,
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester
+      );
+
+      if (result.errors && result.errors.length > 0) {
+        setMessage(`⚠️ Import selesai dengan error: ${result.message}\n${result.errors.slice(0, 5).join(', ')}`);
+        setMessageType('warning');
+      } else {
+        setMessage(`✅ ${result.message}`);
+        setMessageType('success');
+      }
+
+      // Reload grades after import
+      await loadExistingGrades(kelasId, mapelId);
+    } catch (err) {
+      setMessage(`❌ Gagal import nilai: ${err.message}`);
+      setMessageType('error');
+    } finally {
+      setIsImporting(false);
+      // Reset file input
+      event.target.value = '';
+    }
+  };
+
   if (loading) return <p>Memuat data guru...</p>;
   if (error) return <p className="message error">Error: {error}</p>;
 
@@ -431,6 +511,39 @@ const InputNilai = ({ activeTASemester, userId }) => {
           <div className="tp-management">
             <h4>Manajemen Kolom TP</h4>
             {isLoadingTp && <p className="message info">⏳ Memuat TP dari ATP...</p>}
+            
+            {/* Excel Tools Section */}
+            <div className="excel-tools">
+              <h5>Tools Import/Export Excel</h5>
+              <div className="excel-buttons">
+                <button 
+                  type="button" 
+                  onClick={handleExportTemplate}
+                  disabled={isExporting || !selectedAssignment}
+                  className="excel-button export-button"
+                >
+                  {isExporting ? '⏳ Mengunduh...' : '📥 Download Template Excel'}
+                </button>
+                
+                <label className="excel-button import-button">
+                  {isImporting ? '⏳ Uploading...' : '📤 Upload & Import Nilai'}
+                  <input
+                    type="file"
+                    accept=".xlsx"
+                    onChange={handleImportFromExcel}
+                    disabled={isImporting || !selectedAssignment}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+              </div>
+              <p className="excel-info">
+                <small>
+                  💡 <strong>Tip:</strong> Download template Excel untuk input nilai secara offline, 
+                  lalu upload kembali setelah diisi. Format Excel sudah termasuk TP dari ATP dan rumus otomatis.
+                </small>
+              </p>
+            </div>
+
             <div className="tp-controls">
               <button type="button" onClick={addTpColumn} className="add-tp-button">
                 Tambah TP (Manual)
