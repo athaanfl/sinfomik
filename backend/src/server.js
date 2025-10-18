@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const guruRoutes = require('./routes/guruRoutes');
 const excelRoutes = require('./routes/excelRoutes');
+const gradeRoutes = require('./routes/gradeRoutes');
 
 // Muat variabel lingkungan dari file .env
 dotenv.config();
@@ -15,7 +16,10 @@ const app = express();
 const PORT = process.env.PORT || 5000; // Gunakan port dari .env atau default 5000
 
 // Middleware
-app.use(cors()); // Mengizinkan permintaan lintas asal dari frontend
+// Configure CORS to expose Content-Disposition header
+app.use(cors({
+    exposedHeaders: ['Content-Disposition']
+})); // Mengizinkan permintaan lintas asal dari frontend
 app.use(express.json()); // Mengizinkan Express membaca body permintaan JSON
 
 // Koneksi ke database saat aplikasi dimulai
@@ -26,6 +30,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/guru', guruRoutes);
 app.use('/api/excel', excelRoutes);
+app.use('/api/grades', gradeRoutes);
 
 // Route dasar untuk menguji server
 app.get('/', (req, res) => {

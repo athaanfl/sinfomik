@@ -115,3 +115,74 @@ export const getTpByMapelFaseKelas = async (id_mapel, fase, id_kelas, semester =
   
   return fetchData(url);
 };
+
+// --- New: Export Excel Template for Grades ---
+export const exportGradeTemplate = async (id_guru, id_mapel, id_kelas, id_ta_semester) => {
+  if (!id_guru || !id_mapel || !id_kelas || !id_ta_semester) {
+    throw new Error("Semua ID diperlukan untuk export template.");
+  }
+  
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/grades/export-template/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`
+    );
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Gagal export template');
+    }
+    
+    // Get filename from Content-Disposition header or create default
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'Template_Nilai.xlsx';
+    if (contentDisposition) {
+      // Try multiple regex patterns to extract filename
+      let filenameMatch = contentDisposition.match(/filename="([^"]+)"/i);
+      if (!filenameMatch) {
+        filenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+      }
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].trim();
+      }
+    }
+    
+    console.log('Content-Disposition:', contentDisposition);
+    console.log('Extracted filename:', filename);
+    
+    // Convert to blob and download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    return { success: true, message: 'Template berhasil diunduh' };
+  } catch (error) {
+    console.error('Error exporting template:', error);
+    throw error;
+  }
+};
+
+// --- New: Import Grades from Excel ---
+export const importGradesFromExcel = async (file, id_guru, id_mapel, id_kelas, id_ta_semester) => {
+  if (!file || !id_guru || !id_mapel || !id_kelas || !id_ta_semester) {
+    throw new Error("File dan semua ID diperlukan untuk import nilai.");
+  }
+  
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('id_guru', id_guru);
+  formData.append('id_mapel', id_mapel);
+  formData.append('id_kelas', id_kelas);
+  formData.append('id_ta_semester', id_ta_semester);
+  
+  return fetchData(`${API_BASE_URL}/api/grades/import-from-excel`, {
+    method: 'POST',
+    body: formData,
+  });
+};
+
