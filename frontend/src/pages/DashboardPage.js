@@ -12,10 +12,12 @@ import StudentClassEnroll from '../features/admin/studentClassEnroll';
 import TeacherClassEnroll from '../features/admin/teacherClassEnroll';
 import ClassPromote from '../features/admin/classPromote';
 import CapaianPembelajaranManagement from '../features/admin/capaianPembelajaranManagement';
+import AdminAnalytics from '../features/admin/analytics';
 import InputNilai from '../features/guru/inputNilai';
 import RekapNilai from '../features/guru/rekapNilai';
 import PenilaianCapaianPembelajaran from '../features/guru/cp';
 import WaliKelasGradeView from '../features/guru/WaliKelasGradeView';
+import GuruAnalytics from '../features/guru/analytics';
 
 import * as adminApi from '../api/admin';
 
@@ -83,6 +85,7 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
         { name: "Penugasan Siswa ke Kelas", key: "penugasan-siswa-kelas", component: StudentClassEnroll, icon: "fas fa-user-graduate" },
         { name: "Penugasan Guru ke Mapel & Kelas", key: "penugasan-guru-mapel-kelas", component: TeacherClassEnroll, icon: "fas fa-tasks" },
         { name: "Kenaikan Kelas", key: "kenaian-kelas", component: ClassPromote, icon: "fas fa-level-up-alt" },
+        { name: "📊 Analytics & Laporan", key: "analytics", component: AdminAnalytics, icon: "fas fa-chart-line" },
     ];
 
     const guruMenuItems = [
@@ -90,6 +93,7 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
         { name: "Rekap Nilai", key: "rekap-nilai", component: RekapNilai, icon: "fas fa-chart-bar" },
         { name: "Penilaian CP", key: "penilaian-cp", component: PenilaianCapaianPembelajaran, icon: "fas fa-check-circle" },
         { name: "Nilai Kelas Wali", key: "nilai-kelas-wali", component: WaliKelasGradeView, icon: "fas fa-eye" },
+        { name: "📊 Analytics Kelas", key: "analytics-guru", component: () => <GuruAnalytics idGuru={userId} />, icon: "fas fa-chart-line" },
     ];
 
     const siswaMenuItems = [
