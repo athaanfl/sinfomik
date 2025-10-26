@@ -227,6 +227,129 @@ exports.getAtpByFase = async (req, res) => {
 };
 
 /**
+ * Update ATP data in Excel file
+ * PUT /api/excel/atp/:id_mapel/:fase
+ * Body: { data: [{ Elemen, CP, TP, KKTP, "Materi Pokok", Kelas, Semester }, ...] }
+ */
+exports.updateAtpByFase = async (req, res) => {
+    try {
+        const { id_mapel, fase } = req.params;
+        const { data: updatedData } = req.body;
+
+        if (!updatedData || !Array.isArray(updatedData)) {
+            return res.status(400).json({ 
+                message: 'Data ATP tidak valid. Expected array of objects.' 
+            });
+        }
+
+        const db = getDb();
+        
+        // Ambil file_path dari database
+        const cpRow = await new Promise((resolve, reject) => {
+            db.get(
+                `SELECT cp.file_path, m.nama_mapel 
+                 FROM CapaianPembelajaran cp
+                 JOIN MataPelajaran m ON cp.id_mapel = m.id_mapel
+                 WHERE cp.id_mapel = ? AND cp.fase = ?`,
+                [id_mapel, fase],
+                (err, row) => {
+                    if (err) reject(err);
+                    resolve(row);
+                }
+            );
+        });
+
+        if (!cpRow || !cpRow.file_path) {
+            return res.status(404).json({ 
+                message: 'File Excel tidak ditemukan untuk mata pelajaran dan fase ini' 
+            });
+        }
+
+        // Baca file Excel
+        const filePath = path.join(__dirname, '../../', cpRow.file_path);
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ 
+                message: 'File Excel tidak ditemukan di server' 
+            });
+        }
+
+        // Read workbook
+        const workbook = xlsx.readFile(filePath);
+        
+        // Cari sheet yang sesuai dengan fase
+        const targetSheetName = `ATP ${cpRow.nama_mapel} Fase ${fase}`;
+        const sheetName = workbook.SheetNames.find(name => 
+            name.toLowerCase() === targetSheetName.toLowerCase()
+        );
+        
+        if (!sheetName) {
+            return res.status(404).json({ 
+                message: `Sheet "ATP ${cpRow.nama_mapel} Fase ${fase}" tidak ditemukan di file Excel`,
+                availableSheets: workbook.SheetNames
+            });
+        }
+
+        const sheet = workbook.Sheets[sheetName];
+        
+        // Convert sheet ke JSON dengan header di baris 5 (index 4)
+        const data = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+        
+        // Header ada di baris 5 (index 4)
+        const headers = data[4] || [];
+        
+        // Validasi: pastikan semua kolom dari updatedData ada di headers
+        const firstRow = updatedData[0];
+        if (firstRow) {
+            const incomingKeys = Object.keys(firstRow);
+            const missingKeys = incomingKeys.filter(key => !headers.includes(key));
+            if (missingKeys.length > 0) {
+                return res.status(400).json({ 
+                    message: 'Kolom tidak valid dalam data',
+                    missingKeys: missingKeys,
+                    validHeaders: headers
+                });
+            }
+        }
+
+        // Update data rows (mulai dari index 5, karena index 0-4 adalah header/metadata)
+        const newRows = updatedData.map(rowData => {
+            return headers.map(header => rowData[header] || '');
+        });
+
+        // Gabungkan metadata (baris 0-4) dengan data baru (baris 5+)
+        const updatedSheetData = [
+            ...data.slice(0, 5), // Keep header rows (index 0-4)
+            ...newRows            // New data rows (index 5+)
+        ];
+
+        // Convert array kembali ke sheet
+        const newSheet = xlsx.utils.aoa_to_sheet(updatedSheetData);
+        
+        // Replace sheet di workbook
+        workbook.Sheets[sheetName] = newSheet;
+
+        // Save file Excel
+        xlsx.writeFile(workbook, filePath);
+
+        res.json({
+            success: true,
+            message: 'ATP berhasil diupdate',
+            mapel: cpRow.nama_mapel,
+            fase: fase,
+            rowsUpdated: newRows.length
+        });
+
+    } catch (err) {
+        console.error('Error updating ATP:', err);
+        res.status(500).json({ 
+            message: 'Gagal mengupdate ATP', 
+            error: err.message 
+        });
+    }
+};
+
+/**
  * Get TP (Tujuan Pembelajaran) by Mapel, Fase, Kelas, and Semester
  * Filter ATP berdasarkan tingkat kelas dan semester aktif
  */

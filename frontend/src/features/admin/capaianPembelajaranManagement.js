@@ -1,15 +1,18 @@
-// frontend/src/features/admin/CapaianPembelajaranManagement.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
 
-// Komponen Modal ATP Viewer
+// Komponen Modal ATP Viewer (dengan Edit Mode)
 const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
   const [atpData, setAtpData] = useState([]);
+  const [editedData, setEditedData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterKelas, setFilterKelas] = useState('all');
   const [filterSemester, setFilterSemester] = useState('all');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
 
   useEffect(() => {
     fetchAtpData();
@@ -26,6 +29,7 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
       }
       const data = await response.json();
       setAtpData(data.data || []);
+      setEditedData(JSON.parse(JSON.stringify(data.data || []))); // Deep copy
     } catch (err) {
       setError(err.message);
     } finally {
@@ -33,8 +37,51 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     }
   };
 
-  // Filter data
-  const filteredData = atpData.filter(row => {
+  const handleCellEdit = (rowIndex, field, value) => {
+    const newData = [...editedData];
+    newData[rowIndex][field] = value;
+    setEditedData(newData);
+  };
+
+  const handleSaveChanges = async () => {
+    setSaving(true);
+    setSaveMessage('');
+    try {
+      const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: editedData })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to save changes');
+      }
+
+      const result = await response.json();
+      setSaveMessage('✓ Changes saved successfully!');
+      setAtpData([...editedData]); // Update original data
+      setIsEditMode(false);
+      
+      setTimeout(() => setSaveMessage(''), 3000);
+    } catch (err) {
+      setSaveMessage(`✗ Error: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditedData(JSON.parse(JSON.stringify(atpData))); // Reset to original
+    setIsEditMode(false);
+    setSaveMessage('');
+  };
+
+  // Filter data (gunakan editedData saat edit mode, atpData saat view mode)
+  const dataToDisplay = isEditMode ? editedData : atpData;
+  const filteredData = dataToDisplay.filter(row => {
     const matchesSearch = Object.values(row).some(val => 
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -44,8 +91,8 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
   });
 
   // Get unique values for filters
-  const uniqueKelas = [...new Set(atpData.map(row => row.Kelas).filter(Boolean))].sort();
-  const uniqueSemester = [...new Set(atpData.map(row => row.Semester).filter(Boolean))].sort();
+  const uniqueKelas = [...new Set(dataToDisplay.map(row => row.Kelas).filter(Boolean))].sort();
+  const uniqueSemester = [...new Set(dataToDisplay.map(row => row.Semester).filter(Boolean))].sort();
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -55,18 +102,54 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
           <div className="flex justify-between items-center">
             <div>
               <h3 className="text-2xl font-bold text-white flex items-center">
-                <i className="fas fa-table mr-3 text-3xl"></i>
-                Alur Tujuan Pembelajaran (ATP)
+                <i className={`fas ${isEditMode ? 'fa-edit' : 'fa-table'} mr-3 text-3xl`}></i>
+                {isEditMode ? 'Edit ' : ''}Alur Tujuan Pembelajaran (ATP)
               </h3>
               <p className="text-blue-100 mt-2">{nama_mapel} - Fase {fase}</p>
             </div>
-            <button 
-              onClick={onClose}
-              className="text-white hover:text-blue-200 transition-colors duration-200 p-2 hover:bg-white/20 rounded-full"
-            >
-              <i className="fas fa-times text-2xl"></i>
-            </button>
+            <div className="flex items-center space-x-3">
+              {!isEditMode && (
+                <button 
+                  onClick={() => setIsEditMode(true)}
+                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center font-medium"
+                >
+                  <i className="fas fa-edit mr-2"></i>
+                  Edit Mode
+                </button>
+              )}
+              {isEditMode && (
+                <>
+                  <button 
+                    onClick={handleSaveChanges}
+                    disabled={saving}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <i className={`fas ${saving ? 'fa-spinner fa-spin' : 'fa-save'} mr-2`}></i>
+                    {saving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                  <button 
+                    onClick={handleCancelEdit}
+                    disabled={saving}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <i className="fas fa-times mr-2"></i>
+                    Cancel
+                  </button>
+                </>
+              )}
+              <button 
+                onClick={onClose}
+                className="text-white hover:text-blue-200 transition-colors duration-200 p-2 hover:bg-white/20 rounded-full"
+              >
+                <i className="fas fa-times text-2xl"></i>
+              </button>
+            </div>
           </div>
+          {saveMessage && (
+            <div className={`mt-3 p-3 rounded-lg ${saveMessage.startsWith('✓') ? 'bg-green-500/20 text-white' : 'bg-red-500/20 text-white'} font-medium`}>
+              {saveMessage}
+            </div>
+          )}
         </div>
 
         {/* Filters */}
@@ -144,24 +227,119 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredData.map((row, idx) => (
-                    <tr key={idx} className="hover:bg-blue-50 transition-colors duration-150">
-                      <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{idx + 1}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{row.Elemen || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-xs">
-                        <div className="line-clamp-3">{row['Capaian Pembelajaran (CP)'] || '-'}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-md">
-                        <div className="line-clamp-3">{row['Tujuan Pembelajaran (TP)'] || '-'}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-md">
-                        <div className="line-clamp-3">{row['Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)'] || '-'}</div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200">{row['Materi Pokok'] || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-center font-medium">{row.Kelas || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-center font-medium">{row.Semester || '-'}</td>
-                    </tr>
-                  ))}
+                  {filteredData.map((row, idx) => {
+                    // Find original index in editedData for editing
+                    const originalIndex = editedData.findIndex(r => 
+                      r.Elemen === row.Elemen && 
+                      r['Tujuan Pembelajaran (TP)'] === row['Tujuan Pembelajaran (TP)'] &&
+                      r.Kelas === row.Kelas &&
+                      r.Semester === row.Semester
+                    );
+                    
+                    return (
+                      <tr key={idx} className={`hover:bg-blue-50 transition-colors duration-150 ${isEditMode ? 'bg-yellow-50' : ''}`}>
+                        <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{idx + 1}</td>
+                        
+                        {/* Elemen - editable */}
+                        <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
+                          {isEditMode ? (
+                            <input 
+                              type="text"
+                              value={row.Elemen || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Elemen', e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                          ) : (
+                            row.Elemen || '-'
+                          )}
+                        </td>
+                        
+                        {/* CP - editable textarea */}
+                        <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-xs">
+                          {isEditMode ? (
+                            <textarea 
+                              value={row['Capaian Pembelajaran (CP)'] || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Capaian Pembelajaran (CP)', e.target.value)}
+                              rows="3"
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          ) : (
+                            <div className="line-clamp-3">{row['Capaian Pembelajaran (CP)'] || '-'}</div>
+                          )}
+                        </td>
+                        
+                        {/* TP - editable textarea */}
+                        <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-md">
+                          {isEditMode ? (
+                            <textarea 
+                              value={row['Tujuan Pembelajaran (TP)'] || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Tujuan Pembelajaran (TP)', e.target.value)}
+                              rows="3"
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          ) : (
+                            <div className="line-clamp-3">{row['Tujuan Pembelajaran (TP)'] || '-'}</div>
+                          )}
+                        </td>
+                        
+                        {/* KKTP - editable textarea */}
+                        <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-md">
+                          {isEditMode ? (
+                            <textarea 
+                              value={row['Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)'] || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)', e.target.value)}
+                              rows="3"
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-sm"
+                            />
+                          ) : (
+                            <div className="line-clamp-3">{row['Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)'] || '-'}</div>
+                          )}
+                        </td>
+                        
+                        {/* Materi Pokok - editable */}
+                        <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200">
+                          {isEditMode ? (
+                            <input 
+                              type="text"
+                              value={row['Materi Pokok'] || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Materi Pokok', e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                            />
+                          ) : (
+                            row['Materi Pokok'] || '-'
+                          )}
+                        </td>
+                        
+                        {/* Kelas - editable */}
+                        <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-center font-medium">
+                          {isEditMode ? (
+                            <input 
+                              type="text"
+                              value={row.Kelas || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Kelas', e.target.value)}
+                              className="w-16 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-center"
+                            />
+                          ) : (
+                            row.Kelas || '-'
+                          )}
+                        </td>
+                        
+                        {/* Semester - editable */}
+                        <td className="px-4 py-3 text-sm text-gray-900 text-center font-medium">
+                          {isEditMode ? (
+                            <input 
+                              type="text"
+                              value={row.Semester || ''}
+                              onChange={(e) => handleCellEdit(originalIndex, 'Semester', e.target.value)}
+                              className="w-16 px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 text-center"
+                            />
+                          ) : (
+                            row.Semester || '-'
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

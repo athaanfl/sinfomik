@@ -9,6 +9,9 @@ router.post('/import-cp', upload.single('file'), excelController.importCapaianPe
 // Route untuk membaca ATP berdasarkan mapel dan fase
 router.get('/atp/:id_mapel/:fase', excelController.getAtpByFase);
 
+// Route untuk update ATP berdasarkan mapel dan fase
+router.put('/atp/:id_mapel/:fase', excelController.updateAtpByFase);
+
 // Route untuk mengambil TP berdasarkan mapel, fase, dan kelas
 router.get('/tp/:id_mapel/:fase/:id_kelas', excelController.getTpByMapelFaseKelas);
 
