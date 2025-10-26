@@ -5,6 +5,14 @@ const { format } = require('date-fns');
 
 async function seedAnalyticsData() {
     const db = getDb();
+    const allowedKelasNames = [
+        '1 Gumujeng', '1 Someah', '1 Darehdeh',
+        '2 Gentur', '2 Rancage', '2 Daria',
+        '3 Calakan', '3 Singer', '3 Rancingeus',
+        '4 Jatmika', '4 Gumanti', '4 Marahmay',
+        '5 Rucita', '5 Binangkit', '5 Macakal',
+        '6 Gumilang', '6 Sonagar', '6 Parigel'
+    ];
 
     const runQuery = (sql, params = []) => {
         return new Promise((resolve, reject) => {
@@ -32,6 +40,28 @@ async function seedAnalyticsData() {
             });
         });
     };
+
+    // --- Hapus kelas lama dan data terkait sebelum seeding ---
+    try {
+        const kelasLama = await allQuery(`SELECT id_kelas, nama_kelas FROM Kelas WHERE nama_kelas NOT IN (${allowedKelasNames.map(() => '?').join(',')})`, allowedKelasNames);
+        if (kelasLama.length > 0) {
+            console.log(`\n🧹 Menghapus kelas lama dan data terkait...`);
+            for (const kelas of kelasLama) {
+                await runQuery('DELETE FROM Nilai WHERE id_kelas = ?', [kelas.id_kelas]);
+                await runQuery('DELETE FROM SiswaKelas WHERE id_kelas = ?', [kelas.id_kelas]);
+                await runQuery('DELETE FROM GuruMataPelajaranKelas WHERE id_kelas = ?', [kelas.id_kelas]);
+                await runQuery('DELETE FROM Kelas WHERE id_kelas = ?', [kelas.id_kelas]);
+                console.log(`  ✅ Kelas lama dihapus: ${kelas.nama_kelas}`);
+            }
+            // Pastikan data orphan di Nilai, SiswaKelas, GuruMataPelajaranKelas juga dihapus
+            await runQuery(`DELETE FROM Nilai WHERE id_kelas NOT IN (SELECT id_kelas FROM Kelas)`);
+            await runQuery(`DELETE FROM SiswaKelas WHERE id_kelas NOT IN (SELECT id_kelas FROM Kelas)`);
+            await runQuery(`DELETE FROM GuruMataPelajaranKelas WHERE id_kelas NOT IN (SELECT id_kelas FROM Kelas)`);
+            console.log('  ✅ Data orphan kelas lama dihapus dari semua relasi.');
+        }
+    } catch (err) {
+        console.error('❌ Error saat menghapus kelas lama:', err);
+    }
 
     try {
         console.log('🚀 Starting to seed analytics data...\n');
@@ -101,17 +131,14 @@ async function seedAnalyticsData() {
         // Refresh student list
         const updatedSiswa = await allQuery('SELECT * FROM Siswa ORDER BY id_siswa');
 
-        // Create more kelas for different TA/Semester
-        console.log('\n🏫 Creating kelas for all TA/Semester...');
-        const kelasNames = ['X A', 'X B', 'XI IPA 1', 'XI IPA 2', 'XII IPA 1', 'XII IPA 2'];
-        
+        // Create kelas sesuai permintaan user
+        console.log('\n🏫 Creating kelas untuk semua TA/Semester...');
         for (const tas of updatedTASemester) {
-            for (const kelasName of kelasNames) {
+            for (const kelasName of allowedKelasNames) {
                 const existing = await getQuery(
                     'SELECT id_kelas FROM Kelas WHERE nama_kelas = ? AND id_ta_semester = ?',
                     [kelasName, tas.id_ta_semester]
                 );
-                
                 if (!existing && allGuru.length > 0) {
                     const waliKelas = allGuru[Math.floor(Math.random() * allGuru.length)].id_guru;
                     await runQuery(
@@ -127,34 +154,42 @@ async function seedAnalyticsData() {
         const updatedKelas = await allQuery('SELECT * FROM Kelas ORDER BY id_kelas');
 
         // Assign students to kelas (simulate rolling)
-        console.log('\n📝 Assigning students to kelas (simulating rolling)...');
+        console.log('\n📝 Assigning students to kelas...');
+        
+        // Untuk siswa yang tidak punya tahun_ajaran_masuk, set ke angkatan saat ini
         for (const siswa of updatedSiswa) {
             if (!siswa.tahun_ajaran_masuk) {
-                console.log(`  ⚠️  Skipping ${siswa.nama_siswa} - no tahun_ajaran_masuk`);
-                continue;
+                // Set tahun ajaran masuk ke 2023/2024 sebagai default
+                await runQuery('UPDATE Siswa SET tahun_ajaran_masuk = ? WHERE id_siswa = ?', ['2023/2024', siswa.id_siswa]);
+                siswa.tahun_ajaran_masuk = '2023/2024';
+                console.log(`  ✅ Updated ${siswa.nama_siswa} - set tahun_ajaran_masuk to 2023/2024`);
             }
-            
+        }
+        
+        // Assign siswa ke kelas berdasarkan tahun ajaran
+        for (const siswa of updatedSiswa) {
             const tahunMasuk = parseInt(siswa.tahun_ajaran_masuk.split('/')[0]);
             
             for (const tas of updatedTASemester) {
                 const currentYear = parseInt(tas.tahun_ajaran.split('/')[0]);
                 const yearDiff = currentYear - tahunMasuk;
                 
-                let targetKelasName = null;
-                if (yearDiff === 0) targetKelasName = tas.semester === 'Ganjil' ? 'X A' : 'X B';
-                else if (yearDiff === 1) targetKelasName = tas.semester === 'Ganjil' ? 'XI IPA 1' : 'XI IPA 2';
-                else if (yearDiff === 2) targetKelasName = tas.semester === 'Ganjil' ? 'XII IPA 1' : 'XII IPA 2';
+                // Tentukan tingkat kelas berdasarkan selisih tahun
+                let tingkat = yearDiff + 1; // Kelas 1, 2, 3, 4, 5, 6
                 
-                if (targetKelasName) {
-                    const targetKelas = updatedKelas.find(k => 
-                        k.nama_kelas === targetKelasName && k.id_ta_semester === tas.id_ta_semester
+                if (tingkat >= 1 && tingkat <= 6) {
+                    // Pilih kelas secara acak dari kelas tingkat tersebut
+                    const kelasForTingkat = updatedKelas.filter(k => 
+                        k.nama_kelas.startsWith(tingkat.toString()) && k.id_ta_semester === tas.id_ta_semester
                     );
                     
-                    if (targetKelas) {
+                    if (kelasForTingkat.length > 0) {
+                        const randomKelas = kelasForTingkat[Math.floor(Math.random() * kelasForTingkat.length)];
+                        
                         try {
                             await runQuery(
                                 'INSERT OR IGNORE INTO SiswaKelas (id_siswa, id_kelas, id_ta_semester) VALUES (?, ?, ?)',
-                                [siswa.id_siswa, targetKelas.id_kelas, tas.id_ta_semester]
+                                [siswa.id_siswa, randomKelas.id_kelas, tas.id_ta_semester]
                             );
                         } catch (err) {
                             // Ignore duplicate errors
@@ -258,11 +293,9 @@ async function seedAnalyticsData() {
 
     } catch (error) {
         console.error('❌ Error seeding analytics data:', error);
-    } finally {
-        // Don't close db here, let the script exit naturally
-        process.exit(0);
+        process.exit(1);
     }
-}
 
 // Run the seeding
 seedAnalyticsData();
+}
