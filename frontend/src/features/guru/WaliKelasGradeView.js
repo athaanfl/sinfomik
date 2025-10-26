@@ -4,6 +4,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 import * as guruApi from '../../api/guru';
+import { ALLOWED_MAPEL_WALI, normalizeName } from '../../config/constants';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
@@ -170,15 +171,37 @@ const WaliKelasGradeView = ({ activeTASemester, userId }) => {
       rata_rata: student.overall_count > 0 ? parseFloat((student.overall_total / student.overall_count).toFixed(2)) : 0,
     })).sort((a, b) => a.nama_siswa.localeCompare(b.nama_siswa));
 
-    const gradesBySubjectChart = Array.from(subjectChartMap.entries()).map(([name, data]) => ({
+    let gradesBySubjectChart = Array.from(subjectChartMap.entries()).map(([name, data]) => ({
       nama_mapel: name,
       rata_rata: data.count > 0 ? parseFloat((data.total_nilai / data.count).toFixed(2)) : 0,
     })).sort((a, b) => a.nama_mapel.localeCompare(b.nama_mapel));
 
+    // === Apply Wali Kelas subject filter ===
+    const allowedSet = new Set(ALLOWED_MAPEL_WALI.map(normalizeName));
+
+    // Filter the per-subject detailed tables
+    const filteredGradesPerSubjectTable = new Map();
+    finalGradesPerSubjectTable.forEach((value, key) => {
+      if (allowedSet.has(normalizeName(key))) {
+        filteredGradesPerSubjectTable.set(key, value);
+      }
+    });
+
+    // Filter unique grade types map to only allowed subjects
+    const filteredUniqueTipeNilaiPerMapel = new Map();
+    uniqueTipeNilaiPerMapel.forEach((set, key) => {
+      if (allowedSet.has(normalizeName(key))) {
+        filteredUniqueTipeNilaiPerMapel.set(key, set);
+      }
+    });
+
+    // Filter chart data to allowed subjects
+    gradesBySubjectChart = gradesBySubjectChart.filter(item => allowedSet.has(normalizeName(item.nama_mapel)));
+
     setProcessedData({
-      gradesPerSubjectTable: finalGradesPerSubjectTable,
+      gradesPerSubjectTable: filteredGradesPerSubjectTable,
       summaryTableData,
-      uniqueTipeNilaiPerMapel,
+      uniqueTipeNilaiPerMapel: filteredUniqueTipeNilaiPerMapel,
       gradesByStudentChart,
       gradesBySubjectChart,
       gradeDistributionChart, // Use the newly calculated distribution
@@ -235,7 +258,7 @@ const WaliKelasGradeView = ({ activeTASemester, userId }) => {
   if (!classInfo) return <p className="message info">Anda bukan wali kelas untuk Tahun Ajaran & Semester aktif ini.</p>;
   if (!gradesData || gradesData.length === 0) return <p className="message info">Belum ada nilai yang diinput untuk kelas {classInfo.nama_kelas} di semester ini.</p>;
 
-  // Get all unique subject names for summary table headers
+  // Get all unique subject names for summary table headers (already filtered)
   const allSubjectNames = Array.from(processedData.gradesPerSubjectTable.keys()).sort();
 
   return (

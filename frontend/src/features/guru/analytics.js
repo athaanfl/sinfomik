@@ -5,6 +5,7 @@ import {
     LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
     Tooltip, Legend, ResponsiveContainer 
 } from 'recharts';
+import { ALLOWED_MAPEL_WALI, SCHOOL_CLASSES, normalizeName } from '../../config/constants';
 
 const GuruAnalytics = ({ idGuru }) => {
     const [activeTab, setActiveTab] = useState('subject'); // 'subject', 'student'
@@ -26,17 +27,32 @@ const GuruAnalytics = ({ idGuru }) => {
     // Extract unique mapel and kelas from guru data
     useEffect(() => {
         if (guruData.length > 0) {
-            const uniqueMapel = [...new Set(guruData.map(item => ({ 
-                id: item.id_mapel, 
-                nama: item.nama_mapel 
-            })))];
-            const uniqueKelas = [...new Set(guruData.map(item => ({ 
-                id: item.id_kelas, 
-                nama: item.nama_kelas 
-            })))];
-            
-            setMataPelajaranList(uniqueMapel);
-            setKelasList(uniqueKelas);
+            // Build unique lists
+            const mapelMap = new Map();
+            guruData.forEach(item => {
+                if (!mapelMap.has(item.id_mapel)) {
+                    mapelMap.set(item.id_mapel, { id: item.id_mapel, nama: item.nama_mapel });
+                }
+            });
+            const kelasMap = new Map();
+            guruData.forEach(item => {
+                if (!kelasMap.has(item.id_kelas)) {
+                    kelasMap.set(item.id_kelas, { id: item.id_kelas, nama: item.nama_kelas });
+                }
+            });
+
+            const uniqueMapel = Array.from(mapelMap.values());
+            const uniqueKelas = Array.from(kelasMap.values());
+
+            // Apply school-level filters
+            const allowedMapelSet = new Set(ALLOWED_MAPEL_WALI.map(normalizeName));
+            const allowedClassSet = new Set(SCHOOL_CLASSES.map(normalizeName));
+
+            const filteredMapel = uniqueMapel.filter(m => allowedMapelSet.has(normalizeName(m.nama)));
+            const filteredKelas = uniqueKelas.filter(k => allowedClassSet.has(normalizeName(k.nama)));
+
+            setMataPelajaranList(filteredMapel);
+            setKelasList(filteredKelas);
         }
     }, [guruData]);
 
