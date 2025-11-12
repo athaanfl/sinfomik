@@ -5,10 +5,45 @@ export { getTipeNilai, getMataPelajaran }; // Ekspor ulang agar bisa digunakan o
 // frontend/src/api/guru.js
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-// --- Fungsi Umum untuk Panggilan API ---
+// --- API untuk Tahun Ajaran & Semester (Read-only for Guru) ---
+export const getTASemester = async () => {
+  return fetchData(`${API_BASE_URL}/api/guru/ta-semester`);
+};
+
+// --- Fungsi Umum untuk Panggilan API dengan JWT Authentication ---
 const fetchData = async (url, options = {}) => {
   try {
-    const response = await fetch(url, options);
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('token');
+    
+    // Add Authorization header if token exists
+    const headers = {
+      ...options.headers,
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    // Only add Content-Type if not sending FormData
+    if (options.body && !(options.body instanceof FormData)) {
+      headers['Content-Type'] = 'application/json';
+    }
+    
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+    
+    // Handle 401 Unauthorized - token expired or invalid
+    if (response.status === 401) {
+      console.log('🔒 Token expired or invalid, redirecting to login...');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return;
+    }
+    
     const data = await response.json();
     if (!response.ok) {
       throw new Error(data.message || 'Terjadi kesalahan pada server.');
@@ -94,11 +129,23 @@ export const addOrUpdateSiswaCapaianPembelajaran = async (siswaCpData) => {
 };
 
 // --- New: Get Wali Kelas Grades ---
-export const getWaliKelasGrades = async (id_guru, id_ta_semester) => {
+export const getWaliKelasGrades = async (id_guru, id_ta_semester, id_kelas = null) => {
   if (!id_guru || !id_ta_semester) {
     throw new Error("ID Guru dan ID TA/Semester diperlukan untuk mengambil nilai kelas wali.");
   }
-  return fetchData(`${API_BASE_URL}/api/guru/wali-kelas-grades/${id_guru}/${id_ta_semester}`);
+  let url = `${API_BASE_URL}/api/guru/wali-kelas-grades/${id_guru}/${id_ta_semester}`;
+  if (id_kelas) {
+    url += `?id_kelas=${id_kelas}`;
+  }
+  return fetchData(url);
+};
+
+// --- New: Get Wali Kelas Class List ---
+export const getWaliKelasClassList = async (id_guru, id_ta_semester) => {
+  if (!id_guru || !id_ta_semester) {
+    throw new Error("ID Guru dan ID TA/Semester diperlukan untuk mengambil daftar kelas wali.");
+  }
+  return fetchData(`${API_BASE_URL}/api/guru/wali-kelas-class-list/${id_guru}/${id_ta_semester}`);
 };
 
 // --- New: Get TP (Tujuan Pembelajaran) by Mapel, Fase, and Kelas ---
@@ -123,9 +170,26 @@ export const exportGradeTemplate = async (id_guru, id_mapel, id_kelas, id_ta_sem
   }
   
   try {
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     const response = await fetch(
-      `${API_BASE_URL}/api/grades/export-template/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`
+      `${API_BASE_URL}/api/grades/export-template/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`,
+      { headers }
     );
+    
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
+      console.log('🔒 Token expired or invalid, redirecting to login...');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return;
+    }
     
     if (!response.ok) {
       const error = await response.json();
@@ -213,5 +277,73 @@ export const getKkmSettings = async (id_guru, id_mapel, id_kelas, id_ta_semester
   
   return fetchData(`${API_BASE_URL}/api/kkm/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`);
 };
+
+// --- New: Export Final Grades to Excel ---
+export const exportFinalGrades = async (id_guru, id_mapel, id_kelas, id_ta_semester) => {
+  if (!id_guru || !id_mapel || !id_kelas || !id_ta_semester) {
+    throw new Error("Semua ID diperlukan untuk export nilai final.");
+  }
+  
+  try {
+    // Get JWT token from localStorage
+    const token = localStorage.getItem('token');
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(
+      `${API_BASE_URL}/api/grades/export/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`,
+      { headers }
+    );
+    
+    // Handle 401 Unauthorized
+    if (response.status === 401) {
+      console.log('🔒 Token expired or invalid, redirecting to login...');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      return;
+    }
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Gagal export nilai');
+    }
+    
+    // Get filename from Content-Disposition header
+    const contentDisposition = response.headers.get('Content-Disposition');
+    let filename = 'Nilai_Final.xlsx';
+    if (contentDisposition) {
+      let filenameMatch = contentDisposition.match(/filename="([^"]+)"/i);
+      if (!filenameMatch) {
+        filenameMatch = contentDisposition.match(/filename=([^;]+)/i);
+      }
+      if (filenameMatch && filenameMatch[1]) {
+        filename = filenameMatch[1].trim();
+      }
+    }
+    
+    console.log('Export Final - Content-Disposition:', contentDisposition);
+    console.log('Export Final - Extracted filename:', filename);
+    
+    // Convert to blob and download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    
+    return { success: true, message: 'Nilai final berhasil diexport' };
+  } catch (error) {
+    console.error('Error exporting final grades:', error);
+    throw error;
+  }
+};
+
 
 

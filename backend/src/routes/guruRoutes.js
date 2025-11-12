@@ -2,12 +2,17 @@
 const express = require('express');
 const router = express.Router();
 const guruController = require('../controllers/guruController');
-// const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware'); // Untuk otorisasi
+const adminController = require('../controllers/adminController');
+const { verifyToken, isAdminOrGuru } = require('../middlewares/authMiddleware');
 
-// Endpoint untuk guru
-// router.get('/assignments/:id_guru/:id_ta_semester', authenticateToken, authorizeRole(['guru']), guruController.getGuruAssignments);
+// Apply auth middleware to all guru routes
+router.use(verifyToken);
+router.use(isAdminOrGuru);
 
-// Untuk demo awal tanpa otorisasi JWT:
+// Read-only access to TA Semester data (needed for guru dashboard)
+router.get('/ta-semester', adminController.getAllTASemester);
+
+// Protected guru endpoints
 router.get('/assignments/:id_guru/:id_ta_semester', guruController.getGuruAssignments);
 router.get('/students-in-class/:id_kelas/:id_ta_semester', guruController.getStudentsInClass);
 router.post('/grades-new', guruController.addOrUpdateNewGrade); // New endpoint for TP/UAS structure
@@ -21,5 +26,6 @@ router.post('/siswa-cp', guruController.addOrUpdateSiswaCapaianPembelajaran); //
 
 // --- New: Wali Kelas Grades ---
 router.get('/wali-kelas-grades/:id_guru/:id_ta_semester', guruController.getWaliKelasGrades);
+router.get('/wali-kelas-class-list/:id_guru/:id_ta_semester', guruController.getWaliKelasClassList);
 
 module.exports = router;

@@ -20,6 +20,7 @@ import WaliKelasGradeView from '../features/guru/WaliKelasGradeView';
 import GuruAnalytics from '../features/guru/analytics';
 
 import * as adminApi from '../api/admin';
+import * as guruApi from '../api/guru';
 
 function DashboardPage({ userRole, username, userId, onLogout }) {
     const [activeMenuItem, setActiveMenuItem] = useState('');
@@ -60,7 +61,11 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
         const fetchActiveTASemester = async () => {
             setLoadingTAS(true);
             try {
-                const data = await adminApi.getTASemester();
+                // Use appropriate API based on user role
+                const data = userRole === 'admin' 
+                    ? await adminApi.getTASemester()
+                    : await guruApi.getTASemester();
+                    
                 const active = data.find(ta => ta.is_aktif);
                 setActiveTASemester(active || null);
             } catch (error) {
@@ -71,7 +76,7 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
             }
         };
         fetchActiveTASemester();
-    }, []);
+    }, [userRole]);
 
     // Tambahkan ikon ke item menu
     const adminMenuItems = [

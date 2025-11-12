@@ -1,6 +1,31 @@
 // frontend/src/api/analytics.js
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Helper to add JWT token to requests
+const fetchWithAuth = async (url, options = {}) => {
+    const token = localStorage.getItem('token');
+    const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+        ...options.headers
+    };
+    
+    const response = await fetch(url, { ...options, headers });
+    
+    if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        throw new Error('Session expired');
+    }
+    
+    if (!response.ok) {
+        throw new Error(`Request failed: ${response.statusText}`);
+    }
+    
+    return response.json();
+};
+
 /**
  * Fetch school-wide analytics
  * @param {Object} params - { id_mapel?, id_ta_semester? }
@@ -9,12 +34,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api
 export const fetchSchoolAnalytics = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const url = `${API_BASE_URL}/analytics/school${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to fetch school analytics');
-    }
-    return response.json();
+    return fetchWithAuth(url);
 };
 
 /**
@@ -28,12 +48,7 @@ export const fetchAngkatanAnalytics = async (tahunAjaranMasuk, params = {}) => {
     const encodedTahunAjaran = encodeURIComponent(tahunAjaranMasuk);
     const queryString = new URLSearchParams(params).toString();
     const url = `${API_BASE_URL}/analytics/angkatan/${encodedTahunAjaran}${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to fetch angkatan analytics');
-    }
-    return response.json();
+    return fetchWithAuth(url);
 };
 
 /**
@@ -42,12 +57,7 @@ export const fetchAngkatanAnalytics = async (tahunAjaranMasuk, params = {}) => {
  */
 export const fetchAngkatanList = async () => {
     const url = `${API_BASE_URL}/analytics/angkatan-list`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to fetch angkatan list');
-    }
-    return response.json();
+    return fetchWithAuth(url);
 };
 
 /**
@@ -65,12 +75,7 @@ export const fetchStudentAnalytics = async (idSiswa, params = {}) => {
     
     const queryString = new URLSearchParams(cleanParams).toString();
     const url = `${API_BASE_URL}/analytics/student/${idSiswa}${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to fetch student analytics');
-    }
-    return response.json();
+    return fetchWithAuth(url);
 };
 
 /**
@@ -82,12 +87,7 @@ export const fetchStudentAnalytics = async (idSiswa, params = {}) => {
 export const fetchGuruAnalytics = async (idGuru, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
     const url = `${API_BASE_URL}/analytics/guru/${idGuru}${queryString ? `?${queryString}` : ''}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to fetch guru analytics');
-    }
-    return response.json();
+    return fetchWithAuth(url);
 };
 
 /**
@@ -103,10 +103,5 @@ export const compareStudents = async (idSiswaList, params = {}) => {
     };
     const queryString = new URLSearchParams(allParams).toString();
     const url = `${API_BASE_URL}/analytics/compare-students?${queryString}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw new Error('Failed to compare students');
-    }
-    return response.json();
+    return fetchWithAuth(url);
 };

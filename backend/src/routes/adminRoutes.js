@@ -2,12 +2,13 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-// const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware'); // Untuk otorisasi
+const { verifyToken, isAdmin } = require('../middlewares/authMiddleware');
 
-// Contoh endpoint untuk manajemen siswa (hanya admin yang bisa akses)
-// router.get('/students', authenticateToken, authorizeRole(['admin']), adminController.getAllStudents);
+// Apply auth middleware to all admin routes
+router.use(verifyToken);
+router.use(isAdmin);
 
-// Untuk demo awal tanpa otorisasi JWT:
+// Protected admin endpoints
 router.get('/students', adminController.getAllStudents);
 router.post('/students', adminController.addStudent);
 router.put('/students/:id', adminController.updateStudent); // Endpoint UPDATE siswa
@@ -40,10 +41,12 @@ router.delete('/teachers/:id', adminController.deleteTeacher); // Endpoint DELET
 
 router.post('/siswa-kelas', adminController.assignSiswaToKelas);
 router.get('/siswa-in-kelas/:id_kelas/:id_ta_semester', adminController.getSiswaInKelas); // Mengambil siswa di kelas tertentu
+router.delete('/siswa-kelas', adminController.unassignSiswaFromKelas); // Menghapus siswa dari kelas
 
 router.post('/guru-mapel-kelas', adminController.assignGuruToMapelKelas);
 router.get('/guru-mapel-kelas/:id_ta_semester', adminController.getGuruMapelKelasAssignments); // Mengambil penugasan guru
 router.delete('/guru-mapel-kelas/assignment/:id', adminController.deleteGuruMapelKelasAssignment); // Hapus penugasan guru
+router.put('/kelas/:id_kelas/wali-kelas', adminController.updateWaliKelas); // Update wali kelas
 
 router.post('/promote-students', adminController.promoteStudents); // Endpoint untuk kenaikan kelas
 

@@ -123,19 +123,19 @@ const AdminAnalytics = () => {
 
     // School analytics state
     const [schoolData, setSchoolData] = useState([]);
-    const [selectedMapelSchool, setSelectedMapelSchool] = useState('');
+    const [selectedMapelSchool, setSelectedMapelSchool] = useState('all');
     const [mataPelajaranList, setMataPelajaranList] = useState([]);
 
     // Angkatan analytics state
     const [angkatanData, setAngkatanData] = useState([]);
     const [angkatanList, setAngkatanList] = useState([]);
     const [selectedAngkatan, setSelectedAngkatan] = useState('');
-    const [selectedMapelAngkatan, setSelectedMapelAngkatan] = useState('');
+    const [selectedMapelAngkatan, setSelectedMapelAngkatan] = useState('all');
 
     // Student analytics state
     const [studentData, setStudentData] = useState(null);
     const [studentId, setStudentId] = useState('');
-    const [selectedMapelStudent, setSelectedMapelStudent] = useState('');
+    const [selectedMapelStudent, setSelectedMapelStudent] = useState('all');
 
     // Fetch mata pelajaran list from school data (only once)
     useEffect(() => {
@@ -413,7 +413,7 @@ const AdminAnalytics = () => {
         setLoading(true);
         setError(null);
         try {
-            const params = selectedMapelSchool ? { id_mapel: selectedMapelSchool } : {};
+            const params = (selectedMapelSchool && selectedMapelSchool !== 'all') ? { id_mapel: selectedMapelSchool } : {};
             const result = await fetchSchoolAnalytics(params);
             setSchoolData(result.data || []);
         } catch (err) {
@@ -431,7 +431,7 @@ const AdminAnalytics = () => {
         setLoading(true);
         setError(null);
         try {
-            const params = selectedMapelAngkatan ? { id_mapel: selectedMapelAngkatan } : {};
+            const params = (selectedMapelAngkatan && selectedMapelAngkatan !== 'all') ? { id_mapel: selectedMapelAngkatan } : {};
             const result = await fetchAngkatanAnalytics(selectedAngkatan, params);
             setAngkatanData(result.data || []);
         } catch (err) {
@@ -453,8 +453,8 @@ const AdminAnalytics = () => {
         setError(null);
         try {
             const params = {};
-            // Only add id_mapel if a specific mapel is selected (not empty string)
-            if (selectedMapelStudent && selectedMapelStudent !== '') {
+            // Only add id_mapel if a specific mapel is selected (not 'all' or empty string)
+            if (selectedMapelStudent && selectedMapelStudent !== 'all' && selectedMapelStudent !== '') {
                 params.id_mapel = selectedMapelStudent;
             }
             
@@ -622,7 +622,7 @@ const AdminAnalytics = () => {
                                 onChange={(e) => setSelectedMapelSchool(e.target.value)}
                                 className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="">-- Pilih Mata Pelajaran --</option>
+                                <option value="all">📚 Semua Mata Pelajaran</option>
                                 {mataPelajaranList.map((mapel) => (
                                     <option key={mapel.id} value={mapel.id}>{mapel.nama}</option>
                                 ))}
@@ -642,7 +642,7 @@ const AdminAnalytics = () => {
                             <div className="mb-6">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-semibold">📈 Grafik Trend Nilai Sekolah</h3>
-                                    {selectedMapelSchool && (
+                                    {selectedMapelSchool && selectedMapelSchool !== 'all' && (
                                         <button
                                             onClick={() => {
                                                 const mapelName = mataPelajaranList.find(m => m.id === parseInt(selectedMapelSchool))?.nama || 'Mata Pelajaran';
@@ -665,13 +665,60 @@ const AdminAnalytics = () => {
                                         </button>
                                     )}
                                 </div>
-                                {selectedMapelSchool ? (
-                                    (() => {
+                                {(() => {
+                                    // Show chart for both 'all' and specific mapel
+                                    if (selectedMapelSchool === 'all') {
+                                        // Multi-line chart for all subjects
+                                        const chartData = prepareChartData(schoolData);
+                                        
+                                        if (chartData.length === 0) {
+                                            return <div className="text-gray-500 p-8 text-center border-2 border-dashed border-gray-300 rounded">Tidak ada data untuk ditampilkan</div>;
+                                        }
+                                        
+                                        // Get all unique subject names
+                                        const subjectKeys = Object.keys(chartData[0] || {}).filter(k => k !== 'period' && k !== 'tahun_ajaran' && k !== 'semester');
+                                        
+                                        return (
+                                            <div ref={schoolChartRef}>
+                                                <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                                                    <span className="text-sm text-gray-700">Menampilkan trend rata-rata sekolah untuk: </span>
+                                                    <span className="font-bold text-blue-700 text-lg">Semua Mata Pelajaran</span>
+                                                </div>
+                                                <ResponsiveContainer width="100%" height={400}>
+                                                    <BarChart data={chartData}>
+                                                        <CartesianGrid strokeDasharray="3 3" />
+                                                        <XAxis 
+                                                            dataKey="period" 
+                                                            angle={-45} 
+                                                            textAnchor="end" 
+                                                            height={100}
+                                                            style={{ fontSize: '12px' }}
+                                                        />
+                                                        <YAxis 
+                                                            domain={[0, 100]} 
+                                                            label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }}
+                                                        />
+                                                        <Tooltip 
+                                                            contentStyle={{ backgroundColor: '#fff', border: '2px solid #3b82f6', borderRadius: '8px' }}
+                                                            labelStyle={{ fontWeight: 'bold', color: '#1e40af' }}
+                                                        />
+                                                        <Legend />
+                                                        {subjectKeys.map((subject, idx) => (
+                                                            <Bar
+                                                                key={idx}
+                                                                dataKey={subject}
+                                                                fill={`hsl(${idx * 60}, 70%, 50%)`}
+                                                                name={subject}
+                                                            />
+                                                        ))}
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        );
+                                    } else {
+                                        // Single line chart for specific subject
                                         const chartData = prepareChartData(schoolData);
                                         const selectedMapelName = mataPelajaranList.find(m => m.id === parseInt(selectedMapelSchool))?.nama || '';
-                                        
-                                        console.log('🏫 School chart rendering for:', selectedMapelName);
-                                        console.log('🏫 Chart data:', chartData);
                                         
                                         if (chartData.length === 0) {
                                             return <div className="text-gray-500 p-8 text-center border-2 border-dashed border-gray-300 rounded">Tidak ada data untuk mata pelajaran ini</div>;
@@ -692,7 +739,7 @@ const AdminAnalytics = () => {
                                                     <span className="font-bold text-blue-700 text-lg">{selectedMapelName}</span>
                                                 </div>
                                                 <ResponsiveContainer width="100%" height={400}>
-                                                    <LineChart data={chartData}>
+                                                    <BarChart data={chartData}>
                                                         <CartesianGrid strokeDasharray="3 3" />
                                                         <XAxis 
                                                             dataKey="period" 
@@ -710,36 +757,25 @@ const AdminAnalytics = () => {
                                                             labelStyle={{ fontWeight: 'bold', color: '#1e40af' }}
                                                         />
                                                         <Legend />
-                                                        <Line
-                                                            type="monotone"
+                                                        <Bar
                                                             dataKey="nilai"
-                                                            stroke="#3b82f6"
-                                                            strokeWidth={4}
-                                                            dot={{ r: 6, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }}
-                                                            activeDot={{ r: 8, fill: '#1e40af' }}
-                                                            connectNulls
+                                                            fill="#3b82f6"
                                                             name={selectedMapelName}
-                                                            label={<CustomizedLabel />}
+                                                            label={{ position: 'top', formatter: (value) => value.toFixed(1) }}
                                                         />
-                                                    </LineChart>
+                                                    </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         );
-                                    })()
-                                ) : (
-                                    <div className="p-12 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                        <div className="text-6xl mb-4">📊</div>
-                                        <p className="text-lg text-gray-600 mb-2">Pilih mata pelajaran untuk melihat trend grafik</p>
-                                        <p className="text-sm text-gray-500">Gunakan dropdown di atas untuk memilih mata pelajaran</p>
-                                    </div>
-                                )}
+                                    }
+                                })()}
                             </div>
 
                             {/* Summary Table */}
                             <div className="mb-3">
                                 <h3 className="text-md font-semibold text-gray-700">
                                     📊 Tabel Data Sekolah
-                                    {selectedMapelSchool && (
+                                    {selectedMapelSchool && selectedMapelSchool !== 'all' && (
                                         <span className="ml-2 text-sm text-blue-600">
                                             (Menampilkan: {mataPelajaranList.find(m => m.id === parseInt(selectedMapelSchool))?.nama || 'Mata Pelajaran'})
                                         </span>
@@ -764,7 +800,7 @@ const AdminAnalytics = () => {
                                         {schoolData && schoolData.length > 0 ? (
                                             schoolData
                                                 .filter(item => {
-                                                    if (!selectedMapelSchool) return true;
+                                                    if (!selectedMapelSchool || selectedMapelSchool === 'all') return true;
                                                     return item && item.id_mapel && parseInt(item.id_mapel) === parseInt(selectedMapelSchool);
                                                 })
                                                 .map((item, idx) => (
@@ -825,7 +861,7 @@ const AdminAnalytics = () => {
                                 onChange={(e) => setSelectedMapelAngkatan(e.target.value)}
                                 className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-green-500"
                             >
-                                <option value="">-- Pilih Mata Pelajaran --</option>
+                                <option value="all">📚 Semua Mata Pelajaran</option>
                                 {mataPelajaranList.map((mapel) => (
                                     <option key={mapel.id} value={mapel.id}>{mapel.nama}</option>
                                 ))}
@@ -840,7 +876,7 @@ const AdminAnalytics = () => {
                                     <h3 className="text-lg font-semibold">
                                         📈 Grafik Perkembangan Angkatan {selectedAngkatan}
                                     </h3>
-                                    {selectedMapelAngkatan && prepareChartData(angkatanData).length > 0 && (
+                                    {selectedMapelAngkatan && selectedMapelAngkatan !== 'all' && prepareChartData(angkatanData).length > 0 && (
                                         <button
                                             onClick={() => {
                                                 const mapelName = mataPelajaranList.find(m => m.id === parseInt(selectedMapelAngkatan))?.nama || 'Mata Pelajaran';
@@ -862,13 +898,60 @@ const AdminAnalytics = () => {
                                         </button>
                                     )}
                                 </div>
-                                {selectedMapelAngkatan ? (
-                                    (() => {
+                                {(() => {
+                                    // Show chart for both 'all' and specific mapel
+                                    if (selectedMapelAngkatan === 'all') {
+                                        // Multi-line chart for all subjects
+                                        const chartData = prepareChartData(angkatanData);
+                                        
+                                        if (chartData.length === 0) {
+                                            return <div className="text-gray-500 p-8 text-center border-2 border-dashed border-gray-300 rounded">Tidak ada data untuk ditampilkan</div>;
+                                        }
+                                        
+                                        // Get all unique subject names
+                                        const subjectKeys = Object.keys(chartData[0] || {}).filter(k => k !== 'period' && k !== 'tahun_ajaran' && k !== 'semester');
+                                        
+                                        return (
+                                            <div ref={angkatanChartRef}>
+                                                <div className="mb-2 p-3 bg-green-50 border border-green-200 rounded">
+                                                    <span className="text-sm text-gray-700">Menampilkan perkembangan angkatan {selectedAngkatan} untuk: </span>
+                                                    <span className="font-bold text-green-700 text-lg">Semua Mata Pelajaran</span>
+                                                </div>
+                                                <ResponsiveContainer width="100%" height={400}>
+                                                    <BarChart data={chartData}>
+                                                        <CartesianGrid strokeDasharray="3 3" />
+                                                        <XAxis 
+                                                            dataKey="period" 
+                                                            angle={-45} 
+                                                            textAnchor="end" 
+                                                            height={100}
+                                                            style={{ fontSize: '12px' }}
+                                                        />
+                                                        <YAxis 
+                                                            domain={[0, 100]} 
+                                                            label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }}
+                                                        />
+                                                        <Tooltip 
+                                                            contentStyle={{ backgroundColor: '#fff', border: '2px solid #10b981', borderRadius: '8px' }}
+                                                            labelStyle={{ fontWeight: 'bold', color: '#047857' }}
+                                                        />
+                                                        <Legend />
+                                                        {subjectKeys.map((subject, idx) => (
+                                                            <Bar
+                                                                key={idx}
+                                                                dataKey={subject}
+                                                                fill={`hsl(${idx * 60}, 70%, 50%)`}
+                                                                name={subject}
+                                                            />
+                                                        ))}
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            </div>
+                                        );
+                                    } else {
+                                        // Single line chart for specific subject
                                         const chartData = prepareChartData(angkatanData);
                                         const selectedMapelName = mataPelajaranList.find(m => m.id === parseInt(selectedMapelAngkatan))?.nama || '';
-                                        
-                                        console.log('🎓 Angkatan chart rendering for:', selectedMapelName);
-                                        console.log('🎓 Chart data:', chartData);
                                         
                                         if (chartData.length === 0) {
                                             return <div className="text-gray-500 p-8 text-center border-2 border-dashed border-gray-300 rounded">Tidak ada data untuk mata pelajaran ini</div>;
@@ -889,7 +972,7 @@ const AdminAnalytics = () => {
                                                     <span className="font-bold text-green-700 text-lg">{selectedMapelName}</span>
                                                 </div>
                                                 <ResponsiveContainer width="100%" height={400}>
-                                                    <LineChart data={chartData}>
+                                                    <BarChart data={chartData}>
                                                         <CartesianGrid strokeDasharray="3 3" />
                                                         <XAxis 
                                                             dataKey="period" 
@@ -907,29 +990,18 @@ const AdminAnalytics = () => {
                                                             labelStyle={{ fontWeight: 'bold', color: '#047857' }}
                                                         />
                                                         <Legend />
-                                                        <Line
-                                                            type="monotone"
+                                                        <Bar
                                                             dataKey="nilai"
-                                                            stroke="#10b981"
-                                                            strokeWidth={4}
-                                                            dot={{ r: 6, fill: '#10b981', strokeWidth: 2, stroke: '#fff' }}
-                                                            activeDot={{ r: 8, fill: '#047857' }}
-                                                            connectNulls
+                                                            fill="#10b981"
                                                             name={selectedMapelName}
-                                                            label={<CustomizedLabel />}
+                                                            label={{ position: 'top', formatter: (value) => value.toFixed(1) }}
                                                         />
-                                                    </LineChart>
+                                                    </BarChart>
                                                 </ResponsiveContainer>
                                             </div>
                                         );
-                                    })()
-                                ) : (
-                                    <div className="p-12 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                        <div className="text-6xl mb-4">📊</div>
-                                        <p className="text-lg text-gray-600 mb-2">Pilih mata pelajaran untuk melihat grafik perkembangan angkatan</p>
-                                        <p className="text-sm text-gray-500">Gunakan dropdown di atas untuk memilih mata pelajaran</p>
-                                    </div>
-                                )}
+                                    }
+                                })()}
                             </div>
 
                             <div className="overflow-x-auto">
@@ -987,7 +1059,7 @@ const AdminAnalytics = () => {
                                     onChange={(e) => setSelectedMapelStudent(e.target.value)}
                                     className="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-purple-500"
                                 >
-                                    <option value="">-- Pilih Mata Pelajaran --</option>
+                                    <option value="all">📚 Semua Mata Pelajaran</option>
                                     {mataPelajaranList.map((mapel) => (
                                         <option key={mapel.id} value={mapel.id}>{mapel.nama}</option>
                                     ))}
@@ -1020,7 +1092,7 @@ const AdminAnalytics = () => {
                                     <div className="mb-6">
                                         <div className="flex justify-between items-center mb-4">
                                             <h3 className="text-lg font-semibold">📈 Grafik Perkembangan Nilai</h3>
-                                            {selectedMapelStudent && (
+                                            {selectedMapelStudent && selectedMapelStudent !== 'all' && (
                                                 <button
                                                     onClick={() => {
                                                         const mapelName = mataPelajaranList.find(m => m.id === parseInt(selectedMapelStudent))?.nama || 'Mata Pelajaran';
@@ -1047,9 +1119,57 @@ const AdminAnalytics = () => {
                                                 </button>
                                             )}
                                         </div>
-                                        {selectedMapelStudent ? (
-                                            (() => {
-                                                // Filter and map data directly - DON'T use prepareChartData
+                                        {(() => {
+                                            if (selectedMapelStudent === 'all') {
+                                                // Multi-line chart for all subjects
+                                                const chartData = prepareChartData(studentData.data);
+                                                
+                                                if (chartData.length === 0) {
+                                                    return <div className="text-gray-500 p-8 text-center border-2 border-dashed border-gray-300 rounded">Tidak ada data untuk ditampilkan</div>;
+                                                }
+                                                
+                                                // Get all unique subject names
+                                                const subjectKeys = Object.keys(chartData[0] || {}).filter(k => k !== 'period' && k !== 'tahun_ajaran' && k !== 'semester');
+                                                
+                                                return (
+                                                    <div ref={studentChartRef}>
+                                                        <div className="mb-2 p-3 bg-purple-50 border border-purple-200 rounded">
+                                                            <span className="text-sm text-gray-700">Progress untuk: </span>
+                                                            <span className="font-bold text-purple-700 text-lg">Semua Mata Pelajaran</span>
+                                                        </div>
+                                                        <ResponsiveContainer width="100%" height={400}>
+                                                            <BarChart data={chartData}>
+                                                                <CartesianGrid strokeDasharray="3 3" />
+                                                                <XAxis 
+                                                                    dataKey="period" 
+                                                                    angle={-45} 
+                                                                    textAnchor="end" 
+                                                                    height={100}
+                                                                    style={{ fontSize: '12px' }}
+                                                                />
+                                                                <YAxis 
+                                                                    domain={[0, 100]} 
+                                                                    label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }}
+                                                                />
+                                                                <Tooltip 
+                                                                    contentStyle={{ backgroundColor: '#fff', border: '2px solid #9333ea', borderRadius: '8px' }}
+                                                                    labelStyle={{ fontWeight: 'bold', color: '#6b21a8' }}
+                                                                />
+                                                                <Legend />
+                                                                {subjectKeys.map((subject, idx) => (
+                                                                    <Bar
+                                                                        key={idx}
+                                                                        dataKey={subject}
+                                                                        fill={`hsl(${idx * 60}, 70%, 50%)`}
+                                                                        name={subject}
+                                                                    />
+                                                                ))}
+                                                            </BarChart>
+                                                        </ResponsiveContainer>
+                                                    </div>
+                                                );
+                                            } else {
+                                                // Single line chart for specific subject - Filter and map data directly
                                                 const filtered = Array.isArray(studentData.data)
                                                     ? studentData.data.filter(it => parseInt(it.id_mapel, 10) === parseInt(selectedMapelStudent, 10))
                                                     : [];
@@ -1100,7 +1220,7 @@ const AdminAnalytics = () => {
                                                         </div>
                                                         <div style={{ width: '100%', height: '400px', background: '#fafafa', border: '1px solid #e5e7eb' }}>
                                                             <ResponsiveContainer width="100%" height={400}>
-                                                                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
+                                                                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
                                                                     <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
                                                                     <XAxis 
                                                                         dataKey="period" 
@@ -1122,19 +1242,13 @@ const AdminAnalytics = () => {
                                                                         formatter={(value) => [value.toFixed(2), 'Nilai']}
                                                                     />
                                                                     <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                                                                    <Line
-                                                                        type="monotone"
+                                                                    <Bar
                                                                         dataKey="nilai"
-                                                                        stroke="#8b5cf6"
-                                                                        strokeWidth={3}
-                                                                        dot={{ r: 8, fill: '#8b5cf6', strokeWidth: 2, stroke: '#fff' }}
-                                                                        activeDot={{ r: 10, fill: '#6d28d9' }}
-                                                                        connectNulls
+                                                                        fill="#8b5cf6"
                                                                         name={selectedMapelName}
-                                                                        isAnimationActive={true}
-                                                                        label={<CustomizedLabel />}
+                                                                        label={{ position: 'top', formatter: (value) => value.toFixed(1) }}
                                                                     />
-                                                                </LineChart>
+                                                                </BarChart>
                                                             </ResponsiveContainer>
                                                         </div>
                                                         <div style={{ marginTop: '15px', padding: '10px', background: '#f3f4f6', borderRadius: '4px', fontSize: '12px' }}>
@@ -1142,21 +1256,15 @@ const AdminAnalytics = () => {
                                                         </div>
                                                     </div>
                                                 );
-                                            })()
-                                        ) : (
-                                            <div className="p-12 text-center border-2 border-dashed border-gray-300 rounded-lg bg-gray-50">
-                                                <div className="text-6xl mb-4">📊</div>
-                                                <p className="text-lg text-gray-600 mb-2">Pilih mata pelajaran untuk melihat grafik perkembangan</p>
-                                                <p className="text-sm text-gray-500">Gunakan dropdown "Semua Mata Pelajaran" di atas untuk memilih</p>
-                                            </div>
-                                        )}
+                                            }
+                                        })()}
                                     </div>
 
                                     {/* Tabel Data */}
                                     <div className="mb-3">
                                         <h3 className="text-md font-semibold text-gray-700">
                                             📊 Tabel Riwayat Nilai
-                                            {selectedMapelStudent && (
+                                            {selectedMapelStudent && selectedMapelStudent !== 'all' && (
                                                 <span className="ml-2 text-sm text-blue-600">
                                                     (Menampilkan: {mataPelajaranList.find(m => m.id === parseInt(selectedMapelStudent))?.nama || 'Mata Pelajaran'})
                                                 </span>
@@ -1180,7 +1288,7 @@ const AdminAnalytics = () => {
                                                 {studentData && studentData.data && studentData.data.length > 0 ? (
                                                     studentData.data
                                                         .filter(item => {
-                                                            if (!selectedMapelStudent) return true;
+                                                            if (!selectedMapelStudent || selectedMapelStudent === 'all') return true;
                                                             return item && item.id_mapel && parseInt(item.id_mapel) === parseInt(selectedMapelStudent);
                                                         })
                                                         .map((item, idx) => (

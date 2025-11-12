@@ -2,13 +2,19 @@
 const express = require('express');
 const router = express.Router();
 const analyticsController = require('../controllers/analyticsController');
+const { verifyToken, isAdminOrGuru } = require('../middlewares/authMiddleware');
 
 /**
  * ANALYTICS ROUTES
  * Base path: /api/analytics
+ * All analytics routes require authentication
  */
 
-// School-wide analytics (ADMIN only in production - add auth middleware)
+// Apply auth middleware to all analytics routes
+router.use(verifyToken);
+router.use(isAdminOrGuru);
+
+// School-wide analytics
 // GET /api/analytics/school?id_mapel=1&id_ta_semester=2
 router.get('/school', analyticsController.getSchoolAnalytics);
 

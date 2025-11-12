@@ -10,6 +10,7 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
   const [selectedGuruId, setSelectedGuruId] = useState('');
   const [selectedMapelId, setSelectedMapelId] = useState('');
   const [selectedKelasId, setSelectedKelasId] = useState('');
+  const [isWaliKelas, setIsWaliKelas] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
@@ -83,9 +84,11 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
         id_guru: selectedGuruId,
         id_mapel: selectedMapelId,
         id_kelas: selectedKelasId,
-        id_ta_semester: activeTASemester.id_ta_semester
+        id_ta_semester: activeTASemester.id_ta_semester,
+        is_wali_kelas: isWaliKelas
       });
       showMessage(response.message, 'success');
+      setIsWaliKelas(false); // Reset checkbox after successful assignment
       fetchData();
     } catch (err) {
       showMessage(err.message, 'error');
@@ -322,6 +325,11 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
   const selectedTeacher = teachers.find(t => t.id_guru === selectedGuruId);
   const selectedSubject = mataPelajaran.find(mp => mp.id_mapel === selectedMapelId);
   const selectedClass = kelas.find(k => k.id_kelas === selectedKelasId);
+
+  // Check if selected class already has a wali kelas
+  const currentWaliKelas = selectedClass ? assignments.find(
+    a => a.id_kelas === selectedClass.id_kelas && a.is_wali_kelas === 1
+  ) : null;
 
   // Render grouped assignments table
   const renderGroupedAssignmentsTable = () => {
@@ -811,9 +819,67 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                           </div>
                           <span className="text-sm font-medium">{selectedClass.nama_kelas}</span>
                         </div>
+                        {isWaliKelas && (
+                          <>
+                            <i className="fas fa-arrow-right text-gray-400"></i>
+                            <div className="flex items-center">
+                              <div className="bg-gradient-to-br from-yellow-400 to-amber-500 p-2 rounded-lg mr-2">
+                                <i className="fas fa-home text-white text-sm"></i>
+                              </div>
+                              <span className="text-sm font-bold text-yellow-600">Wali Kelas</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
+
+                  {/* Wali Kelas Checkbox */}
+                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 p-4 rounded-lg border border-yellow-200">
+                    <label className="flex items-center cursor-pointer group">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={isWaliKelas}
+                          onChange={(e) => setIsWaliKelas(e.target.checked)}
+                          className="sr-only"
+                          disabled={currentWaliKelas && currentWaliKelas.id_guru !== selectedGuruId}
+                        />
+                        <div className={`w-14 h-7 rounded-full transition-all duration-300 ${
+                          isWaliKelas 
+                            ? 'bg-gradient-to-r from-yellow-400 to-amber-500' 
+                            : currentWaliKelas && currentWaliKelas.id_guru !== selectedGuruId
+                            ? 'bg-gray-200'
+                            : 'bg-gray-300'
+                        }`}>
+                          <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-300 ${
+                            isWaliKelas ? 'translate-x-7' : 'translate-x-0'
+                          }`}>
+                            <i className={`fas ${isWaliKelas ? 'fa-check text-yellow-500' : 'fa-times text-gray-400'} text-xs flex items-center justify-center h-full`}></i>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <span className={`text-sm font-semibold transition-colors duration-200 ${
+                          isWaliKelas ? 'text-yellow-700' : 'text-gray-700'
+                        }`}>
+                          <i className="fas fa-home mr-2"></i>
+                          Set as Wali Kelas (Homeroom Teacher)
+                        </span>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {currentWaliKelas && currentWaliKelas.id_guru !== selectedGuruId ? (
+                            <span className="text-orange-600 font-medium">
+                              ⚠️ {selectedClass?.nama_kelas} already has a wali kelas: <strong>{currentWaliKelas.nama_guru}</strong>
+                            </span>
+                          ) : isWaliKelas ? (
+                            'This teacher will be assigned as the homeroom teacher for this class'
+                          ) : (
+                            'Check this box to assign as homeroom teacher'
+                          )}
+                        </p>
+                      </div>
+                    </label>
+                  </div>
 
                   <button
                     type="submit"
@@ -972,19 +1038,64 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
               </h3>
               
               <div className="space-y-4">
-                {Object.values(getClassSubjectMapping(selectedTeacherDetail.assignments)).map((classData) => (
+                {Object.values(getClassSubjectMapping(selectedTeacherDetail.assignments)).map((classData) => {
+                  // Check if teacher is wali kelas for this class
+                  const isWaliKelasForClass = classData.subjects.some(s => s.assignment.is_wali_kelas === 1);
+                  
+                  return (
                   <div key={classData.kelas} className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center">
+                      <div className="flex items-center flex-1">
                         <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-3 rounded-lg mr-4">
                           <i className="fas fa-door-open text-white text-lg"></i>
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-gray-800 text-lg">{classData.kelas}</h4>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-gray-800 text-lg">{classData.kelas}</h4>
+                            {isWaliKelasForClass && (
+                              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-bold flex items-center">
+                                <i className="fas fa-home mr-1"></i>
+                                Wali Kelas
+                              </span>
+                            )}
+                          </div>
                           <p className="text-gray-500 text-sm">{classData.tahun_ajaran} - {classData.semester}</p>
                           <p className="text-gray-400 text-xs">{classData.subjects.length} subject{classData.subjects.length > 1 ? 's' : ''}</p>
                         </div>
                       </div>
+                      
+                      {/* Remove Wali Kelas Button */}
+                      {editMode && isWaliKelasForClass && (
+                        <button
+                          onClick={async () => {
+                            if (window.confirm(`Remove ${selectedTeacherDetail.teacher.nama_guru} sebagai wali kelas dari ${classData.kelas}?`)) {
+                              try {
+                                await adminApi.removeWaliKelas(classData.id_kelas);
+                                setMessage(`Wali kelas berhasil dihapus dari ${classData.kelas}.`);
+                                setMessageType('success');
+                                setTimeout(() => {
+                                  setMessage('');
+                                  setMessageType('');
+                                  closeModal();
+                                  fetchData();
+                                }, 1500);
+                              } catch (err) {
+                                setMessage(err.message);
+                                setMessageType('error');
+                                setTimeout(() => {
+                                  setMessage('');
+                                  setMessageType('');
+                                }, 3000);
+                              }
+                            }
+                          }}
+                          className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg transition-colors duration-200 flex items-center text-sm"
+                          title="Remove Wali Kelas"
+                        >
+                          <i className="fas fa-user-times mr-1"></i>
+                          Remove Wali Kelas
+                        </button>
+                      )}
                     </div>
                     
                     {/* Subject badges */}
@@ -1017,7 +1128,8 @@ const GuruMapelKelasAssignment = ({ activeTASemester }) => {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Summary Statistics */}

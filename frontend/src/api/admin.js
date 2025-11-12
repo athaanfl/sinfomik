@@ -1,19 +1,33 @@
 // frontend/src/api/admin.js
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
-// --- Fungsi Umum untuk Panggilan API ---
+// --- Fungsi Umum untuk Panggilan API dengan JWT ---
 const fetchData = async (url, options = {}) => {
   try {
-    const response = await fetch(url, options);
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers
+    };
+    
+    const response = await fetch(url, { ...options, headers });
     const data = await response.json();
+    
     if (!response.ok) {
-      // Jika respons bukan 2xx, lempar error dengan pesan dari backend
+      // Handle 401 - token expired
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        throw new Error('Session expired. Please login again.');
+      }
       throw new Error(data.message || 'Terjadi kesalahan pada server.');
     }
     return data;
   } catch (error) {
     console.error(`Error fetching from ${url}:`, error);
-    throw error; // Lempar error agar bisa ditangkap di komponen
+    throw error;
   }
 };
 
@@ -191,6 +205,14 @@ export const getSiswaInKelas = async (id_kelas, id_ta_semester) => {
   return fetchData(`${API_BASE_URL}/api/admin/siswa-in-kelas/${id_kelas}/${id_ta_semester}`);
 };
 
+export const unassignSiswaFromKelas = async (unassignmentData) => {
+  return fetchData(`${API_BASE_URL}/api/admin/siswa-kelas`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(unassignmentData),
+  });
+};
+
 // --- API untuk Penugasan Guru ke Mapel & Kelas ---
 export const assignGuruToMapelKelas = async (assignmentData) => {
   return fetchData(`${API_BASE_URL}/api/admin/guru-mapel-kelas`, {
@@ -207,6 +229,23 @@ export const getGuruMapelKelasAssignments = async (id_ta_semester) => {
 export const deleteGuruMapelKelasAssignment = async (id_guru_mapel_kelas) => {
   return fetchData(`${API_BASE_URL}/api/admin/guru-mapel-kelas/assignment/${id_guru_mapel_kelas}`, {
     method: 'DELETE',
+  });
+};
+
+// --- API untuk Update Wali Kelas ---
+export const updateWaliKelas = async (id_kelas, id_guru) => {
+  return fetchData(`${API_BASE_URL}/api/admin/kelas/${id_kelas}/wali-kelas`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_guru }),
+  });
+};
+
+export const removeWaliKelas = async (id_kelas) => {
+  return fetchData(`${API_BASE_URL}/api/admin/kelas/${id_kelas}/wali-kelas`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id_guru: null }),
   });
 };
 

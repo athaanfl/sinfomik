@@ -84,15 +84,41 @@ exports.importCapaianPembelajaran = async (req, res) => {
                 throw new Error('Format Excel tidak sesuai. Pastikan ada header fase di baris 5 dan deskripsi di baris 6');
             }
 
-            // Proses setiap fase (A, B, C)
-            const fases = ['A', 'B', 'C'];
-            for (let i = 0; i < fases.length; i++) {
-                const fase = fases[i];
-                // Baca deskripsi dari baris 6 (index 5)
-                // Kolom A = index 0, Kolom B = index 1, Kolom C = index 2
-                const deskripsi = data[5][i];
+            // Baca header fase di baris 5 (index 4)
+            const headerRow = data[4]; // ["Fase A" / "FASE A" / "A", "Fase B" / "B", "Fase C" / "C"]
+            
+            console.log('Header Row (Baris 5):', headerRow);
+            
+            // Mapping kolom ke fase berdasarkan header
+            const faseMapping = {}; // { 'A': columnIndex, 'B': columnIndex, 'C': columnIndex }
+            
+            headerRow.forEach((header, colIndex) => {
+                if (header && typeof header === 'string') {
+                    const headerUpper = header.toString().toUpperCase().trim();
+                    
+                    // Deteksi fase A, B, atau C dari header
+                    if (headerUpper.includes('FASE A') || headerUpper === 'A') {
+                        faseMapping['A'] = colIndex;
+                    } else if (headerUpper.includes('FASE B') || headerUpper === 'B') {
+                        faseMapping['B'] = colIndex;
+                    } else if (headerUpper.includes('FASE C') || headerUpper === 'C') {
+                        faseMapping['C'] = colIndex;
+                    }
+                }
+            });
+            
+            console.log('Fase Mapping:', faseMapping);
+            
+            if (Object.keys(faseMapping).length === 0) {
+                throw new Error('Tidak ditemukan header fase (A/B/C) di baris 5. Pastikan ada kolom dengan header "Fase A", "Fase B", atau "Fase C"');
+            }
 
-                if (deskripsi && deskripsi.trim()) {
+            // Proses setiap fase yang terdeteksi
+            for (const [fase, colIndex] of Object.entries(faseMapping)) {
+                // Baca deskripsi dari baris 6 (index 5) di kolom yang sesuai
+                const deskripsi = data[5][colIndex];
+
+                if (deskripsi && deskripsi.toString().trim()) {
                     try {
                         await new Promise((resolve, reject) => {
                             db.run(
@@ -490,6 +516,20 @@ exports.getTpByMapelFaseKelas = async (req, res) => {
                 
                 // Semester filter (jika ada)
                 if (semesterFilter && semesterIndex !== -1 && semesterExcel) {
+                    const semesterStr = semesterExcel.toString().trim();
+                    
+                    // Cek berbagai format multi-semester:
+                    // "1 dan 2", "1,2", "1-2", "1, 2", "1 & 2", "1/2"
+                    const semesterMatches = semesterStr.match(/\d+/g); // Extract semua angka
+                    
+                    if (semesterMatches) {
+                        // Konversi ke array of integers
+                        const semesterNumbers = semesterMatches.map(s => parseInt(s));
+                        // Check apakah semesterFilter ada di dalam list
+                        return basicMatch && semesterNumbers.includes(semesterFilter);
+                    }
+                    
+                    // Fallback ke parseInt biasa jika tidak ada match
                     return basicMatch && parseInt(semesterExcel) === semesterFilter;
                 }
                 

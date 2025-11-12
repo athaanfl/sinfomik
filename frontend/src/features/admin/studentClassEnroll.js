@@ -134,6 +134,28 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
     }
   };
 
+  const handleRemoveStudent = async (id_siswa, nama_siswa) => {
+    if (!window.confirm(`Are you sure you want to remove "${nama_siswa}" from this class?\n\nThis action will:\n• Remove student from class roster\n• Keep all existing grades\n• Student can be re-enrolled later`)) {
+      return;
+    }
+
+    setMessage('');
+    setMessageType('');
+
+    try {
+      await adminApi.unassignSiswaFromKelas({
+        id_siswa: id_siswa,
+        id_kelas: selectedKelasId,
+        id_ta_semester: activeTASemester.id_ta_semester
+      });
+
+      showMessage(`Successfully removed "${nama_siswa}" from class.`, 'success');
+      fetchStudentsInKelas(selectedKelasId, activeTASemester.id_ta_semester);
+    } catch (err) {
+      showMessage(`Failed to remove student: ${err.message}`, 'error');
+    }
+  };
+
   const availableStudents = students.filter(s =>
     !studentsInSelectedKelas.some(sisInKelas => sisInKelas.id_siswa === s.id_siswa)
   );
@@ -349,6 +371,7 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
                             <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Student ID</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Student Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-indigo-600 uppercase tracking-wider">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -368,6 +391,14 @@ const SiswaKelasAssignment = ({ activeTASemester }) => {
                                   <i className="fas fa-check-circle mr-1"></i>
                                   Enrolled
                                 </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button 
+                                  onClick={() => handleRemoveStudent(s.id_siswa, s.nama_siswa)}
+                                  className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 transform hover:-translate-y-0.5"
+                                >
+                                  <i className="fas fa-user-minus mr-1"></i> Remove
+                                </button>
                               </td>
                             </tr>
                           ))}

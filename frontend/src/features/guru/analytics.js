@@ -15,14 +15,14 @@ const GuruAnalytics = ({ idGuru }) => {
     // Subject analytics state
     const [guruData, setGuruData] = useState([]);
     const [mataPelajaranList, setMataPelajaranList] = useState([]);
-    const [selectedMapel, setSelectedMapel] = useState('');
-    const [selectedKelas, setSelectedKelas] = useState('');
+    const [selectedMapel, setSelectedMapel] = useState('all');
+    const [selectedKelas, setSelectedKelas] = useState('all');
     const [kelasList, setKelasList] = useState([]);
 
     // Student analytics state
     const [studentId, setStudentId] = useState('');
     const [studentData, setStudentData] = useState(null);
-    const [selectedMapelStudent, setSelectedMapelStudent] = useState('');
+    const [selectedMapelStudent, setSelectedMapelStudent] = useState('all');
 
     // Extract unique mapel and kelas from guru data
     useEffect(() => {
@@ -75,8 +75,8 @@ const GuruAnalytics = ({ idGuru }) => {
         setError(null);
         try {
             const params = {};
-            if (selectedMapel) params.id_mapel = selectedMapel;
-            if (selectedKelas) params.id_kelas = selectedKelas;
+            if (selectedMapel && selectedMapel !== 'all') params.id_mapel = selectedMapel;
+            if (selectedKelas && selectedKelas !== 'all') params.id_kelas = selectedKelas;
 
             const result = await fetchGuruAnalytics(idGuru, params);
             setGuruData(result.data || []);
@@ -97,7 +97,7 @@ const GuruAnalytics = ({ idGuru }) => {
         setLoading(true);
         setError(null);
         try {
-            const params = selectedMapelStudent ? { id_mapel: selectedMapelStudent } : {};
+            const params = (selectedMapelStudent && selectedMapelStudent !== 'all') ? { id_mapel: selectedMapelStudent } : {};
             const result = await fetchStudentAnalytics(studentId, params);
             setStudentData(result);
         } catch (err) {
@@ -179,7 +179,7 @@ const GuruAnalytics = ({ idGuru }) => {
                             onChange={(e) => setSelectedMapel(e.target.value)}
                             className="px-4 py-2 border rounded"
                         >
-                            <option value="">Semua Mata Pelajaran</option>
+                            <option value="all">📚 Semua Mata Pelajaran</option>
                             {mataPelajaranList.map((mapel, idx) => (
                                 <option key={idx} value={mapel.id}>{mapel.nama}</option>
                             ))}
@@ -189,7 +189,7 @@ const GuruAnalytics = ({ idGuru }) => {
                             onChange={(e) => setSelectedKelas(e.target.value)}
                             className="px-4 py-2 border rounded"
                         >
-                            <option value="">Semua Kelas</option>
+                            <option value="all">🏫 Semua Kelas</option>
                             {kelasList.map((kelas, idx) => (
                                 <option key={idx} value={kelas.id}>{kelas.nama}</option>
                             ))}
@@ -231,24 +231,22 @@ const GuruAnalytics = ({ idGuru }) => {
                             <div className="mb-6">
                                 <h3 className="text-lg font-semibold mb-4">Trend Nilai Kelas yang Diajar</h3>
                                 <ResponsiveContainer width="100%" height={400}>
-                                    <LineChart data={prepareChartData(guruData)}>
+                                    <BarChart data={prepareChartData(guruData)}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="period" />
-                                        <YAxis domain={[0, 100]} />
+                                        <XAxis dataKey="period" angle={-45} textAnchor="end" height={100} style={{ fontSize: '12px' }} />
+                                        <YAxis domain={[0, 100]} label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }} />
                                         <Tooltip />
                                         <Legend />
                                         {guruData.length > 0 && Object.keys(prepareChartData(guruData)[0] || {})
                                             .filter(key => key !== 'period' && key !== 'tahun_ajaran' && key !== 'semester')
                                             .map((key, idx) => (
-                                                <Line
+                                                <Bar
                                                     key={idx}
-                                                    type="monotone"
                                                     dataKey={key}
-                                                    stroke={`hsl(${idx * 60}, 70%, 50%)`}
-                                                    strokeWidth={2}
+                                                    fill={`hsl(${idx * 60}, 70%, 50%)`}
                                                 />
                                             ))}
-                                    </LineChart>
+                                    </BarChart>
                                 </ResponsiveContainer>
                             </div>
 
@@ -315,7 +313,7 @@ const GuruAnalytics = ({ idGuru }) => {
                             onChange={(e) => setSelectedMapelStudent(e.target.value)}
                             className="px-4 py-2 border rounded"
                         >
-                            <option value="">Semua Mata Pelajaran</option>
+                            <option value="all">📚 Semua Mata Pelajaran</option>
                             {mataPelajaranList.map((mapel, idx) => (
                                 <option key={idx} value={mapel.id}>{mapel.nama}</option>
                             ))}
@@ -346,24 +344,22 @@ const GuruAnalytics = ({ idGuru }) => {
                                             Progress Akademik Siswa
                                         </h3>
                                         <ResponsiveContainer width="100%" height={400}>
-                                            <LineChart data={prepareChartData(studentData.data)}>
+                                            <BarChart data={prepareChartData(studentData.data)}>
                                                 <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey="period" />
-                                                <YAxis domain={[0, 100]} />
+                                                <XAxis dataKey="period" angle={-45} textAnchor="end" height={100} style={{ fontSize: '12px' }} />
+                                                <YAxis domain={[0, 100]} label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }} />
                                                 <Tooltip />
                                                 <Legend />
                                                 {studentData.data.length > 0 && 
                                                     [...new Set(studentData.data.map(d => d.nama_mapel))].map((mapel, idx) => (
-                                                        <Line
+                                                        <Bar
                                                             key={idx}
-                                                            type="monotone"
                                                             dataKey={mapel}
-                                                            stroke={`hsl(${idx * 90}, 70%, 50%)`}
-                                                            strokeWidth={2}
+                                                            fill={`hsl(${idx * 90}, 70%, 50%)`}
                                                         />
                                                     ))
                                                 }
-                                            </LineChart>
+                                            </BarChart>
                                         </ResponsiveContainer>
                                     </div>
 

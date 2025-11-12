@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const kkmController = require('../controllers/kkmController');
+const { verifyToken, isAdminOrGuru } = require('../middlewares/authMiddleware');
+
+// Apply auth middleware to all KKM routes
+router.use(verifyToken);
+router.use(isAdminOrGuru);
 
 // Save/Update KKM Settings
 router.post('/save', kkmController.saveKkmSettings);

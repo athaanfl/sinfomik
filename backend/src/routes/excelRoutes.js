@@ -2,6 +2,11 @@ const express = require('express');
 const router = express.Router();
 const upload = require('../middlewares/fileUpload');
 const excelController = require('../controllers/excelController');
+const { verifyToken, isAdminOrGuru } = require('../middlewares/authMiddleware');
+
+// Apply auth middleware to all excel routes
+router.use(verifyToken);
+router.use(isAdminOrGuru);
 
 // Route untuk import Excel CP
 router.post('/import-cp', upload.single('file'), excelController.importCapaianPembelajaran);

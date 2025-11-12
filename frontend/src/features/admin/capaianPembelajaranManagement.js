@@ -22,7 +22,23 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`);
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        }
+      });
+      
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
+      
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch ATP data');
@@ -47,13 +63,25 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     setSaving(true);
     setSaveMessage('');
     try {
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+      
       const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
         },
         body: JSON.stringify({ data: editedData })
       });
+
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -88,7 +116,7 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     const matchesKelas = filterKelas === 'all' || String(row.Kelas) === filterKelas;
     const matchesSemester = filterSemester === 'all' || String(row.Semester) === filterSemester;
     return matchesSearch && matchesKelas && matchesSemester;
-  });
+  }).map((row, idx) => ({ ...row, _originalIndex: dataToDisplay.indexOf(row) }));
 
   // Get unique values for filters
   const uniqueKelas = [...new Set(dataToDisplay.map(row => row.Kelas).filter(Boolean))].sort();
@@ -171,8 +199,8 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Classes</option>
-              {uniqueKelas.map(kelas => (
-                <option key={kelas} value={kelas}>Kelas {kelas}</option>
+              {uniqueKelas.map((kelas, idx) => (
+                <option key={`kelas-${idx}-${kelas}`} value={kelas}>Kelas {kelas}</option>
               ))}
             </select>
             <select 
@@ -181,8 +209,8 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Semesters</option>
-              {uniqueSemester.map(sem => (
-                <option key={sem} value={sem}>Semester {sem}</option>
+              {uniqueSemester.map((sem, idx) => (
+                <option key={`semester-${idx}-${sem}`} value={sem}>Semester {sem}</option>
               ))}
             </select>
           </div>
@@ -228,16 +256,14 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredData.map((row, idx) => {
-                    // Find original index in editedData for editing
-                    const originalIndex = editedData.findIndex(r => 
-                      r.Elemen === row.Elemen && 
-                      r['Tujuan Pembelajaran (TP)'] === row['Tujuan Pembelajaran (TP)'] &&
-                      r.Kelas === row.Kelas &&
-                      r.Semester === row.Semester
-                    );
+                    // Use pre-calculated original index from filtered data
+                    const originalIndex = row._originalIndex;
+                    
+                    // Create unique key from row data
+                    const uniqueKey = `row-${originalIndex}-${row.Kelas}-${row.Semester}`;
                     
                     return (
-                      <tr key={idx} className={`hover:bg-blue-50 transition-colors duration-150 ${isEditMode ? 'bg-yellow-50' : ''}`}>
+                      <tr key={uniqueKey} className={`hover:bg-blue-50 transition-colors duration-150 ${isEditMode ? 'bg-yellow-50' : ''}`}>
                         <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{idx + 1}</td>
                         
                         {/* Elemen - editable */}
@@ -525,10 +551,24 @@ const ImportExcel = ({ onImportSuccess }) => {
 
     setLoading(true);
     try {
+      // Get JWT token from localStorage
+      const token = localStorage.getItem('token');
+      
       const response = await fetch('http://localhost:5000/api/excel/import-cp', {
         method: 'POST',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
         body: formData,
       });
+      
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return;
+      }
       
       let data;
       try {

@@ -530,6 +530,32 @@ const InputNilai = ({ activeTASemester, userId }) => {
     }
   };
 
+  // Export Final Grades to Excel
+  const handleExportFinalGrades = async () => {
+    if (!selectedAssignment || !activeTASemester) {
+      setMessage('Pilih assignment terlebih dahulu');
+      setMessageType('error');
+      return;
+    }
+
+    const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+    
+    setIsExporting(true);
+    setMessage('Sedang membuat file Excel nilai final...');
+    setMessageType('info');
+
+    try {
+      await guruApi.exportFinalGrades(userId, mapelId, kelasId, activeTASemester.id_ta_semester);
+      setMessage('✅ Nilai final berhasil diexport! File akan segera terunduh.');
+      setMessageType('success');
+    } catch (err) {
+      setMessage(`❌ Gagal export nilai final: ${err.message}`);
+      setMessageType('error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (loading) return <p>Memuat data guru...</p>;
   if (error) return <p className="message error">Error: {error}</p>;
 
@@ -591,11 +617,20 @@ const InputNilai = ({ activeTASemester, userId }) => {
                     style={{ display: 'none' }}
                   />
                 </label>
+                
+                <button 
+                  type="button" 
+                  onClick={handleExportFinalGrades}
+                  disabled={isExporting || !selectedAssignment}
+                  className="excel-button export-final-button"
+                >
+                  {isExporting ? '⏳ Mengunduh...' : '📊 Export Nilai Final'}
+                </button>
               </div>
               <p className="excel-info">
                 <small>
                   💡 <strong>Tip:</strong> Download template Excel untuk input nilai secara offline, 
-                  lalu upload kembali setelah diisi. Format Excel sudah termasuk TP dari ATP dan rumus otomatis.
+                  lalu upload kembali setelah diisi. Gunakan "Export Nilai Final" untuk download hasil nilai lengkap dengan formula nilai akhir.
                 </small>
               </p>
             </div>

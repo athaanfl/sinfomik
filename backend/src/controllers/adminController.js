@@ -612,22 +612,70 @@ exports.getSiswaInKelas = (req, res) => {
     });
 };
 
-// --- Penugasan Guru ke Mata Pelajaran & Kelas ---
-exports.assignGuruToMapelKelas = (req, res) => {
-    const { id_guru, id_mapel, id_kelas, id_ta_semester } = req.body;
+exports.unassignSiswaFromKelas = (req, res) => {
+    const { id_siswa, id_kelas, id_ta_semester } = req.body;
     const db = getDb();
-    db.run("INSERT INTO GuruMataPelajaranKelas (id_guru, id_mapel, id_kelas, id_ta_semester) VALUES (?, ?, ?, ?)",
-        [id_guru, id_mapel, id_kelas, id_ta_semester],
+    
+    db.run(
+        "DELETE FROM SiswaKelas WHERE id_siswa = ? AND id_kelas = ? AND id_ta_semester = ?",
+        [id_siswa, id_kelas, id_ta_semester],
         function(err) {
             if (err) {
-                if (err.message.includes('UNIQUE constraint failed')) {
-                    return res.status(409).json({ message: 'Penugasan guru ini sudah ada.' });
-                }
                 return res.status(400).json({ message: err.message });
             }
-            res.status(201).json({ message: 'Guru berhasil ditugaskan ke mata pelajaran dan kelas.', id: this.lastID });
+            if (this.changes === 0) {
+                return res.status(404).json({ message: 'Enrollment record not found or already removed.' });
+            }
+            res.json({ message: 'Student successfully removed from class.', changes: this.changes });
         }
     );
+};
+
+// --- Penugasan Guru ke Mata Pelajaran & Kelas ---
+exports.assignGuruToMapelKelas = (req, res) => {
+    const { id_guru, id_mapel, id_kelas, id_ta_semester, is_wali_kelas } = req.body;
+    const db = getDb();
+    
+    // Start transaction
+    db.serialize(() => {
+        // Insert the assignment
+        db.run("INSERT INTO GuruMataPelajaranKelas (id_guru, id_mapel, id_kelas, id_ta_semester) VALUES (?, ?, ?, ?)",
+            [id_guru, id_mapel, id_kelas, id_ta_semester],
+            function(err) {
+                if (err) {
+                    if (err.message.includes('UNIQUE constraint failed')) {
+                        return res.status(409).json({ message: 'Penugasan guru ini sudah ada.' });
+                    }
+                    return res.status(400).json({ message: err.message });
+                }
+                
+                const assignmentId = this.lastID;
+                
+                // If is_wali_kelas is true, update the Kelas table
+                if (is_wali_kelas) {
+                    db.run("UPDATE Kelas SET id_wali_kelas = ? WHERE id_kelas = ?",
+                        [id_guru, id_kelas],
+                        function(updateErr) {
+                            if (updateErr) {
+                                // Rollback the assignment if wali kelas update fails
+                                db.run("DELETE FROM GuruMataPelajaranKelas WHERE id_guru_mapel_kelas = ?", [assignmentId]);
+                                return res.status(400).json({ message: 'Gagal mengatur wali kelas: ' + updateErr.message });
+                            }
+                            res.status(201).json({ 
+                                message: 'Guru berhasil ditugaskan ke mata pelajaran dan kelas serta ditetapkan sebagai wali kelas.', 
+                                id: assignmentId 
+                            });
+                        }
+                    );
+                } else {
+                    res.status(201).json({ 
+                        message: 'Guru berhasil ditugaskan ke mata pelajaran dan kelas.', 
+                        id: assignmentId 
+                    });
+                }
+            }
+        );
+    });
 };
 
 exports.getGuruMapelKelasAssignments = (req, res) => {
@@ -676,13 +724,87 @@ exports.deleteGuruMapelKelasAssignment = (req, res) => {
                 });
             }
 
-            // Proceed with deletion
-            db.run("DELETE FROM GuruMataPelajaranKelas WHERE id_guru_mapel_kelas = ?", [id], function(err) {
-                if (err) return res.status(400).json({ message: err.message });
-                if (this.changes === 0) return res.status(404).json({ message: 'Assignment tidak ditemukan.' });
-                res.json({ message: 'Assignment berhasil dihapus.' });
+            // Check if this teacher is the wali kelas for this class
+            db.get("SELECT id_wali_kelas FROM Kelas WHERE id_kelas = ?", [assignment.id_kelas], (err, kelas) => {
+                if (err) return res.status(500).json({ message: err.message });
+                
+                const isWaliKelas = kelas && kelas.id_wali_kelas === assignment.id_guru;
+                
+                // Use transaction to ensure atomicity
+                db.serialize(() => {
+                    // Delete the assignment
+                    db.run("DELETE FROM GuruMataPelajaranKelas WHERE id_guru_mapel_kelas = ?", [id], function(err) {
+                        if (err) return res.status(400).json({ message: err.message });
+                        if (this.changes === 0) return res.status(404).json({ message: 'Assignment tidak ditemukan.' });
+                        
+                        // If this guru was the wali kelas, check if they have any remaining assignments in this class
+                        if (isWaliKelas) {
+                            db.get(
+                                "SELECT COUNT(*) AS count FROM GuruMataPelajaranKelas WHERE id_guru = ? AND id_kelas = ? AND id_ta_semester = ?",
+                                [assignment.id_guru, assignment.id_kelas, assignment.id_ta_semester],
+                                (err, remainingCheck) => {
+                                    if (err) {
+                                        console.error("Error checking remaining assignments:", err);
+                                        return res.json({ message: 'Assignment berhasil dihapus.' });
+                                    }
+                                    
+                                    // If no more assignments for this guru in this class, remove wali kelas
+                                    if (remainingCheck.count === 0) {
+                                        db.run("UPDATE Kelas SET id_wali_kelas = NULL WHERE id_kelas = ? AND id_wali_kelas = ?",
+                                            [assignment.id_kelas, assignment.id_guru],
+                                            (err) => {
+                                                if (err) {
+                                                    console.error("Error removing wali kelas:", err);
+                                                }
+                                                res.json({ 
+                                                    message: 'Assignment berhasil dihapus. Wali kelas juga dihapus karena tidak ada assignment lagi.' 
+                                                });
+                                            }
+                                        );
+                                    } else {
+                                        res.json({ message: 'Assignment berhasil dihapus.' });
+                                    }
+                                }
+                            );
+                        } else {
+                            res.json({ message: 'Assignment berhasil dihapus.' });
+                        }
+                    });
+                });
             });
         });
+    });
+};
+
+exports.updateWaliKelas = (req, res) => {
+    const { id_kelas } = req.params;
+    const { id_guru } = req.body; // null to remove wali kelas, or id_guru to set new wali kelas
+    const db = getDb();
+
+    // Validate that the class exists
+    db.get("SELECT * FROM Kelas WHERE id_kelas = ?", [id_kelas], (err, kelas) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (!kelas) return res.status(404).json({ message: 'Kelas tidak ditemukan.' });
+
+        // If id_guru is provided, validate that the teacher exists
+        if (id_guru !== null && id_guru !== undefined) {
+            db.get("SELECT * FROM Guru WHERE id_guru = ?", [id_guru], (err, guru) => {
+                if (err) return res.status(500).json({ message: err.message });
+                if (!guru) return res.status(404).json({ message: 'Guru tidak ditemukan.' });
+
+                // Update the wali kelas
+                db.run("UPDATE Kelas SET id_wali_kelas = ? WHERE id_kelas = ?", [id_guru, id_kelas], function(err) {
+                    if (err) return res.status(400).json({ message: err.message });
+                    res.json({ message: `Wali kelas berhasil diubah menjadi ${guru.nama_guru}.` });
+                });
+            });
+        } else {
+            // Remove wali kelas (set to null)
+            db.run("UPDATE Kelas SET id_wali_kelas = NULL WHERE id_kelas = ?", [id_kelas], function(err) {
+                if (err) return res.status(400).json({ message: err.message });
+                res.json({ message: 'Wali kelas berhasil dihapus dari kelas ini.' });
+            });
+        }
     });
 };
 
