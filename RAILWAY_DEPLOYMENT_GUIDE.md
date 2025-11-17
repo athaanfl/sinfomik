@@ -43,26 +43,22 @@ RATE_LIMIT_MAX_REQUESTS=500
 - `FRONTEND_URL` akan otomatis sesuai domain Railway Anda
 - Bisa generate JWT_SECRET dengan: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
 
-### 4️⃣ Setup Volume (Untuk Database SQLite)
-
-Railway perlu volume persistent untuk SQLite:
-
-1. Di dashboard project > klik service Anda
-2. Pilih tab "Settings"
-3. Scroll ke "Volumes"
-4. Klik "Add Volume"
-5. Mount Path: `/app/backend` (lokasi database)
-
-### 5️⃣ Deploy
+### 4️⃣ Deploy
 
 Railway akan otomatis deploy setelah push ke GitHub. Monitor di tab "Deployments".
 
-### 6️⃣ Post-Deployment
+### 5️⃣ Post-Deployment
 
 1. **Get Domain**: Railway memberikan domain otomatis `xxx.up.railway.app`
 2. **Update FRONTEND_URL**: Di environment variables, set `FRONTEND_URL` ke domain Railway Anda
 3. **Redeploy**: Railway akan otomatis redeploy
 4. **Test**: Buka domain Railway Anda dan test login
+
+⚠️ **PENTING - Tentang Database SQLite**:
+Railway menggunakan ephemeral storage, artinya **data SQLite akan hilang setiap kali redeploy**. Untuk production yang serius, pertimbangkan:
+- Gunakan PostgreSQL (Railway menyediakan plugin gratis)
+- Atau migrate ke database cloud lainnya
+- Atau gunakan hosting yang support persistent disk storage
 
 ## 🔧 Custom Domain (Optional)
 

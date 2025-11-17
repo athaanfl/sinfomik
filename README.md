@@ -137,12 +137,7 @@ Sistem manajemen akademik berbasis web untuk sekolah dengan fitur lengkap untuk 
    node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ```
 
-4. **Add Volume (For SQLite):**
-   - Settings → Volumes → Add Volume
-   - Mount Path: `/app/backend`
-   - Size: 1GB
-
-5. **Deploy & Initialize:**
+4. **Deploy & Initialize:**
    ```bash
    # Connect via Railway CLI
    railway run bash
@@ -151,7 +146,12 @@ Sistem manajemen akademik berbasis web untuk sekolah dengan fitur lengkap untuk 
    exit
    ```
 
-6. **Done!** Access your app at `https://your-app.railway.app`
+5. **Done!** Access your app at `https://your-app.railway.app`
+
+⚠️ **Important Note**: Railway uses ephemeral storage. SQLite database will reset on each deploy. For production use, consider:
+- Using Railway's PostgreSQL plugin (free)
+- Migrating to cloud database (MongoDB Atlas, Supabase)
+- Implementing regular database backups
 
 ### Detailed Documentation
 

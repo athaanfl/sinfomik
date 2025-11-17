@@ -81,13 +81,10 @@ git push origin main
 1. Buat project baru di [railway.app](https://railway.app)
 2. Connect GitHub repository `sinfomik`
 3. Set environment variables di Settings > Variables
-4. Add volume di Settings > Volumes:
-   - Mount path: `/app/backend`
-   - Size: 1GB
-5. Deploy otomatis akan berjalan
-6. Dapatkan domain Railway (xxx.up.railway.app)
-7. Update `FRONTEND_URL` dengan domain tersebut
-8. Redeploy otomatis
+4. Deploy otomatis akan berjalan
+5. Dapatkan domain Railway (xxx.up.railway.app)
+6. Update `FRONTEND_URL` dengan domain tersebut
+7. Redeploy otomatis
 
 ### 4. Inisialisasi Database:
 ```bash
@@ -103,13 +100,19 @@ Buka `https://your-app-name.up.railway.app`
 ## ✅ Arsitektur Deployment:
 
 ```
-Railway Container
+Railway Container (Ephemeral Storage)
 ├── Frontend (React Build) → Served by Express as static files
 └── Backend (Express API)   → Serves frontend + API endpoints
-    └── SQLite Database     → Persistent volume (/app/backend)
+    └── SQLite Database     → ⚠️ Demo only - resets on redeploy
 ```
 
-**Keuntungan:**
+**⚠️ PENTING - SQLite untuk Demo/Testing:**
+- Railway menggunakan **ephemeral storage**
+- Database SQLite akan **reset setiap redeploy**
+- **OK untuk demo** dan testing deployment
+- **Untuk production**, gunakan PostgreSQL, MongoDB, atau database cloud lainnya
+
+**Keuntungan Arsitektur:**
 - ✅ Single domain (no CORS issues)
 - ✅ Single deployment (simpler)
 - ✅ Lower cost (one service)
@@ -144,7 +147,8 @@ Railway Dashboard provides:
 | Issue | Solution |
 |-------|----------|
 | Build failed | Check logs, verify package.json, test local build |
-| Database error | Check volume mount, verify init_db.js ran |
+| Database error | Run init_db.js via Railway CLI, check file permissions |
+| Data hilang | Normal behavior - ephemeral storage resets on deploy |
 | CORS error | Verify FRONTEND_URL matches Railway domain |
 | 502 Gateway | Check PORT env var, test /health endpoint |
 

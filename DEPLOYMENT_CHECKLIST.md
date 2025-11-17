@@ -79,23 +79,17 @@ REACT_APP_API_BASE_URL=
    - Tambahkan semua variables di atas
    - **PENTING:** Ganti `JWT_SECRET` dengan nilai unik!
 
-4. **Setup Volume (Untuk SQLite Database):**
-   - Klik service Anda > Settings > Volumes
-   - Klik "Add Volume"
-   - Mount Path: `/app/backend`
-   - Size: 1GB (free tier)
-
-5. **Deploy:**
+4. **Deploy:**
    - Railway akan otomatis build & deploy
    - Tunggu hingga status "Success"
    - Dapatkan domain: `xxx.up.railway.app`
 
-6. **Update FRONTEND_URL:**
+5. **Update FRONTEND_URL:**
    - Kembali ke Settings > Variables
    - Update `FRONTEND_URL` dengan domain Railway Anda
    - Railway akan otomatis redeploy
 
-7. **Inisialisasi Database (First Time):**
+6. **Inisialisasi Database (First Time):**
    ```bash
    # Di Railway dashboard > Connect via CLI
    railway run bash
@@ -104,10 +98,16 @@ REACT_APP_API_BASE_URL=
    exit
    ```
 
-8. **Test:**
+7. **Test:**
    - Buka `https://your-app-name.up.railway.app`
    - Login dengan default credentials
    - Cek semua fitur berfungsi
+
+⚠️ **CATATAN PENTING - SQLite di Railway**:
+Railway menggunakan **ephemeral storage**. Setiap redeploy akan **reset database**. Untuk production:
+- Gunakan PostgreSQL (Railway provide plugin gratis)
+- Atau migrate ke database cloud
+- Backup database regular jika tetap pakai SQLite
 
 ### 5. Database Backup
 
