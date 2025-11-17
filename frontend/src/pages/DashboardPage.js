@@ -7,7 +7,7 @@ import Student from '../features/admin/student';
 import Teacher from '../features/admin/teacher';
 import ClassManagement from '../features/admin/classManagement';
 import Course from '../features/admin/course';
-import GradeType from '../features/admin/grade';
+// import GradeType from '../features/admin/grade'; // DISABLED - Fitur manajemen tipe nilai dihilangkan
 import StudentClassEnroll from '../features/admin/studentClassEnroll';
 import TeacherClassEnroll from '../features/admin/teacherClassEnroll';
 import ClassPromote from '../features/admin/classPromote';
@@ -15,7 +15,7 @@ import CapaianPembelajaranManagement from '../features/admin/capaianPembelajaran
 import AdminAnalytics from '../features/admin/analytics';
 import InputNilai from '../features/guru/inputNilai';
 import RekapNilai from '../features/guru/rekapNilai';
-import PenilaianCapaianPembelajaran from '../features/guru/cp';
+// import PenilaianCapaianPembelajaran from '../features/guru/cp'; // DISABLED - Fitur dihilangkan
 import WaliKelasGradeView from '../features/guru/WaliKelasGradeView';
 import GuruAnalytics from '../features/guru/analytics';
 
@@ -27,28 +27,48 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
     const [activeTASemester, setActiveTASemester] = useState(null);
     const [loadingTAS, setLoadingTAS] = useState(true);
     const [errorTAS, setErrorTAS] = useState(null);
-    const [isMobile, setIsMobile] = useState(false);
+    // Detect if mobile on initial load
+    const [isMobile, setIsMobile] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            return window.innerWidth <= 1024 || isTouchDevice;
+        }
+        return false;
+    });
     
-    // Initialize sidebar state based on screen size
+    // Initialize sidebar state: closed on mobile, open on desktop
     const [isSidebarOpen, setSidebarOpen] = useState(() => {
         if (typeof window !== 'undefined') {
-            return window.innerWidth > 768; // Open by default on desktop, closed on mobile
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const mobile = window.innerWidth <= 1024 || isTouchDevice;
+            return !mobile; // Open on desktop, closed on mobile
         }
         return true;
     });
     const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-    // Handle window resize
+    // Handle window resize and detect mobile
     useEffect(() => {
         const handleResize = () => {
-            const mobile = window.innerWidth <= 768;
+            // Deteksi mobile: lebar <= 1024px ATAU touchscreen device
+            const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const mobile = window.innerWidth <= 1024 || isTouchDevice;
+            
+            console.log('Resize detected:', {
+                width: window.innerWidth,
+                isTouchDevice,
+                mobile,
+                currentSidebarOpen: isSidebarOpen
+            });
+            
             setIsMobile(mobile);
             
-            if (!mobile) {
-                setSidebarOpen(true); // Always open on desktop
-            } else {
-                setSidebarOpen(false); // Always closed on mobile initially
-            }
+            // JANGAN auto-close sidebar saat resize, biarkan user yang control
+            // if (!mobile) {
+            //     setSidebarOpen(true); // Always open on desktop
+            // } else {
+            //     setSidebarOpen(false); // Always closed on mobile initially
+            // }
         };
 
         window.addEventListener('resize', handleResize);
@@ -85,7 +105,7 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
         { name: "Manajemen Guru", key: "manajemen-guru", component: Teacher, icon: "fas fa-chalkboard-teacher" },
         { name: "Manajemen Kelas", key: "manajemen-kelas", component: ClassManagement, icon: "fas fa-door-open" },
         { name: "Manajemen Mata Pelajaran", key: "manajemen-mapel", component: Course, icon: "fas fa-book" },
-        { name: "Manajemen Tipe Nilai", key: "manajemen-tipe-nilai", component: GradeType, icon: "fas fa-star" },
+        // { name: "Manajemen Tipe Nilai", key: "manajemen-tipe-nilai", component: GradeType, icon: "fas fa-star" }, // DISABLED - Fitur dihilangkan
         { name: "Manajemen Capaian Pembelajaran", key: "manajemen-cp", component: CapaianPembelajaranManagement, icon: "fas fa-bullseye" },
         { name: "Penugasan Siswa ke Kelas", key: "penugasan-siswa-kelas", component: StudentClassEnroll, icon: "fas fa-user-graduate" },
         { name: "Penugasan Guru ke Mapel & Kelas", key: "penugasan-guru-mapel-kelas", component: TeacherClassEnroll, icon: "fas fa-tasks" },
@@ -96,7 +116,7 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
     const guruMenuItems = [
         { name: "Input Nilai", key: "input-nilai", component: InputNilai, icon: "fas fa-edit" },
         { name: "Rekap Nilai", key: "rekap-nilai", component: RekapNilai, icon: "fas fa-chart-bar" },
-        { name: "Penilaian CP", key: "penilaian-cp", component: PenilaianCapaianPembelajaran, icon: "fas fa-check-circle" },
+        // { name: "Penilaian CP", key: "penilaian-cp", component: PenilaianCapaianPembelajaran, icon: "fas fa-check-circle" }, // DISABLED
         { name: "Nilai Kelas Wali", key: "nilai-kelas-wali", component: WaliKelasGradeView, icon: "fas fa-eye" },
         { name: "📊 Analytics Kelas", key: "analytics-guru", component: () => <GuruAnalytics idGuru={userId} />, icon: "fas fa-chart-line" },
     ];
@@ -149,24 +169,32 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
                 id="mobileMenuBtn" 
                 className={`mobile-menu-btn ${isSidebarOpen ? 'active' : ''}`} 
                 onClick={() => {
-                    // Desktop: toggle collapsed state, Mobile: toggle open state
-                    if (!isMobile) {
-                        setSidebarCollapsed(!isSidebarCollapsed);
-                    } else {
-                        setSidebarOpen(!isSidebarOpen);
-                    }
+                    console.log('🍔 Burger clicked! Current:', isSidebarOpen, '-> Next:', !isSidebarOpen);
+                    setSidebarOpen(!isSidebarOpen);
                 }}
+                type="button"
             >
                 <i className="fas fa-bars"></i>
             </button>
 
-            {/* Overlay untuk menutup sidebar (mobile only) */}
-            {isSidebarOpen && isMobile && (
-                <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>
+            {/* Overlay untuk menutup sidebar - selalu render tapi visibility diatur CSS */}
+            {isSidebarOpen && (
+                <div 
+                    className="sidebar-overlay" 
+                    onClick={() => {
+                        console.log('📱 Overlay clicked! Closing sidebar');
+                        setSidebarOpen(false);
+                    }}
+                ></div>
             )}
 
 
-            <div className={`app-sidebar ${isSidebarOpen ? 'open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+            <div className={`app-sidebar ${isSidebarOpen ? 'open' : ''} ${isSidebarCollapsed ? 'collapsed' : ''}`}
+                 data-sidebar-open={isSidebarOpen ? 'true' : 'false'}
+                 style={isMobile ? { 
+                     transform: isSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+                     transition: 'transform 0.3s ease'
+                 } : {}}>
                 <div className="sidebar-header">
                     <div 
                         className={`school-logo ${isSidebarCollapsed ? 'clickable' : ''}`}

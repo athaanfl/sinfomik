@@ -9,6 +9,10 @@ frontend/node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+backend/.env
+frontend/.env
+frontend/.env.production
 
 # Build directories
 backend/build/
@@ -49,3 +53,10 @@ coverage/
 
 # Uploads directory (optional - uncomment if you don't want to track uploads)
 # backend/uploads/
+
+# SQLite database (keep .example if exists)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+!*.db.example

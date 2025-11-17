@@ -3,6 +3,7 @@
     import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
     import LoginPage from './pages/LoginPage';
     import DashboardPage from './pages/DashboardPage';
+    import PWAInstallPrompt from './components/PWAInstallPrompt';
 
     function App() {
       // State untuk melacak status login pengguna
@@ -98,6 +99,9 @@
             {/* Default route: redirect ke login jika tidak ada path yang cocok */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
+          
+          {/* PWA Install Prompt */}
+          <PWAInstallPrompt />
         </Router>
       );
     }

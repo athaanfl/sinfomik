@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv'); // Import dotenv untuk membaca .env
+const path = require('path');
 const { connectDb } = require('./config/db'); // Import fungsi koneksi DB
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -31,19 +32,37 @@ app.use(helmet({
 }));
 
 // 2. CORS - Configure properly untuk specific origin
-app.use(cors({
-    origin: FRONTEND_URL,
+// In production, if frontend is served from same domain, allow same origin
+// In development, allow localhost:3000
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' 
+        ? [FRONTEND_URL, 'https://*.railway.app'] // Allow Railway domains
+        : ['http://localhost:3000', 'http://localhost:3001'], // Development
     credentials: true,
     exposedHeaders: ['Content-Disposition']
-}));
+};
+
+app.use(cors(corsOptions));
 
 // 3. Rate Limiting - Prevent brute force attacks
 const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.',
+    max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 500, // Limit each IP to 500 requests per windowMs (development)
+    message: {
+        error: 'Too many requests',
+        message: 'Anda telah mencapai batas request. Silakan tunggu beberapa saat sebelum mencoba lagi.',
+        retryAfter: '15 menit'
+    },
     standardHeaders: true,
     legacyHeaders: false,
+    handler: (req, res) => {
+        console.log(`⚠️  Rate limit exceeded for IP: ${req.ip}`);
+        res.status(429).json({
+            error: 'Too many requests',
+            message: 'Anda telah mencapai batas request. Silakan tunggu beberapa saat sebelum mencoba lagi.',
+            retryAfter: '15 menit'
+        });
+    }
 });
 
 // Apply rate limiting to all routes
@@ -79,8 +98,13 @@ app.use('/api/grades', gradeRoutes);
 app.use('/api/kkm', kkmRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Route dasar untuk menguji server
-app.get('/', (req, res) => {
+// Health check endpoint (before static files)
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// API routes check
+app.get('/api', (req, res) => {
     res.json({ 
         message: 'API Sistem Manajemen Akademik Berjalan!',
         version: '1.0.0',
@@ -89,15 +113,39 @@ app.get('/', (req, res) => {
     });
 });
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// 404 handler
-app.use((req, res) => {
-    res.status(404).json({ message: 'Endpoint not found' });
-});
+// ===============================
+// SERVE FRONTEND IN PRODUCTION
+// ===============================
+if (process.env.NODE_ENV === 'production') {
+    // Serve static files from React build
+    const frontendBuildPath = path.join(__dirname, '../../frontend/build');
+    app.use(express.static(frontendBuildPath));
+    
+    // Handle React routing - return index.html for all non-API routes
+    app.get('*', (req, res) => {
+        // Skip if it's an API route
+        if (req.path.startsWith('/api/')) {
+            return res.status(404).json({ message: 'API endpoint not found' });
+        }
+        res.sendFile(path.join(frontendBuildPath, 'index.html'));
+    });
+} else {
+    // Development mode - just return API info
+    app.get('/', (req, res) => {
+        res.json({ 
+            message: 'API Sistem Manajemen Akademik Berjalan!',
+            version: '1.0.0',
+            security: 'hardened',
+            status: 'healthy',
+            mode: 'development'
+        });
+    });
+    
+    // 404 handler for development
+    app.use((req, res) => {
+        res.status(404).json({ message: 'Endpoint not found' });
+    });
+}
 
 // Error handler
 app.use((err, req, res, next) => {

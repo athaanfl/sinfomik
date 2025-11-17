@@ -271,12 +271,26 @@ html, body, #root {
     color: white;
     border: none;
     border-radius: 8px;
-    display: flex;
+    display: none; /* Hide by default */
     align-items: center;
     justify-content: center;
     z-index: 10001;
     box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     cursor: pointer;
+}
+
+/* Show desktop expand button only on desktop when sidebar is collapsed */
+@media (min-width: 769px) {
+    .desktop-expand-fixed {
+        display: flex;
+    }
+}
+
+/* Hide desktop expand button on mobile, use mobile-menu-btn instead */
+@media (max-width: 768px) {
+    .desktop-expand-fixed {
+        display: none !important;
+    }
 }
 
 /* Hide the big logo image when collapsed to avoid leftover visuals */
@@ -412,20 +426,21 @@ html, body, #root {
 }
 
 .mobile-menu-btn {
-    display: none; /* Default: hidden */
+    display: none; /* Default: hidden di desktop */
     position: fixed;
     top: 1rem;
     left: 1rem;
-    z-index: 1100;
+    z-index: 1101; /* Di atas sidebar (1100) */
     background-color: var(--primary-color);
     color: white;
     border: none;
     border-radius: 0.5rem;
     padding: 0.5rem;
     cursor: pointer;
-    height: 40px;
-    width: 40px;
+    height: 44px; /* Touch target 44px */
+    width: 44px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-menu-btn:hover {
@@ -452,11 +467,12 @@ html, body, #root {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1099; /* Di bawah sidebar (1100) dan mobile-menu-btn (1101) */
     display: block;
     opacity: 0;
     animation: fadeIn 0.3s ease-out forwards;
+    cursor: pointer; /* Tunjukkan bahwa overlay bisa diklik */
 }
 
 /* Animasi fade in untuk overlay */
@@ -1199,10 +1215,35 @@ html, body, #root {
     font-weight: 600;
 }
 
+/* Tablet landscape - keep sidebar visible but adjust width */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .app-sidebar {
+        width: 240px !important; /* Narrower sidebar for tablet */
+    }
+    
+    .main-content-area {
+        margin-left: 240px !important;
+        width: calc(100% - 240px) !important;
+        max-width: calc(100vw - 240px) !important;
+    }
+    
+    .main-content-area.sidebar-collapsed {
+        margin-left: var(--sidebar-width-collapsed) !important;
+        width: calc(100% - var(--sidebar-width-collapsed)) !important;
+    }
+    
+    /* Make content more compact */
+    .content-wrapper {
+        padding: 16px !important;
+    }
+}
+
 /* Mobile behavior - overlay mode */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .mobile-menu-btn {
-        display: block; /* Show on mobile */
+        display: flex !important; /* Show on mobile */
+        align-items: center;
+        justify-content: center;
     }
     
     .dashboard-container {
@@ -1210,21 +1251,24 @@ html, body, #root {
     }
     
     .app-sidebar {
-        position: fixed;
-        transform: translateX(-100%);
-        width: var(--sidebar-width);
-        z-index: 1100;
-        left: 0;
-        top: 0;
+        position: fixed !important;
+        transform: translateX(-100%) !important;
+        width: 75vw !important; /* 75% dari viewport width, lebih ramping */
+        max-width: 300px !important; /* Maksimal 300px */
+        z-index: 1100 !important;
+        left: 0 !important;
+        top: 0 !important;
+        transition: transform 0.3s ease !important;
     }
     
     .app-sidebar.open {
-        transform: translateX(0);
-        box-shadow: 8px 0 25px rgba(0, 0, 0, 0.15);
+        transform: translateX(0) !important;
+        box-shadow: 8px 0 25px rgba(0, 0, 0, 0.15) !important;
     }
     
     .app-sidebar.collapsed {
-        width: var(--sidebar-width); /* Full width on mobile even when collapsed */
+        width: 75vw;
+        max-width: 300px;
     }
     
     .main-content-area {
@@ -1233,10 +1277,22 @@ html, body, #root {
         margin-left: 0 !important; /* No margin on mobile */
         overflow-x: hidden;
     }
+    
+    /* Pastikan konten tidak tertutup sidebar */
+    .main-content-area .content-wrapper {
+        padding: 12px !important;
+    }
+    
+    /* Header title lebih kecil di mobile */
+    .dashboard-header h1,
+    .dashboard-header-main h1 {
+        font-size: 20px !important;
+        margin: 0 !important;
+    }
 }
 
 /* Desktop behavior - push layout */
-@media (min-width: 769px) {
+@media (min-width: 1025px) {
     .sidebar-overlay {
         display: none !important;
     }
@@ -1381,4 +1437,308 @@ html, body, #root {
 
 /* Hide the in-header expand button if any */
 .desktop-expand-btn { display: none !important; }
+
+/* Better table scrolling on tablet/desktop */
+@media (max-width: 1200px) {
+    .table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    table {
+        min-width: 100%;
+        font-size: 14px;
+    }
+    
+    table th,
+    table td {
+        padding: 8px 12px;
+        white-space: nowrap;
+    }
+}
+
+/* Optimize form layouts for landscape tablet */
+@media (min-width: 769px) and (max-width: 1200px) and (orientation: landscape) {
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 16px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+    
+    .button-group {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    
+    .button-group button {
+        flex: 1;
+        min-width: 120px;
+    }
+}
+
+/* Improve card layouts for wide screens */
+@media (min-width: 1024px) {
+    .card-grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+}
+
+/* Fix content padding for different screen sizes */
+.content-wrapper {
+    padding: 24px;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+@media (max-width: 1200px) {
+    .content-wrapper {
+        padding: 16px;
+    }
+}
+
+/* Ensure charts are responsive */
+.recharts-wrapper {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+.recharts-surface {
+    max-width: 100% !important;
+}
+
+/* ================================================
+   MOBILE RESPONSIVE OPTIMIZATION (Portrait)
+   ================================================ */
+
+@media (max-width: 768px) {
+    /* Main content full width di mobile */
+    .main-content-area {
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+    }
+    
+    /* Header responsive - beri ruang untuk burger button */
+    .dashboard-header,
+    .dashboard-header-main {
+        padding-top: 60px !important; /* Beri space untuk burger button */
+    }
+    
+    .dashboard-header h1,
+    .dashboard-header-main h1 {
+        font-size: 18px !important;
+        padding: 16px !important;
+        padding-top: 0 !important; /* Reset padding top karena parent sudah diberi */
+    }
+    
+    /* Content wrapper mobile padding */
+    .content-wrapper {
+        padding: 12px !important;
+    }
+    
+    .dashboard-feature-content {
+        padding: 16px !important;
+        margin-top: 12px !important;
+    }
+    
+    /* Table responsive */
+    .table-wrapper,
+    .data-table {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: block !important;
+    }
+    
+    table {
+        font-size: 12px !important;
+        min-width: 600px !important;
+        width: 100% !important;
+    }
+    
+    table th,
+    table td {
+        padding: 8px 6px !important;
+        white-space: nowrap !important;
+    }
+    
+    /* Form mobile layout */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr !important;
+        flex-direction: column !important;
+    }
+    
+    .form-column {
+        min-width: 100% !important;
+    }
+    
+    .form-group {
+        margin-bottom: 12px !important;
+    }
+    
+    /* Button responsive - KECUALI mobile-menu-btn */
+    button:not(.mobile-menu-btn),
+    .submit-button,
+    .action-button {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        min-height: 44px !important;
+        font-size: 16px !important;
+        padding: 12px !important;
+    }
+    
+    /* Mobile menu button tetap ukuran fixed */
+    .mobile-menu-btn {
+        width: 44px !important;
+        height: 44px !important;
+        min-height: 44px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .button-group {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    .button-group button {
+        width: 100% !important;
+        margin-right: 0 !important;
+    }
+    
+    /* Input sizing untuk prevent zoom iOS */
+    input[type="text"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="password"],
+    select,
+    textarea {
+        font-size: 16px !important;
+        padding: 12px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Charts mobile */
+    .charts-container {
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+    
+    .chart-card {
+        min-width: unset !important;
+        width: 100% !important;
+        margin-bottom: 16px !important;
+        padding: 16px !important;
+    }
+    
+    /* Modal responsive */
+    .modal-content {
+        width: 95% !important;
+        max-width: none !important;
+        padding: 20px !important;
+        margin: 12px !important;
+    }
+    
+    .modal-content h3 {
+        font-size: 18px !important;
+    }
+    
+    .modal-actions {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    
+    .modal-actions button {
+        width: 100% !important;
+    }
+    
+    /* Grid structures responsive */
+    .grades-table-wrapper,
+    .cp-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .grades-grid-header,
+    .grades-grid-row {
+        grid-template-columns: minmax(120px, 1fr) repeat(auto-fit, minmax(80px, 1fr)) !important;
+    }
+    
+    .cp-grid-header,
+    .cp-grid-row {
+        grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr)) !important;
+    }
+    
+    .grid-header-item,
+    .grid-cell-item {
+        padding: 8px 5px !important;
+        font-size: 12px !important;
+    }
+    
+    /* Student checkbox list mobile */
+    .student-checkbox-list {
+        grid-template-columns: 1fr !important;
+        max-height: 250px !important;
+    }
+    
+    /* CP specific mobile adjustments */
+    .cp-card {
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+    }
+    
+    .cp-mapel-card {
+        padding: 16px !important;
+    }
+    
+    /* Prevent horizontal scroll */
+    body,
+    html,
+    #root,
+    .dashboard-container {
+        overflow-x: hidden !important;
+        max-width: 100vw !important;
+    }
+}
+
+/* Tablet landscape - keep sidebar visible but adjust width */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .app-sidebar {
+        width: 240px !important;
+    }
+    
+    .main-content-area {
+        margin-left: 240px !important;
+        width: calc(100% - 240px) !important;
+        max-width: calc(100vw - 240px) !important;
+    }
+    
+    .main-content-area.sidebar-collapsed {
+        margin-left: var(--sidebar-width-collapsed) !important;
+        width: calc(100% - var(--sidebar-width-collapsed)) !important;
+    }
+    
+    .content-wrapper {
+        padding: 16px !important;
+    }
+    
+    /* Form 2 kolom di tablet landscape */
+    .form-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
 
