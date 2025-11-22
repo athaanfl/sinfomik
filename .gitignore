@@ -60,3 +60,6 @@ coverage/
 *.db-wal
 *.db-shm
 !*.db.example
+
+# Project-specific ignores
+backend/academic_dashboard.db
