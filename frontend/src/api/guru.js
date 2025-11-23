@@ -10,6 +10,35 @@ export const getTASemester = async () => {
   return fetchData(`${API_BASE_URL}/api/guru/ta-semester`);
 };
 
+// --- API untuk Change Password Guru ---
+export const changePassword = async (oldPassword, newPassword) => {
+  // Fungsi khusus yang TIDAK redirect saat 401 (password salah)
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(`${API_BASE_URL}/api/guru/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ oldPassword, newPassword })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      // Jangan redirect, lempar error dengan message dari backend
+      throw new Error(data.message || 'Gagal mengubah password');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error changing password:', error);
+    throw error;
+  }
+};
+
 // --- Fungsi Umum untuk Panggilan API dengan JWT Authentication ---
 const fetchData = async (url, options = {}) => {
   try {
@@ -37,11 +66,20 @@ const fetchData = async (url, options = {}) => {
     
     // Handle 401 Unauthorized - token expired or invalid
     if (response.status === 401) {
-      console.log('🔒 Token expired or invalid, redirecting to login...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      return;
+      console.log('🔒 Token expired or invalid, redirecting to login (guarded)...');
+      const now = Date.now();
+      const last = window.__lastAuthRedirect || 0;
+      if (now - last > 5000) {
+        window.__lastAuthRedirect = now;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.replace('/login');
+      }
+      throw new Error('Session expired');
+    }
+    if (response.status === 429) {
+      const data429 = await response.json().catch(()=>({}));
+      throw new Error(data429.message || 'Rate limit exceeded. Please wait.');
     }
     
     const data = await response.json();
@@ -182,13 +220,23 @@ export const exportGradeTemplate = async (id_guru, id_mapel, id_kelas, id_ta_sem
       { headers }
     );
     
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized with redirect guard
     if (response.status === 401) {
-      console.log('🔒 Token expired or invalid, redirecting to login...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      return;
+      console.log('🔒 Token expired or invalid, redirecting to login (guarded)...');
+      const now = Date.now();
+      const last = window.__lastAuthRedirect || 0;
+      if (now - last > 5000) {
+        window.__lastAuthRedirect = now;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.replace('/login');
+      }
+      throw new Error('Session expired');
+    }
+    
+    if (response.status === 429) {
+      const data429 = await response.json().catch(()=>({}));
+      throw new Error(data429.message || 'Rate limit exceeded. Please wait.');
     }
     
     if (!response.ok) {
@@ -297,13 +345,23 @@ export const exportFinalGrades = async (id_guru, id_mapel, id_kelas, id_ta_semes
       { headers }
     );
     
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized with redirect guard
     if (response.status === 401) {
-      console.log('🔒 Token expired or invalid, redirecting to login...');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      return;
+      console.log('🔒 Token expired or invalid, redirecting to login (guarded)...');
+      const now = Date.now();
+      const last = window.__lastAuthRedirect || 0;
+      if (now - last > 5000) {
+        window.__lastAuthRedirect = now;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.replace('/login');
+      }
+      throw new Error('Session expired');
+    }
+    
+    if (response.status === 429) {
+      const data429 = await response.json().catch(()=>({}));
+      throw new Error(data429.message || 'Rate limit exceeded. Please wait.');
     }
     
     if (!response.ok) {

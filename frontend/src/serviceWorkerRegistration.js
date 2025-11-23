@@ -111,7 +111,15 @@ function checkValidServiceWorker(swUrl, config) {
         // No service worker found. Probably a different app. Reload the page.
         navigator.serviceWorker.ready.then((registration) => {
           registration.unregister().then(() => {
-            window.location.reload();
+            // Throttle reload to avoid rapid refresh loops hitting rate limits
+            const now = Date.now();
+            const lastReload = window.__lastSWReload || 0;
+            if (now - lastReload > 10000) { // at most once per 10s
+              window.__lastSWReload = now;
+              window.location.reload();
+            } else {
+              console.log('⏱ Skipping repeated service worker reload');
+            }
           });
         });
       } else {

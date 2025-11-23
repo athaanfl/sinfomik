@@ -35,7 +35,12 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        const now = Date.now();
+        const last = window.__lastAuthRedirect || 0;
+        if (now - last > 5000) {
+          window.__lastAuthRedirect = now;
+          window.location.replace('/login');
+        }
         return;
       }
       
@@ -79,7 +84,12 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        const now2 = Date.now();
+        const last2 = window.__lastAuthRedirect || 0;
+        if (now2 - last2 > 5000) {
+          window.__lastAuthRedirect = now2;
+          window.location.replace('/login');
+        }
         return;
       }
 
@@ -566,7 +576,12 @@ const ImportExcel = ({ onImportSuccess }) => {
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        const now3 = Date.now();
+        const last3 = window.__lastAuthRedirect || 0;
+        if (now3 - last3 > 5000) {
+          window.__lastAuthRedirect = now3;
+          window.location.replace('/login');
+        }
         return;
       }
       

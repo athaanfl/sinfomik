@@ -11,7 +11,6 @@ function hashPasswordPythonStyle(password) {
 // --- Manajemen Siswa ---
 exports.getAllStudents = (req, res) => {
     const db = getDb();
-    // Ambil id_ta_semester aktif dari query parameter jika ada, atau cari yang aktif
     const activeTASemesterId = req.query.active_ta_semester_id;
 
     let query = `
@@ -20,7 +19,6 @@ exports.getAllStudents = (req, res) => {
             s.nama_siswa,
             s.tanggal_lahir,
             s.jenis_kelamin,
-            s.password_hash,
             s.tahun_ajaran_masuk,
             k.id_kelas AS kelas_aktif_id,
             k.nama_kelas AS kelas_aktif_nama,
@@ -31,14 +29,12 @@ exports.getAllStudents = (req, res) => {
         LEFT JOIN Kelas k ON sk.id_kelas = k.id_kelas
         LEFT JOIN TahunAjaranSemester tas_k ON k.id_ta_semester = tas_k.id_ta_semester
     `;
-    let params = [];
+    const params = [];
 
     if (activeTASemesterId) {
-        // Jika ada active_ta_semester_id, filter siswa_kelas berdasarkan itu
-        query += ` WHERE sk.id_ta_semester = ? OR sk.id_ta_semester IS NULL`; // Siswa tanpa kelas juga ditampilkan
+        query += ` WHERE sk.id_ta_semester = ? OR sk.id_ta_semester IS NULL`;
         params.push(activeTASemesterId);
     } else {
-        // Jika tidak ada active_ta_semester_id dari frontend, coba cari yang aktif di DB
         query += ` LEFT JOIN TahunAjaranSemester tas_active ON tas_active.is_aktif = 1
                    WHERE sk.id_ta_semester = tas_active.id_ta_semester OR sk.id_ta_semester IS NULL`;
     }
@@ -50,17 +46,17 @@ exports.getAllStudents = (req, res) => {
             console.error("Error fetching all students:", err.message);
             return res.status(500).json({ message: err.message });
         }
+        // Jangan expose password_hash ke frontend
         res.json(rows);
     });
 };
 
 exports.addStudent = (req, res) => {
-    const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password, tahun_ajaran_masuk } = req.body;
+    const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk } = req.body;
     const db = getDb();
-    const password_hash = hashPasswordPythonStyle(password);
 
     db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?, ?)",
-        [id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk],
+        [id_siswa, nama_siswa, tanggal_lahir || null, jenis_kelamin || null, null, tahun_ajaran_masuk || null],
         function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
@@ -75,16 +71,10 @@ exports.addStudent = (req, res) => {
 
 exports.updateStudent = (req, res) => {
     const { id } = req.params;
-    const { nama_siswa, tanggal_lahir, jenis_kelamin, password, tahun_ajaran_masuk } = req.body;
+    const { nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk } = req.body;
     const db = getDb();
-    let query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, tahun_ajaran_masuk = ? WHERE id_siswa = ?";
-    let params = [nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk, id];
-
-    if (password) {
-        const password_hash = hashPasswordPythonStyle(password);
-        query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, password_hash = ?, tahun_ajaran_masuk = ? WHERE id_siswa = ?";
-        params = [nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk, id];
-    }
+    const query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, tahun_ajaran_masuk = ? WHERE id_siswa = ?";
+    const params = [nama_siswa, tanggal_lahir || null, jenis_kelamin || null, tahun_ajaran_masuk || null, id];
 
     db.run(query, params, function(err) {
         if (err) return res.status(400).json({ message: err.message });

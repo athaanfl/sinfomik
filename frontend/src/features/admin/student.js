@@ -22,9 +22,7 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
       const dataToUpdate = {
         nama_siswa: editedStudent.nama_siswa,
         tanggal_lahir: editedStudent.tanggal_lahir,
-        jenis_kelamin: editedStudent.jenis_kelamin,
-        // Password hanya dikirim jika diisi
-        ...(editedStudent.password && { password: editedStudent.password })
+        jenis_kelamin: editedStudent.jenis_kelamin
       };
       
       const response = await adminApi.updateStudent(editedStudent.id_siswa, dataToUpdate);
@@ -106,17 +104,6 @@ const EditStudentModal = ({ student, onClose, onSave }) => {
               <option value="P">Female</option>
             </select>
           </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">New Password (leave blank to keep current)</label>
-            <input
-              type="password"
-              name="password"
-              value={editedStudent.password || ''}
-              onChange={handleChange}
-              placeholder="Fill to change password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
           <div className="flex justify-end space-x-3 mt-6">
             <button 
               type="button" 
@@ -146,8 +133,7 @@ const StudentManagement = () => {
     id_siswa: '',
     nama_siswa: '',
     tanggal_lahir: '',
-    jenis_kelamin: 'L',
-    password: ''
+    jenis_kelamin: 'L'
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
@@ -193,14 +179,14 @@ const StudentManagement = () => {
     }
     
     try {
-      const response = await adminApi.addStudent(newStudent);
+      const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin } = newStudent;
+      const response = await adminApi.addStudent({ id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin });
       showMessage(response.message);
       setNewStudent({
         id_siswa: '',
         nama_siswa: '',
         tanggal_lahir: '',
-        jenis_kelamin: 'L',
-        password: ''
+        jenis_kelamin: 'L'
       });
       fetchStudents(); // Refresh daftar
     } catch (err) {
@@ -293,16 +279,6 @@ const StudentManagement = () => {
                 <option value="L">Laki-Laki</option>
                 <option value="P">Perempuan</option>
               </select>
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <input 
-                type="password" 
-                value={newStudent.password}
-                onChange={(e) => setNewStudent({ ...newStudent, password: e.target.value })}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              />
             </div>
             <div className="md:col-span-2">
               <button 

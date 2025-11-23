@@ -95,17 +95,6 @@ function LoginPage({ onLogin }) {
                 >
                   <i data-feather="user" className="mr-2 w-4 h-4"></i> Guru
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleRoleChange('siswa')}
-                  className={`role-btn px-4 py-2 rounded-lg font-medium flex items-center ${
-                    userType === 'siswa'
-                      ? 'bg-[#4F46E5] text-white active'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}
-                >
-                  <i data-feather="book" className="mr-2 w-4 h-4"></i> Siswa
-                </button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">

@@ -33,7 +33,6 @@ function initializeDatabase() {
             nama_siswa TEXT NOT NULL,
             tanggal_lahir TEXT,
             jenis_kelamin TEXT,
-            password_hash TEXT,
             tahun_ajaran_masuk TEXT
         );
 
@@ -227,8 +226,8 @@ async function insertDummyData(db) {
                 { id_siswa: 1005, nama_siswa: 'Eko Saputra', tanggal_lahir: '2008-11-20', jenis_kelamin: 'L', tahun_ajaran_masuk: '2023/2024' },
             ];
             for (const s of students) {
-                await runQuery("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?, ?)",
-                    [s.id_siswa, s.nama_siswa, s.tanggal_lahir, s.jenis_kelamin, hashPasswordPythonStyle('siswa123'), s.tahun_ajaran_masuk]);
+                await runQuery("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?)",
+                    [s.id_siswa, s.nama_siswa, s.tanggal_lahir, s.jenis_kelamin, s.tahun_ajaran_masuk]);
             }
             console.log(`${students.length} Siswa dummy ditambahkan.`);
         } else { console.log("Table Siswa already contains data. Skipping dummy data insertion."); }

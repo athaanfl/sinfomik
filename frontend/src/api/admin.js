@@ -12,16 +12,34 @@ const fetchData = async (url, options = {}) => {
     };
     
     const response = await fetch(url, { ...options, headers });
+    
+    // Handle 401 Unauthorized with redirect guard
+    if (response.status === 401) {
+      const now = Date.now();
+      const last = window.__lastAuthRedirect || 0;
+      if (now - last > 5000) {
+        window.__lastAuthRedirect = now;
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userId');
+        window.location.replace('/login');
+      }
+      throw new Error('Session expired');
+    }
+    
+    // Handle 429 Rate Limit without retry
+    if (response.status === 429) {
+      const data429 = await response.json().catch(() => ({}));
+      throw new Error(data429.message || 'Rate limit exceeded. Please wait.');
+    }
+    
     const data = await response.json();
     
     if (!response.ok) {
-      // Handle 401 - token expired
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        throw new Error('Session expired. Please login again.');
-      }
+      // Jika respons bukan 2xx, lempar error dengan pesan dari backend
       throw new Error(data.message || 'Terjadi kesalahan pada server.');
     }
     return data;

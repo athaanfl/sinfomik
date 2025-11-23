@@ -26,6 +26,10 @@ exports.login = (req, res) => {
     let idField;
     let nameField;
 
+    if (user_type === 'siswa') {
+        return res.status(400).json({ message: 'Role siswa tidak memiliki akses login.' });
+    }
+
     switch (user_type) {
         case 'admin':
             tableName = 'Admin';
@@ -38,12 +42,6 @@ exports.login = (req, res) => {
             usernameField = 'username';
             idField = 'id_guru';
             nameField = 'nama_guru';
-            break;
-        case 'siswa':
-            tableName = 'Siswa';
-            usernameField = 'nama_siswa'; // Untuk siswa, username adalah nama_siswa
-            idField = 'id_siswa';
-            nameField = 'nama_siswa';
             break;
         default:
             return res.status(400).json({ message: 'Tipe pengguna tidak valid.' });

@@ -1,6 +1,19 @@
 // backend/src/controllers/guruController.js
 const { getDb } = require('../config/db');
 const { format } = require('date-fns'); // For date formatting
+const { createHash } = require('crypto'); // Untuk hashing SHA256
+const bcrypt = require('bcryptjs'); // Untuk bcrypt hashing
+
+// Helper untuk hashing password (sesuai dengan yang digunakan di Python)
+function hashPasswordPythonStyle(password) {
+    return createHash('sha256').update(password).digest('hex');
+}
+
+// Helper untuk hashing dengan bcrypt
+async function hashPasswordBcrypt(password) {
+    const salt = await bcrypt.genSalt(10);
+    return await bcrypt.hash(password, salt);
+}
 
 // --- Get Teacher Assignments ---
 exports.getGuruAssignments = (req, res) => {
@@ -335,5 +348,59 @@ exports.getWaliKelasClassList = (req, res) => {
             return res.status(500).json({ message: err.message });
         }
         res.json(rows);
+    });
+};
+
+// --- Change Password untuk Guru ---
+exports.changePassword = async (req, res) => {
+    const { oldPassword, newPassword } = req.body;
+    const id_guru = req.user.id; // Dari JWT token (field 'id', bukan 'id_guru')
+    
+    if (!oldPassword || !newPassword) {
+        return res.status(400).json({ message: 'Password lama dan password baru harus diisi' });
+    }
+    
+    if (newPassword.length < 6) {
+        return res.status(400).json({ message: 'Password baru minimal 6 karakter' });
+    }
+    
+    const db = getDb();
+    
+    // Ambil data guru untuk cek password
+    db.get('SELECT * FROM Guru WHERE id_guru = ?', [id_guru], async (err, guru) => {
+        if (err) {
+            return res.status(500).json({ message: err.message });
+        }
+        
+        if (!guru) {
+            return res.status(404).json({ message: 'Guru tidak ditemukan' });
+        }
+        
+        // Verifikasi password lama - support both SHA256 and bcrypt
+        let isPasswordValid = false;
+        
+        if (guru.password_hash.startsWith('$2a$') || guru.password_hash.startsWith('$2b$')) {
+            // Password di-hash dengan bcrypt
+            isPasswordValid = await bcrypt.compare(oldPassword, guru.password_hash);
+        } else {
+            // Password di-hash dengan SHA256 (legacy)
+            const hashedOldPassword = hashPasswordPythonStyle(oldPassword);
+            isPasswordValid = hashedOldPassword === guru.password_hash;
+        }
+        
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Password lama tidak sesuai' });
+        }
+        
+        // Hash password baru dengan bcrypt (lebih aman)
+        const hashedNewPassword = await hashPasswordBcrypt(newPassword);
+        
+        // Update password
+        db.run('UPDATE Guru SET password_hash = ? WHERE id_guru = ?', [hashedNewPassword, id_guru], function(err) {
+            if (err) {
+                return res.status(500).json({ message: err.message });
+            }
+            res.json({ message: 'Password berhasil diubah' });
+        });
     });
 };

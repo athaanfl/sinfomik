@@ -12,6 +12,9 @@ router.use(isAdminOrGuru);
 // Read-only access to TA Semester data (needed for guru dashboard)
 router.get('/ta-semester', adminController.getAllTASemester);
 
+// Change password endpoint
+router.post('/change-password', guruController.changePassword);
+
 // Protected guru endpoints
 router.get('/assignments/:id_guru/:id_ta_semester', guruController.getGuruAssignments);
 router.get('/students-in-class/:id_kelas/:id_ta_semester', guruController.getStudentsInClass);

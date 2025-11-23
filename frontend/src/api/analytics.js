@@ -13,10 +13,21 @@ const fetchWithAuth = async (url, options = {}) => {
     const response = await fetch(url, { ...options, headers });
     
     if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        // Prevent redirect storm: only redirect once per 5s window
+        const now = Date.now();
+        const last = window.__lastAuthRedirect || 0;
+        if (now - last > 5000) {
+            window.__lastAuthRedirect = now;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.replace('/login');
+        }
         throw new Error('Session expired');
+    }
+    if (response.status === 429) {
+        // Rate limit hit: do NOT retry automatically, surface message
+        const data429 = await response.json().catch(()=>({}));
+        throw new Error(data429.message || 'Rate limit exceeded. Please wait.');
     }
     
     if (!response.ok) {

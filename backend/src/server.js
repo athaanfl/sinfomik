@@ -65,14 +65,14 @@ const limiter = rateLimit({
     }
 });
 
-// Apply rate limiting to all routes
-app.use(limiter);
+// Apply rate limiting only to API routes (avoid counting static asset reloads)
+app.use('/api', limiter);
 
 // Stricter rate limit for auth routes
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 login requests per windowMs
-    message: 'Too many login attempts, please try again after 15 minutes.',
+    max: process.env.NODE_ENV === 'production' ? 10 : 100, // 100 untuk development, 10 untuk production
+    message: 'Terlalu banyak percobaan login. Silakan coba lagi setelah 15 menit.',
     skipSuccessfulRequests: true, // Don't count successful requests
 });
 
@@ -156,10 +156,29 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start server
-app.listen(PORT, () => {
-    console.log(`\n🚀 Server berjalan di http://localhost:${PORT}`);
-    console.log(`🔒 Security: ENABLED (Helmet, Rate Limit, CORS)`);
-    console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
-    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}\n`);
-});
+// Start server with graceful EADDRINUSE fallback
+function startServer(port, attempt = 0) {
+    const srv = app.listen(port, () => {
+        console.log(`\n🚀 Server berjalan di http://localhost:${port}`);
+        console.log(`🔒 Security: ENABLED (Helmet, Rate Limit, CORS)`);
+        console.log(`🌐 Frontend URL: ${FRONTEND_URL}`);
+        console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+    });
+    srv.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            const nextPort = port + 1;
+            if (attempt < 5) {
+                console.warn(`⚠️  Port ${port} in use. Mencoba port alternatif: ${nextPort}`);
+                startServer(nextPort, attempt + 1);
+            } else {
+                console.error('❌ Gagal menemukan port kosong setelah beberapa percobaan.');
+                process.exit(1);
+            }
+        } else {
+            console.error('❌ Server error:', err);
+            process.exit(1);
+        }
+    });
+}
+
+startServer(Number(PORT));
