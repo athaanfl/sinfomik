@@ -63,3 +63,10 @@ coverage/
 
 # Project-specific ignores
 backend/academic_dashboard.db
+
+# UAT Documentation (contains test credentials)
+UAT_*.md
+UAT_*.txt
+
+# Temporary check scripts
+backend/src/check_*.js
