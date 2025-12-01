@@ -1,5 +1,15 @@
+﻿// frontend/src/features/admin/capaianPembelajaranManagement.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
+import Button from '../../components/Button';
+import Table from '../../components/Table';
+import ModuleContainer from '../../components/ModuleContainer';
+import PageHeader from '../../components/PageHeader';
+import FormSection from '../../components/FormSection';
+import ConfirmDialog from '../../components/ConfirmDialog';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import StatusMessage from '../../components/StatusMessage';
+import EmptyState from '../../components/EmptyState';
 
 // Komponen Modal ATP Viewer (dengan Edit Mode)
 const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
@@ -22,7 +32,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      // Get JWT token from localStorage
       const token = localStorage.getItem('token');
       
       const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
@@ -31,7 +40,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
         }
       });
       
-      // Handle 401 Unauthorized
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -50,7 +58,7 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
       }
       const data = await response.json();
       setAtpData(data.data || []);
-      setEditedData(JSON.parse(JSON.stringify(data.data || []))); // Deep copy
+      setEditedData(JSON.parse(JSON.stringify(data.data || [])));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -68,7 +76,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     setSaving(true);
     setSaveMessage('');
     try {
-      // Get JWT token from localStorage
       const token = localStorage.getItem('token');
       
       const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
@@ -80,7 +87,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
         body: JSON.stringify({ data: editedData })
       });
 
-      // Handle 401 Unauthorized
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -99,25 +105,24 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
       }
 
       const result = await response.json();
-      setSaveMessage('✓ Changes saved successfully!');
-      setAtpData([...editedData]); // Update original data
+      setSaveMessage(' Changes saved successfully!');
+      setAtpData([...editedData]);
       setIsEditMode(false);
       
       setTimeout(() => setSaveMessage(''), 3000);
     } catch (err) {
-      setSaveMessage(`✗ Error: ${err.message}`);
+      setSaveMessage(` Error: ${err.message}`);
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancelEdit = () => {
-    setEditedData(JSON.parse(JSON.stringify(atpData))); // Reset to original
+    setEditedData(JSON.parse(JSON.stringify(atpData)));
     setIsEditMode(false);
     setSaveMessage('');
   };
 
-  // Filter data (gunakan editedData saat edit mode, atpData saat view mode)
   const dataToDisplay = isEditMode ? editedData : atpData;
   const filteredData = dataToDisplay.filter(row => {
     const matchesSearch = Object.values(row).some(val => 
@@ -128,16 +133,15 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     return matchesSearch && matchesKelas && matchesSemester;
   }).map((row, idx) => ({ ...row, _originalIndex: dataToDisplay.indexOf(row) }));
 
-  // Get unique values for filters
   const uniqueKelas = [...new Set(dataToDisplay.map(row => row.Kelas).filter(Boolean))].sort();
   const uniqueSemester = [...new Set(dataToDisplay.map(row => row.Semester).filter(Boolean))].sort();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="modal-overlay">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[90vh] flex flex-col transform transition-all duration-300">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-t-2xl flex-shrink-0">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h3 className="text-2xl font-bold text-white flex items-center">
                 <i className={`fas ${isEditMode ? 'fa-edit' : 'fa-table'} mr-3 text-3xl`}></i>
@@ -145,34 +149,35 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
               </h3>
               <p className="text-blue-100 mt-2">{nama_mapel} - Fase {fase}</p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center flex-wrap gap-3">
               {!isEditMode && (
-                <button 
+                <Button
+                  variant="secondary"
+                  icon="edit"
                   onClick={() => setIsEditMode(true)}
-                  className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center font-medium"
+                  className="bg-white/20 hover:bg-white/30"
                 >
-                  <i className="fas fa-edit mr-2"></i>
                   Edit Mode
-                </button>
+                </Button>
               )}
               {isEditMode && (
                 <>
-                  <button 
+                  <Button
+                    variant="success"
+                    icon={saving ? 'spinner' : 'save'}
                     onClick={handleSaveChanges}
                     disabled={saving}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <i className={`fas ${saving ? 'fa-spinner fa-spin' : 'fa-save'} mr-2`}></i>
                     {saving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button 
+                  </Button>
+                  <Button
+                    variant="danger"
+                    icon="times"
                     onClick={handleCancelEdit}
                     disabled={saving}
-                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <i className="fas fa-times mr-2"></i>
                     Cancel
-                  </button>
+                  </Button>
                 </>
               )}
               <button 
@@ -184,15 +189,17 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
             </div>
           </div>
           {saveMessage && (
-            <div className={`mt-3 p-3 rounded-lg ${saveMessage.startsWith('✓') ? 'bg-green-500/20 text-white' : 'bg-red-500/20 text-white'} font-medium`}>
-              {saveMessage}
-            </div>
+            <StatusMessage 
+              type={saveMessage.startsWith('') ? 'success' : 'error'}
+              message={saveMessage}
+              className="mt-3"
+            />
           )}
         </div>
 
         {/* Filters */}
         <div className="p-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <div className="relative">
               <input 
                 type="text" 
@@ -231,22 +238,14 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
-          {loading && (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center px-6 py-3 rounded-full bg-blue-50 text-blue-600">
-                <i className="fas fa-spinner animate-spin mr-3 text-xl"></i>
-                <span className="font-medium">Loading ATP data...</span>
-              </div>
-            </div>
-          )}
+          {loading && <LoadingSpinner message="Loading ATP data..." />}
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
-              <div className="flex items-center">
-                <i className="fas fa-exclamation-circle mr-2 text-xl"></i>
-                <span className="font-medium">Error: {error}</span>
-              </div>
-            </div>
+            <StatusMessage 
+              type="error"
+              message={error}
+              icon="exclamation-circle"
+            />
           )}
 
           {!loading && !error && filteredData.length > 0 && (
@@ -266,17 +265,13 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredData.map((row, idx) => {
-                    // Use pre-calculated original index from filtered data
                     const originalIndex = row._originalIndex;
-                    
-                    // Create unique key from row data
                     const uniqueKey = `row-${originalIndex}-${row.Kelas}-${row.Semester}`;
                     
                     return (
                       <tr key={uniqueKey} className={`hover:bg-blue-50 transition-colors duration-150 ${isEditMode ? 'bg-yellow-50' : ''}`}>
                         <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">{idx + 1}</td>
                         
-                        {/* Elemen - editable */}
                         <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200">
                           {isEditMode ? (
                             <input 
@@ -290,7 +285,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                           )}
                         </td>
                         
-                        {/* CP - editable textarea */}
                         <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-xs">
                           {isEditMode ? (
                             <textarea 
@@ -304,7 +298,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                           )}
                         </td>
                         
-                        {/* TP - editable textarea */}
                         <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-md">
                           {isEditMode ? (
                             <textarea 
@@ -318,7 +311,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                           )}
                         </td>
                         
-                        {/* KKTP - editable textarea */}
                         <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200 max-w-md">
                           {isEditMode ? (
                             <textarea 
@@ -332,7 +324,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                           )}
                         </td>
                         
-                        {/* Materi Pokok - editable */}
                         <td className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200">
                           {isEditMode ? (
                             <input 
@@ -346,7 +337,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                           )}
                         </td>
                         
-                        {/* Kelas - editable */}
                         <td className="px-4 py-3 text-sm text-gray-900 border-r border-gray-200 text-center font-medium">
                           {isEditMode ? (
                             <input 
@@ -360,7 +350,6 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
                           )}
                         </td>
                         
-                        {/* Semester - editable */}
                         <td className="px-4 py-3 text-sm text-gray-900 text-center font-medium">
                           {isEditMode ? (
                             <input 
@@ -382,28 +371,23 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
           )}
 
           {!loading && !error && filteredData.length === 0 && (
-            <div className="text-center py-12">
-              <div className="inline-block p-6 bg-gray-50 rounded-full mb-4">
-                <i className="fas fa-inbox text-4xl text-gray-400"></i>
-              </div>
-              <h5 className="text-lg font-medium text-gray-700 mb-2">No Data Found</h5>
-              <p className="text-gray-500">
-                {searchTerm || filterKelas !== 'all' || filterSemester !== 'all' 
+            <EmptyState
+              icon="inbox"
+              title="No Data Found"
+              message={
+                searchTerm || filterKelas !== 'all' || filterSemester !== 'all' 
                   ? 'No ATP data matches your filter criteria.' 
-                  : 'No ATP data available for this phase.'}
-              </p>
-            </div>
+                  : 'No ATP data available for this phase.'
+              }
+            />
           )}
         </div>
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end flex-shrink-0">
-          <button
-            onClick={onClose}
-            className="px-6 py-2 text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-all duration-200 font-medium"
-          >
+          <Button variant="secondary" onClick={onClose}>
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -421,11 +405,14 @@ const EditCapaianPembelajaranModal = ({ cp, onClose, onSave }) => {
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage('');
     setMessageType('');
+    setIsSubmitting(true);
+    
     try {
       const response = await adminApi.updateCapaianPembelajaran(editedCp.id_cp, {
         deskripsi_cp: editedCp.deskripsi_cp
@@ -435,102 +422,100 @@ const EditCapaianPembelajaranModal = ({ cp, onClose, onSave }) => {
       setTimeout(() => {
         onSave();
         onClose();
-      }, 1500);
+      }, 1000);
     } catch (err) {
       console.error('Error updating CP:', err);
       setMessage(err.message);
       setMessageType('error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transform transition-all duration-300 animate-pulse-once">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-800 flex items-center">
-              <i className="fas fa-edit mr-3 text-emerald-500 text-2xl"></i>
-              <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                Edit Learning Achievement
-              </span>
-            </h3>
-            <button 
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors duration-200 p-2 hover:bg-gray-100 rounded-full"
-            >
-              <i className="fas fa-times text-xl"></i>
-            </button>
+    <div className="modal-overlay">
+      <div className="modal-content animate-slideInUp">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <i className="fas fa-edit text-emerald-600"></i>
+            Edit Learning Achievement
+          </h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-all"
+          >
+            <i className="fas fa-times text-xl"></i>
+          </button>
+        </div>
+
+        {message && (
+          <StatusMessage 
+            type={messageType}
+            message={message}
+            className="mb-6"
+          />
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="form-group">
+            <label>
+              <i className="fas fa-book mr-2 text-gray-500"></i>
+              Subject (Cannot be changed)
+            </label>
+            <input
+              type="text"
+              value={cp.nama_mapel}
+              disabled
+              className="bg-gray-100 cursor-not-allowed"
+            />
           </div>
 
-          {message && (
-            <div className={`p-4 mb-6 rounded-lg transition-all duration-300 ease-in-out border-l-4 ${
-              messageType === 'success' 
-                ? 'bg-green-50 border-green-500 text-green-700' 
-                : 'bg-red-50 border-red-500 text-red-700'
-            }`}>
-              <i className={`fas ${messageType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
-              {message}
-            </div>
-          )}
+          <div className="form-group">
+            <label>
+              <i className="fas fa-layer-group mr-2 text-gray-500"></i>
+              Phase (Cannot be changed)
+            </label>
+            <input
+              type="text"
+              value={`Fase ${cp.fase}`}
+              disabled
+              className="bg-gray-100 cursor-not-allowed"
+            />
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="relative">
-              <input
-                type="text"
-                value={cp.nama_mapel}
-                disabled
-                className="block w-full px-4 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg peer"
-              />
-              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-gray-100 px-2">
-                Subject (Cannot be changed)
-              </label>
-            </div>
+          <div className="form-group">
+            <label>
+              <i className="fas fa-align-left mr-2 text-gray-500"></i>
+              Learning Achievement Description
+            </label>
+            <textarea
+              name="deskripsi_cp"
+              value={editedCp.deskripsi_cp}
+              onChange={(e) => setEditedCp(prev => ({ ...prev, deskripsi_cp: e.target.value }))}
+              required
+              rows="6"
+              placeholder="Enter learning achievement description..."
+            />
+          </div>
 
-            <div className="relative">
-              <input
-                type="text"
-                value={`Fase ${cp.fase}`}
-                disabled
-                className="block w-full px-4 py-3 text-gray-700 bg-gray-100 border border-gray-300 rounded-lg peer"
-              />
-              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-gray-100 px-2">
-                Phase (Cannot be changed)
-              </label>
-            </div>
-
-            <div className="relative">
-              <textarea
-                name="deskripsi_cp"
-                value={editedCp.deskripsi_cp}
-                onChange={(e) => setEditedCp(prev => ({ ...prev, deskripsi_cp: e.target.value }))}
-                required
-                rows="6"
-                className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 peer"
-                placeholder=" "
-              />
-              <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-emerald-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
-                Learning Achievement Description
-              </label>
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-6 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all duration-200 transform hover:-translate-y-0.5 font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 text-white bg-gradient-to-r from-emerald-500 to-cyan-600 rounded-lg hover:from-emerald-600 hover:to-cyan-700 transition-all duration-200 transform hover:-translate-y-0.5 font-medium shadow-lg flex items-center"
-              >
-                <i className="fas fa-save mr-2"></i>
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
+          <div className="flex flex-col sm:flex-row gap-3 justify-end">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="success"
+              icon="save"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -561,7 +546,6 @@ const ImportExcel = ({ onImportSuccess }) => {
 
     setLoading(true);
     try {
-      // Get JWT token from localStorage
       const token = localStorage.getItem('token');
       
       const response = await fetch('http://localhost:5000/api/excel/import-cp', {
@@ -572,7 +556,6 @@ const ImportExcel = ({ onImportSuccess }) => {
         body: formData,
       });
       
-      // Handle 401 Unauthorized
       if (response.status === 401) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -608,44 +591,38 @@ const ImportExcel = ({ onImportSuccess }) => {
   };
 
   return (
-    <div className="bg-gradient-to-r from-orange-50 to-red-50 p-6 rounded-xl border border-orange-100 mb-8">
-      <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center">
-        <i className="fas fa-file-excel mr-3 text-orange-500 text-2xl"></i>
-        <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-          Import from Excel
-        </span>
-      </h3>
-      
+    <FormSection 
+      title="Import from Excel" 
+      icon="file-excel"
+      variant="warning"
+    >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex items-center space-x-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <input
             type="file"
             accept=".xlsx,.xls"
             onChange={handleFileChange}
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 cursor-pointer"
           />
-          <button 
-            type="submit" 
+          <Button
+            type="submit"
+            variant="warning"
+            icon={loading ? 'spinner' : 'upload'}
             disabled={loading}
-            className="px-6 py-2 text-white bg-gradient-to-r from-orange-500 to-red-600 rounded-lg hover:from-orange-600 hover:to-red-700 transition-all duration-200 transform hover:-translate-y-0.5 font-medium shadow-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            className="whitespace-nowrap w-full sm:w-auto"
           >
-            <i className={`fas ${loading ? 'fa-spinner fa-spin' : 'fa-upload'} mr-2`}></i>
             {loading ? 'Importing...' : 'Import'}
-          </button>
+          </Button>
         </div>
         
         {message && (
-          <div className={`p-4 rounded-lg transition-all duration-300 ease-in-out border-l-4 ${
-            messageType === 'success' 
-              ? 'bg-green-50 border-green-500 text-green-700' 
-              : 'bg-red-50 border-red-500 text-red-700'
-          }`}>
-            <i className={`fas ${messageType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
-            {message}
-          </div>
+          <StatusMessage 
+            type={messageType}
+            message={message}
+          />
         )}
       </form>
-    </div>
+    </FormSection>
   );
 };
 
@@ -667,6 +644,7 @@ const CapaianPembelajaranManagement = () => {
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [showAtpModal, setShowAtpModal] = useState(false);
   const [selectedAtpData, setSelectedAtpData] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, cp: null });
 
   const fetchCpsAndMapel = async () => {
     setLoading(true);
@@ -733,15 +711,19 @@ const CapaianPembelajaranManagement = () => {
     setShowEditModal(true);
   };
 
-  const handleDeleteClick = async (id_cp, deskripsi_cp) => {
-    if (window.confirm(`Are you sure you want to delete Learning Achievement: "${deskripsi_cp.substring(0, 50)}..." (ID: ${id_cp})? This action cannot be undone.`)) {
-      try {
-        const response = await adminApi.deleteCapaianPembelajaran(id_cp);
-        showMessage(response.message);
-        fetchCpsAndMapel();
-      } catch (err) {
-        showMessage(err.message, 'error');
-      }
+  const handleDeleteClick = (cp) => {
+    setDeleteConfirm({ show: true, cp });
+  };
+
+  const confirmDelete = async () => {
+    try {
+      const response = await adminApi.deleteCapaianPembelajaran(deleteConfirm.cp.id_cp);
+      showMessage(response.message);
+      fetchCpsAndMapel();
+    } catch (err) {
+      showMessage(err.message, 'error');
+    } finally {
+      setDeleteConfirm({ show: false, cp: null });
     }
   };
 
@@ -750,7 +732,6 @@ const CapaianPembelajaranManagement = () => {
     setShowAtpModal(true);
   };
 
-  // Filter CPs based on search and subject
   const filteredCps = cps.filter(cp => {
     const matchesSearch = cp.deskripsi_cp.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          cp.nama_mapel.toLowerCase().includes(searchTerm.toLowerCase());
@@ -758,7 +739,6 @@ const CapaianPembelajaranManagement = () => {
     return matchesSearch && matchesSubject;
   });
 
-  // Get phase badge color
   const getPhaseBadgeColor = (fase) => {
     switch(fase) {
       case 'A': return 'from-blue-400 to-indigo-400';
@@ -768,328 +748,299 @@ const CapaianPembelajaranManagement = () => {
     }
   };
 
-  // Get phase icon
   const getPhaseIcon = (fase) => {
     switch(fase) {
-      case 'A': return 'fa-star';
-      case 'B': return 'fa-certificate';
-      case 'C': return 'fa-trophy';
-      default: return 'fa-award';
+      case 'A': return 'star';
+      case 'B': return 'certificate';
+      case 'C': return 'trophy';
+      default: return 'award';
     }
   };
 
+  // Stats
+  const statsData = [
+    {
+      label: 'Total Achievements',
+      value: cps.length,
+      icon: 'list-check',
+      gradient: 'from-emerald-400 to-cyan-400'
+    },
+    {
+      label: 'Phase A',
+      value: cps.filter(cp => cp.fase === 'A').length,
+      icon: 'star',
+      gradient: 'from-blue-400 to-indigo-400'
+    },
+    {
+      label: 'Phase B',
+      value: cps.filter(cp => cp.fase === 'B').length,
+      icon: 'certificate',
+      gradient: 'from-orange-400 to-red-400'
+    },
+    {
+      label: 'Phase C',
+      value: cps.filter(cp => cp.fase === 'C').length,
+      icon: 'trophy',
+      gradient: 'from-purple-400 to-pink-400'
+    }
+  ];
+
   return (
-    <div className="bg-gradient-to-br from-emerald-50 to-cyan-100 min-h-screen">
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-all duration-300 hover:shadow-2xl">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-emerald-500 to-cyan-600 -m-6 mb-6 p-6 rounded-t-2xl">
-            <div className="flex justify-between items-center">
+    <ModuleContainer>
+      <PageHeader
+        icon="clipboard-check"
+        title="Learning Achievement Management"
+        subtitle="Manage curriculum learning achievements by phase"
+        badge={`${cps.length} Total`}
+        action={
+          <Button
+            variant="secondary"
+            icon="sync-alt"
+            onClick={fetchCpsAndMapel}
+            title="Refresh"
+          />
+        }
+      />
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        {statsData.map((stat, idx) => (
+          <div key={idx} className={`bg-gradient-to-r ${stat.gradient} rounded-xl p-4 sm:p-6 text-white`}>
+            <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-3xl font-bold text-white flex items-center">
-                  <i className="fas fa-graduation-cap mr-3 text-4xl"></i>
-                  Learning Achievement Management
-                </h1>
-                <p className="text-emerald-100 mt-2">Manage curriculum learning achievements by phase</p>
+                <p className="text-white/80 text-xs sm:text-sm">{stat.label}</p>
+                <p className="text-xl sm:text-2xl font-bold">{stat.value}</p>
               </div>
-              <div className="flex space-x-2">
-                <button 
-                  onClick={fetchCpsAndMapel}
-                  className="p-3 rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors duration-200"
-                >
-                  <i className="fas fa-sync-alt"></i>
-                </button>
+              <div className="bg-white/20 p-2 sm:p-3 rounded-full">
+                <i className={`fas fa-${stat.icon} text-lg sm:text-2xl`}></i>
               </div>
             </div>
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-emerald-100 text-sm">Total Achievements</p>
-                  <p className="text-2xl font-bold">{cps.length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <i className="fas fa-list-check text-2xl"></i>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-blue-400 to-indigo-400 rounded-xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm">Phase A</p>
-                  <p className="text-2xl font-bold">{cps.filter(cp => cp.fase === 'A').length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <i className="fas fa-star text-2xl"></i>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-orange-400 to-red-400 rounded-xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm">Phase B</p>
-                  <p className="text-2xl font-bold">{cps.filter(cp => cp.fase === 'B').length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <i className="fas fa-certificate text-2xl"></i>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm">Phase C</p>
-                  <p className="text-2xl font-bold">{cps.filter(cp => cp.fase === 'C').length}</p>
-                </div>
-                <div className="bg-white/20 p-3 rounded-full">
-                  <i className="fas fa-trophy text-2xl"></i>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Message Display */}
-          {message && (
-            <div className={`p-4 mb-6 rounded-lg transition-all duration-300 ease-in-out border-l-4 ${
-              messageType === 'success' 
-                ? 'bg-green-50 border-green-500 text-green-700' 
-                : 'bg-red-50 border-red-500 text-red-700'
-            }`}>
-              <i className={`fas ${messageType === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2`}></i>
-              {message}
-            </div>
-          )}
-
-          {/* Loading State */}
-          {loading && (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center px-6 py-3 rounded-full bg-emerald-50 text-emerald-600">
-                <i className="fas fa-spinner animate-spin mr-3 text-xl"></i>
-                <span className="font-medium">Loading learning achievements...</span>
-              </div>
-            </div>
-          )}
-
-          {/* Error State */}
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg">
-              <div className="flex items-center">
-                <i className="fas fa-exclamation-circle mr-2 text-xl"></i>
-                <span className="font-medium">Error: {error}</span>
-              </div>
-            </div>
-          )}
-
-          {!loading && !error && (
-            <>
-              {/* Import Excel Section */}
-              <ImportExcel onImportSuccess={fetchCpsAndMapel} />
-
-              {/* Add CP Form */}
-              <div className="mb-10">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-                  <i className="fas fa-plus-circle mr-3 text-emerald-500 text-3xl"></i>
-                  <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                    Add New Learning Achievement
-                  </span>
-                </h2>
-                <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 p-6 rounded-xl border border-emerald-100">
-                  <form onSubmit={handleAddCp} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="relative">
-                        <select
-                          name="id_mapel"
-                          value={newCp.id_mapel}
-                          onChange={(e) => setNewCp({ ...newCp, id_mapel: e.target.value })}
-                          required
-                          className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer appearance-none"
-                        >
-                          <option value="">Select Subject</option>
-                          {mataPelajaranOptions.map(mapel => (
-                            <option key={mapel.id_mapel} value={mapel.id_mapel}>{mapel.nama_mapel}</option>
-                          ))}
-                        </select>
-                        <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2">
-                          Subject
-                        </label>
-                      </div>
-
-                      <div className="relative">
-                        <select
-                          name="fase"
-                          value={newCp.fase}
-                          onChange={(e) => setNewCp({ ...newCp, fase: e.target.value })}
-                          required
-                          className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 peer appearance-none"
-                        >
-                          <option value="A">Phase A</option>
-                          <option value="B">Phase B</option>
-                          <option value="C">Phase C</option>
-                        </select>
-                        <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2">
-                          Phase
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="relative">
-                      <textarea
-                        name="deskripsi_cp"
-                        value={newCp.deskripsi_cp}
-                        onChange={(e) => setNewCp({ ...newCp, deskripsi_cp: e.target.value })}
-                        required
-                        rows="4"
-                        className="block w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 peer"
-                        placeholder=" "
-                      />
-                      <label className="absolute text-sm text-gray-500 duration-300 transform -translate-y-4 scale-75 top-3 left-3 z-10 origin-[0] bg-white px-2 peer-focus:px-2 peer-focus:text-emerald-600 peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:top-1/2 peer-focus:top-3 peer-focus:scale-75 peer-focus:-translate-y-4">
-                        Learning Achievement Description
-                      </label>
-                    </div>
-
-                    <button
-                      type="submit"
-                      className="w-full flex justify-center items-center py-3 px-6 rounded-lg shadow-md text-white bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg font-semibold"
-                    >
-                      <i className="fas fa-plus mr-2 text-lg"></i>
-                      Add Learning Achievement
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              {/* CPs List */}
-              <div>
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 flex items-center">
-                    <i className="fas fa-list-alt mr-3 text-emerald-500 text-3xl"></i>
-                    <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
-                      Learning Achievements Directory
-                    </span>
-                  </h2>
-                  <div className="flex space-x-3 mt-3 md:mt-0">
-                    <div className="relative">
-                      <input 
-                        type="text" 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search achievements..." 
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                      />
-                      <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                    </div>
-                    <select 
-                      value={selectedSubject}
-                      onChange={(e) => setSelectedSubject(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                    >
-                      <option value="all">All Subjects</option>
-                      {mataPelajaranOptions.map(mapel => (
-                        <option key={mapel.id_mapel} value={mapel.nama_mapel}>{mapel.nama_mapel}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {filteredCps.length === 0 && !loading && (
-                  <div className="text-center py-12">
-                    <div className="inline-block p-6 bg-blue-50 rounded-full mb-4">
-                      <i className="fas fa-graduation-cap text-4xl text-blue-400"></i>
-                    </div>
-                    <h5 className="text-lg font-medium text-gray-700 mb-2">No Learning Achievements Found</h5>
-                    <p className="text-gray-500 max-w-md mx-auto">
-                      {searchTerm || selectedSubject !== 'all' ? 
-                        `No achievements match your search criteria.` : 
-                        "You haven't registered any learning achievements yet. Click the 'Add Learning Achievement' button above to get started."}
-                    </p>
-                  </div>
-                )}
-
-                {filteredCps.length > 0 && (
-                  <div className="space-y-6">
-                    {mataPelajaranOptions
-                      .filter(mapel => filteredCps.some(cp => cp.id_mapel === mapel.id_mapel))
-                      .map((mapel, idx) => {
-                        const cpMapel = filteredCps.filter(cp => cp.id_mapel === mapel.id_mapel);
-                        
-                        return (
-                          <div key={mapel.id_mapel} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-                            <div className={`bg-gradient-to-r ${idx % 3 === 0 ? 'from-blue-400 to-indigo-400' : idx % 3 === 1 ? 'from-emerald-400 to-cyan-400' : 'from-purple-400 to-pink-400'} p-4`}>
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-white font-bold text-xl flex items-center">
-                                  <i className="fas fa-book mr-3 text-2xl"></i>
-                                  {mapel.nama_mapel}
-                                </h3>
-                                <span className="bg-white/20 text-white px-3 py-1 rounded-full text-sm font-medium">
-                                  {cpMapel.length} Achievement{cpMapel.length !== 1 ? 's' : ''}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="p-6 space-y-4">
-                              {['A', 'B', 'C'].map(fase => {
-                                const cpFase = cpMapel.find(cp => cp.fase === fase);
-                                
-                                return (
-                                  <div key={`${mapel.id_mapel}-${fase}`} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
-                                    <div className="flex items-start space-x-4">
-                                      <div className={`bg-gradient-to-r ${getPhaseBadgeColor(fase)} p-4 rounded-lg flex-shrink-0`}>
-                                        <i className={`fas ${getPhaseIcon(fase)} text-white text-2xl`}></i>
-                                      </div>
-                                      <div className="flex-grow">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <h4 className="font-bold text-gray-800 flex items-center">
-                                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r ${getPhaseBadgeColor(fase)} text-white mr-3`}>
-                                              Phase {fase}
-                                            </span>
-                                          </h4>
-                                          {cpFase && (
-                                            <div className="flex space-x-2">
-                                              <button 
-                                                onClick={() => handleViewAtpClick(mapel.id_mapel, fase, mapel.nama_mapel)}
-                                                className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-50 text-green-600 hover:bg-green-100 transition-all duration-200 transform hover:-translate-y-0.5"
-                                              >
-                                                <i className="fas fa-table mr-1"></i> View Details ATP
-                                              </button>
-                                              <button 
-                                                onClick={() => handleEditClick(cpFase)}
-                                                className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all duration-200 transform hover:-translate-y-0.5"
-                                              >
-                                                <i className="fas fa-edit mr-1"></i> Edit
-                                              </button>
-                                              <button 
-                                                onClick={() => handleDeleteClick(cpFase.id_cp, cpFase.deskripsi_cp)}
-                                                className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 transition-all duration-200 transform hover:-translate-y-0.5"
-                                              >
-                                                <i className="fas fa-trash-alt mr-1"></i> Delete
-                                              </button>
-                                            </div>
-                                          )}
-                                        </div>
-                                        {cpFase ? (
-                                          <p className="text-gray-600 text-sm leading-relaxed">{cpFase.deskripsi_cp}</p>
-                                        ) : (
-                                          <p className="text-gray-400 italic text-sm">No learning achievement defined for this phase yet.</p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        ))}
       </div>
+
+      {message && (
+        <StatusMessage 
+          type={messageType}
+          message={message}
+          className="mb-6"
+        />
+      )}
+
+      {loading && <LoadingSpinner message="Loading learning achievements..." />}
+
+      {error && (
+        <StatusMessage 
+          type="error"
+          message={error}
+          icon="exclamation-circle"
+        />
+      )}
+
+      {!loading && !error && (
+        <>
+          {/* Import Excel Section */}
+          <ImportExcel onImportSuccess={fetchCpsAndMapel} />
+
+          {/* Add CP Form */}
+          <FormSection 
+            title="Add New Learning Achievement" 
+            icon="plus-circle"
+            variant="success"
+          >
+            <form onSubmit={handleAddCp} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                <div className="form-group">
+                  <label>
+                    <i className="fas fa-book mr-2 text-gray-500"></i>
+                    Subject
+                  </label>
+                  <select
+                    name="id_mapel"
+                    value={newCp.id_mapel}
+                    onChange={(e) => setNewCp({ ...newCp, id_mapel: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Subject</option>
+                    {mataPelajaranOptions.map(mapel => (
+                      <option key={mapel.id_mapel} value={mapel.id_mapel}>{mapel.nama_mapel}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    <i className="fas fa-layer-group mr-2 text-gray-500"></i>
+                    Phase
+                  </label>
+                  <select
+                    name="fase"
+                    value={newCp.fase}
+                    onChange={(e) => setNewCp({ ...newCp, fase: e.target.value })}
+                    required
+                  >
+                    <option value="A">Phase A</option>
+                    <option value="B">Phase B</option>
+                    <option value="C">Phase C</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <i className="fas fa-align-left mr-2 text-gray-500"></i>
+                  Learning Achievement Description
+                </label>
+                <textarea
+                  name="deskripsi_cp"
+                  value={newCp.deskripsi_cp}
+                  onChange={(e) => setNewCp({ ...newCp, deskripsi_cp: e.target.value })}
+                  required
+                  rows="4"
+                  placeholder="Enter learning achievement description..."
+                />
+              </div>
+
+              <Button
+                type="submit"
+                variant="success"
+                icon="plus"
+                className="w-full"
+              >
+                Add Learning Achievement
+              </Button>
+            </form>
+          </FormSection>
+
+          {/* CPs List */}
+          <div>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 gap-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+                <i className="fas fa-list-alt mr-3 text-emerald-500 text-2xl sm:text-3xl"></i>
+                Learning Achievements Directory
+              </h2>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1 sm:flex-none">
+                  <input 
+                    type="text" 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search achievements..." 
+                    className="w-full sm:w-auto pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  />
+                  <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+                <select 
+                  value={selectedSubject}
+                  onChange={(e) => setSelectedSubject(e.target.value)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                >
+                  <option value="all">All Subjects</option>
+                  {mataPelajaranOptions.map(mapel => (
+                    <option key={mapel.id_mapel} value={mapel.nama_mapel}>{mapel.nama_mapel}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {filteredCps.length === 0 && (
+              <EmptyState
+                icon="clipboard-check"
+                title="No Learning Achievements Found"
+                message={
+                  searchTerm || selectedSubject !== 'all' ? 
+                    'No achievements match your search criteria.' : 
+                    "You haven't registered any learning achievements yet. Click the 'Add Learning Achievement' button above to get started."
+                }
+              />
+            )}
+
+            {filteredCps.length > 0 && (
+              <div className="space-y-6">
+                {mataPelajaranOptions
+                  .filter(mapel => filteredCps.some(cp => cp.id_mapel === mapel.id_mapel))
+                  .map((mapel, idx) => {
+                    const cpMapel = filteredCps.filter(cp => cp.id_mapel === mapel.id_mapel);
+                    
+                    return (
+                      <div key={mapel.id_mapel} className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+                        <div className={`bg-gradient-to-r ${idx % 3 === 0 ? 'from-blue-400 to-indigo-400' : idx % 3 === 1 ? 'from-emerald-400 to-cyan-400' : 'from-purple-400 to-pink-400'} p-4`}>
+                          <div className="flex items-center justify-between">
+                            <h3 className="text-white font-bold text-lg sm:text-xl flex items-center">
+                              <i className="fas fa-book mr-2 sm:mr-3 text-xl sm:text-2xl"></i>
+                              {mapel.nama_mapel}
+                            </h3>
+                            <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs sm:text-sm font-medium">
+                              {cpMapel.length} Achievement{cpMapel.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <div className="p-4 sm:p-6 space-y-4">
+                          {['A', 'B', 'C'].map(fase => {
+                            const cpFase = cpMapel.find(cp => cp.fase === fase);
+                            
+                            return (
+                              <div key={`${mapel.id_mapel}-${fase}`} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all duration-200">
+                                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                                  <div className={`bg-gradient-to-r ${getPhaseBadgeColor(fase)} p-3 sm:p-4 rounded-lg flex-shrink-0 self-start`}>
+                                    <i className={`fas fa-${getPhaseIcon(fase)} text-white text-xl sm:text-2xl`}></i>
+                                  </div>
+                                  <div className="flex-grow min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+                                      <h4 className="font-bold text-gray-800">
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs sm:text-sm font-medium bg-gradient-to-r ${getPhaseBadgeColor(fase)} text-white`}>
+                                          Phase {fase}
+                                        </span>
+                                      </h4>
+                                      {cpFase && (
+                                        <div className="flex flex-wrap gap-2">
+                                          <Button
+                                            variant="info"
+                                            icon="table"
+                                            size="sm"
+                                            onClick={() => handleViewAtpClick(mapel.id_mapel, fase, mapel.nama_mapel)}
+                                          >
+                                            View ATP
+                                          </Button>
+                                          <Button
+                                            variant="primary"
+                                            icon="edit"
+                                            size="sm"
+                                            onClick={() => handleEditClick(cpFase)}
+                                          >
+                                            Edit
+                                          </Button>
+                                          <Button
+                                            variant="danger"
+                                            icon="trash-alt"
+                                            size="sm"
+                                            onClick={() => handleDeleteClick(cpFase)}
+                                          >
+                                            Delete
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                    {cpFase ? (
+                                      <p className="text-gray-600 text-sm leading-relaxed break-words">{cpFase.deskripsi_cp}</p>
+                                    ) : (
+                                      <p className="text-gray-400 italic text-sm">No learning achievement defined for this phase yet.</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Edit Modal */}
       {showEditModal && selectedCp && (
@@ -1109,7 +1060,20 @@ const CapaianPembelajaranManagement = () => {
           onClose={() => setShowAtpModal(false)}
         />
       )}
-    </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.show && (
+        <ConfirmDialog
+          title="Delete Learning Achievement"
+          message={`Are you sure you want to delete this learning achievement: "${deleteConfirm.cp?.deskripsi_cp?.substring(0, 50)}..."? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirm({ show: false, cp: null })}
+          variant="danger"
+        />
+      )}
+    </ModuleContainer>
   );
 };
 

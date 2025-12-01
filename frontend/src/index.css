@@ -1,57 +1,107 @@
 /* frontend/src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================
+   ROOT VARIABLES & RESET
+   =========================== */
+
+:root {
+  --primary-color: #4F46E5;
+  --secondary-color: #7C3AED;
+  --success-color: #10B981;
+  --danger-color: #EF4444;
+  --warning-color: #F59E0B;
+  --info-color: #3B82F6;
+  --dark-color: #1F2937;
+  --light-color: #F9FAFB;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f2f5; /* Warna latar belakang ringan */
+  background: linear-gradient(135deg, #f5f7fa 0%, #e3e8ef 100%);
+  min-height: 100vh;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
-/* Styling dasar untuk form dan button */
+/* ===========================
+   SCROLLBAR STYLING
+   =========================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4F46E5 0%, #7C3AED 100%);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #4338CA 0%, #6D28D9 100%);
+}
+
+/* ===========================
+   CARD COMPONENTS
+   =========================== */
+
+.card {
+  @apply bg-white rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-xl;
+}
+
+.card-header {
+  @apply border-b border-gray-200 pb-4 mb-4;
+}
+
+.card-title {
+  @apply text-2xl font-bold text-gray-800 flex items-center gap-2;
+}
+
+/* ===========================
+   FORM COMPONENTS
+   =========================== */
+
 .form-container {
-  background-color: #ffffff;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  margin: 50px auto;
-  text-align: center;
+  @apply bg-white p-8 rounded-2xl shadow-xl max-w-md mx-auto my-12;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 }
 
-/* Styling untuk form-container-small */
 .form-container-small {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  max-width: 800px; /* Lebar yang lebih fleksibel, diperlebar */
-  margin: 20px 0;
-  text-align: left; /* Sesuaikan text-align */
+  @apply bg-white p-6 rounded-xl shadow-md max-w-4xl my-6;
 }
-
 
 .form-container h2 {
-  margin-bottom: 20px;
-  color: #333;
+  @apply mb-6 text-gray-800 text-2xl font-bold text-center;
 }
 
 .form-group {
-  margin-bottom: 15px;
-  text-align: left;
+  @apply mb-5 text-left;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #555;
+  @apply block mb-2 font-semibold text-gray-700 text-sm;
 }
 
 .form-group input[type="text"],
@@ -61,800 +111,391 @@ code {
 .form-group input[type="date"],
 .form-group select,
 .form-group textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box; /* Agar padding tidak menambah lebar */
+  @apply w-full px-4 py-2.5 border-2 border-gray-200 rounded-lg transition-all duration-200;
+  @apply focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none;
+  @apply hover:border-gray-300;
 }
 
 .form-group input[type="radio"] {
-  margin-right: 5px;
+  @apply mr-2;
 }
 
 .form-group .radio-group label {
-  display: inline-block;
-  margin-right: 15px;
-  font-weight: normal;
+  @apply inline-block mr-4 font-normal;
 }
+
+/* ===========================
+   BUTTONS
+   =========================== */
 
 .submit-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #007bff;
-  color: white;
+  @apply w-full px-6 py-3 rounded-lg font-semibold text-white transition-all duration-300;
+  @apply bg-gradient-to-r from-indigo-600 to-indigo-700;
+  @apply hover:from-indigo-700 hover:to-indigo-800 hover:shadow-lg hover:scale-[1.02];
+  @apply active:scale-95;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
   border: none;
-  border-radius: 4px;
-  font-size: 16px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 10px; /* Tambahkan sedikit margin atas */
 }
 
-.submit-button:hover {
-  background-color: #0056b3;
+.action-button {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  @apply hover:shadow-md hover:scale-105 active:scale-95;
+  border: none;
+  cursor: pointer;
 }
 
-.submit-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
+.action-button.edit-button {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
 }
+
+.action-button.delete-button {
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.action-button:disabled {
+  @apply opacity-50 cursor-not-allowed hover:scale-100;
+}
+
+.cancel-button {
+  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  @apply bg-gray-600 text-white hover:bg-gray-700;
+  border: none;
+  cursor: pointer;
+}
+
+.logout-button-sidebar {
+  @apply w-full px-4 py-3 rounded-lg font-semibold text-white transition-all duration-300;
+  @apply bg-gradient-to-r from-red-600 to-red-700;
+  @apply hover:from-red-700 hover:to-red-800 hover:shadow-lg;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+/* ===========================
+   MESSAGES & ALERTS
+   =========================== */
 
 .message {
-  margin-top: 15px;
-  padding: 10px;
-  border-radius: 4px;
-  font-weight: bold;
+  @apply mt-4 p-4 rounded-lg font-semibold flex items-center gap-2;
+  border-left: 4px solid;
+  animation: slideIn 0.3s ease-out;
 }
 
 .message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
+  @apply bg-green-50 text-green-800 border-green-500;
 }
 
 .message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+  @apply bg-red-50 text-red-800 border-red-500;
 }
 
 .message.info {
-  background-color: #d1ecf1;
-  color: #0c5460;
-  border: 1px solid #bee5eb;
+  @apply bg-blue-50 text-blue-800 border-blue-500;
 }
 
 .message.warning {
-  background-color: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeeba;
+  @apply bg-yellow-50 text-yellow-800 border-yellow-500;
 }
 
-/* Styling untuk dashboard */
-.dashboard-container {
-  display: flex; /* Menggunakan flexbox untuk layout utama */
-  min-height: 100vh; /* Pastikan mengisi seluruh tinggi viewport */
-  background-color: #f0f2f5; /* Warna latar belakang utama */
-  padding: 0; /* Hapus padding di sini, akan ada di dalam konten */
-}
+/* ===========================
+   TABLES
+   =========================== */
 
-/* Sidebar utama aplikasi */
-.app-sidebar {
-  width: 250px; /* Lebar sidebar */
-  background-color: #343a40; /* Warna gelap untuk sidebar */
-  color: white;
-  padding: 20px;
-  flex-shrink: 0; /* Jangan biarkan sidebar mengecil */
-  box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Tambah shadow ke kanan */
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; /* Dorong logout ke bawah */
-}
-
-.app-sidebar h3 {
-  color: #007bff; /* Warna biru untuk judul */
-  margin-top: 0;
-  margin-bottom: 20px;
-  text-align: center;
-  font-size: 24px;
-}
-
-.sidebar-user-info {
-  font-size: 16px;
-  text-align: center;
-  margin-bottom: 20px;
-  color: #adb5bd;
-}
-
-.active-ta-info { /* Digunakan di sidebar utama dan sidebar admin nested */
-  font-size: 14px;
-  text-align: center;
-  margin-bottom: 20px;
-  padding: 10px;
-  background-color: #495057;
-  border-radius: 5px;
-  color: white;
-}
-
-.app-nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  flex-grow: 1; /* Biarkan daftar navigasi mengisi ruang */
-}
-
-.app-nav-list li {
-  margin-bottom: 5px;
-}
-
-.app-nav-button {
-  display: block; /* Agar tombol mengisi lebar penuh */
-  width: 100%;
-  padding: 12px 15px;
-  text-align: left;
-  background-color: transparent;
-  border: none;
-  color: #adb5bd; /* Warna teks default */
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease;
-  border-radius: 5px;
-}
-
-.app-nav-button:hover {
-  background-color: #495057;
-  color: white;
-}
-
-.app-nav-button.active {
-  background-color: #007bff; /* Warna aktif */
-  color: white;
-  font-weight: bold;
-}
-
-.logout-button-sidebar { /* Tombol logout di sidebar utama */
-  width: 100%;
-  padding: 12px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  margin-top: 20px; /* Jarak dari menu */
-}
-
-.logout-button-sidebar:hover {
-  background-color: #c82333;
-}
-
-
-.main-content-area { /* Area konten utama yang dapat digulir */
-  flex-grow: 1; /* Konten akan mengisi sisa ruang */
-  padding: 20px 30px; /* Padding untuk konten */
-  background-color: #f0f2f5; /* Background untuk area konten utama */
-  overflow-y: auto; /* Tambah scroll jika konten terlalu panjang */
-}
-
-.dashboard-header-main { /* Header dashboard utama */
-  background-color: #ffffff;
-  padding: 20px 30px;
-  margin: -20px -30px 20px -30px; /* Negatif margin untuk mengisi padding parent */
-  border-bottom: 1px solid #eee;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  border-top-right-radius: 8px; /* Rounded corner untuk header */
-  /* border-top-left-radius: 8px; */ /* Hapus ini agar tidak rounded di sisi kiri */
-}
-
-.dashboard-header-main h1 {
-  color: #333;
-  margin: 0;
-}
-
-/* Styling untuk Tabel Data */
 .data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  border-radius: 8px; /* Tambahkan border-radius ke tabel */
-  overflow: hidden; /* Penting agar border-radius terlihat */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Tambah shadow */
+  @apply w-full rounded-lg overflow-hidden shadow-md;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 .data-table th,
 .data-table td {
-  border: 1px solid #e0e0e0; /* Warna border lebih lembut */
-  padding: 12px 15px; /* Padding lebih besar */
-  text-align: left;
+  @apply px-6 py-4 text-left border-b border-gray-200;
 }
 
 .data-table th {
-  background-color: #e9ecef; /* Warna header lebih jelas */
-  font-weight: bold;
-  color: #333;
-  text-transform: uppercase; /* Huruf kapital untuk header */
-  font-size: 14px;
+  @apply bg-gradient-to-r from-gray-100 to-gray-50 font-bold text-gray-700 uppercase tracking-wider text-sm;
+}
+
+.data-table tbody tr {
+  @apply bg-white transition-colors duration-150;
 }
 
 .data-table tbody tr:nth-child(even) {
-  background-color: #f8f9fa; /* Warna striping lebih lembut */
+  @apply bg-gray-50;
 }
 
 .data-table tbody tr:hover {
-  background-color: #e2e6ea; /* Hover state yang lebih jelas */
+  @apply bg-indigo-50;
 }
 
-.action-button {
-  padding: 8px 15px; /* Padding lebih besar */
-  background-color: #28a745; /* Green for default/edit */
-  color: white;
-  border: none;
-  border-radius: 5px; /* Rounded corner lebih besar */
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease; /* Tambah transform */
-  margin-right: 8px; /* Jarak antar tombol aksi */
-  font-size: 14px;
+/* ===========================
+   MODALS
+   =========================== */
+
+.modal-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50;
+  animation: fadeIn 0.2s ease-out;
 }
 
-.action-button:last-child {
-    margin-right: 0; /* Hapus margin kanan pada tombol terakhir */
+.modal-content {
+  @apply bg-white p-8 rounded-2xl shadow-2xl max-w-lg w-11/12 relative;
+  animation: slideInUp 0.3s ease-out;
 }
 
-.action-button:hover {
-  opacity: 0.9;
-  transform: translateY(-1px); /* Efek angkat sedikit */
+.modal-content h3 {
+  @apply text-2xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200;
 }
 
-.action-button.edit-button {
-  background-color: #007bff; /* Blue for edit */
+.modal-actions {
+  @apply flex justify-end gap-3 mt-6;
 }
 
-.action-button.edit-button:hover {
-  background-color: #0056b3;
+/* ===========================
+   DASHBOARD COMPONENTS
+   =========================== */
+
+.dashboard-container {
+  @apply flex min-h-screen;
 }
 
-.action-button.delete-button {
-  background-color: #dc3545; /* Red for delete */
+.main-content-area {
+  @apply flex-grow p-6 overflow-y-auto;
+  background-color: #f8f9fa;
 }
 
-.action-button.delete-button:hover {
-  background-color: #c82333;
+.dashboard-header-main {
+  @apply bg-white p-6 mb-6 rounded-xl shadow-md;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
 }
 
-.action-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-  transform: none; /* Hapus efek transform saat disabled */
+.dashboard-header-main h1 {
+  @apply text-3xl font-bold text-gray-800 mb-1;
 }
 
-/* New styles for student checkbox list */
-.student-checkbox-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Responsive columns */
-  gap: 10px;
-  padding: 15px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: #fdfdfd;
-  max-height: 300px; /* Batasi tinggi */
-  overflow-y: auto; /* Tambah scroll jika lebih dari tinggi maksimum */
-  margin-bottom: 15px;
+.dashboard-feature-content {
+  @apply bg-white p-6 rounded-xl shadow-md;
 }
 
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 5px;
-  font-size: 15px;
-  color: #333;
-}
-
-.checkbox-item input[type="checkbox"] {
-  margin-right: 8px;
-  transform: scale(1.2); /* Perbesar checkbox */
-}
-
-/* New styles for form layout (Kenaikan Kelas) */
-.form-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 20px;
-  flex-wrap: wrap; /* Allow wrapping on smaller screens */
-}
-
-.form-column {
-  flex: 1;
-  min-width: 300px; /* Minimum width for each column */
-}
-
-/* --- Admin Dashboard Layout (Content Area) --- */
-/* admin-content-wrapper (old, now dashboard-feature-content) */
-
-/* admin-sidebar-nested (removed, now handled by app-sidebar) */
-
-/* admin-main-feature-area (old, now dashboard-feature-content) */
-
-.dashboard-feature-content { /* Area untuk konten fitur spesifik (admin, guru, siswa) */
-  background-color: #ffffff; /* Background untuk konten fitur */
-  padding: 20px 30px; /* Padding di dalam kartu konten */
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Shadow untuk kartu konten */
-  margin-top: 20px; /* Jarak dari header */
-}
-
-.feature-content { /* Ini adalah div pembungkus untuk setiap komponen fitur individual */
-  padding: 10px;
+.feature-content {
+  @apply p-4;
 }
 
 .feature-content h2 {
-  color: #333;
-  margin-top: 0;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+  @apply text-2xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-200;
 }
 
-/* New wrapper for the entire grid table structure */
+/* ===========================
+   CHARTS & ANALYTICS
+   =========================== */
+
+.charts-container {
+  @apply flex flex-wrap gap-6 mt-6 justify-center;
+}
+
+.chart-card {
+  @apply bg-white p-6 rounded-xl shadow-md flex flex-col items-center;
+  @apply transition-all duration-300 hover:shadow-lg;
+  flex: 1;
+  min-width: 350px;
+  max-width: 500px;
+}
+
+.chart-card h5 {
+  @apply text-lg font-semibold text-gray-700 mb-4 text-center;
+}
+
+/* ===========================
+   SPECIAL FEATURES
+   =========================== */
+
+.student-checkbox-list {
+  @apply grid gap-3 p-4 border-2 border-gray-200 rounded-lg bg-gray-50;
+  @apply max-h-96 overflow-y-auto;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.checkbox-item {
+  @apply flex items-center text-gray-700 font-medium;
+}
+
+.checkbox-item input[type="checkbox"] {
+  @apply mr-2 w-4 h-4 text-indigo-600 focus:ring-indigo-500;
+  transform: scale(1.2);
+}
+
+.form-row {
+  @apply flex gap-6 mb-6 flex-wrap;
+}
+
+.form-column {
+  @apply flex-1 min-w-[300px];
+}
+
+/* Active TA/Semester Info */
+.active-ta-info {
+  @apply text-sm text-center mb-4 p-3 rounded-lg;
+  @apply bg-gradient-to-r from-indigo-600 to-indigo-700 text-white;
+}
+
+.sidebar-user-info {
+  @apply text-base text-center mb-4 text-gray-300;
+}
+
+/* ===========================
+   GRADE INPUT GRIDS
+   =========================== */
+
 .grades-table-wrapper {
-  border: 1px solid #c0c0c0; /* Border grid yang lebih jelas */
-  border-radius: 8px;
-  overflow: hidden; /* Pastikan border-radius terlihat */
-  margin-top: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Tambah shadow pada grid */
-  width: 100%; /* Pastikan wrapper mengambil lebar penuh */
-  overflow-x: auto; /* Tambah scroll horizontal untuk tabel lebar */
+  @apply border border-gray-300 rounded-lg overflow-hidden shadow-md mt-6;
+  @apply overflow-x-auto;
 }
 
-/* Styles for the grid header row */
 .grades-grid-header {
-  display: grid;
-  /* grid-template-columns will be set dynamically by JS */
-  background-color: #e9ecef; /* Warna header lebih jelas */
-  color: #343a40; /* Warna teks header lebih gelap */
-  font-weight: bold; /* Bolder text for headers */
-  font-size: 14px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  border-bottom: 1px solid #e0e0e0; /* Border bawah header */
+  @apply grid bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 font-bold text-sm;
+  @apply sticky top-0 z-10 border-b border-gray-300;
 }
 
-/* Styles for each individual grid row (student data) */
 .grades-grid-row {
-  display: grid;
-  /* grid-template-columns will be set dynamically by JS */
-  border-bottom: 1px solid #e0e0e0; /* Border antar baris data */
+  @apply grid border-b border-gray-200;
 }
 
 .grades-grid-row:last-child {
-  border-bottom: none; /* Hapus border bawah pada baris terakhir */
+  @apply border-b-0;
 }
 
-/* Striping for data rows */
 .grades-grid-row:nth-child(odd) {
-  background-color: #f8f9fa; /* Warna striping lebih lembut */
+  @apply bg-gray-50;
 }
 
 .grades-grid-row:nth-child(even) {
-  background-color: #ffffff; /* Warna striping lebih lembut */
+  @apply bg-white;
 }
 
-/* Hover effect for data rows */
 .grades-grid-row:hover {
-  background-color: #e2e6ea; /* Hover state yang lebih jelas */
+  @apply bg-indigo-50;
 }
 
-
-/* Gaya untuk setiap item di dalam grid (baik header maupun sel data) */
 .grid-header-item,
 .grid-cell-item {
-  padding: 12px 8px; /* Padding lebih besar */
-  border-right: 1px solid #e0e0e0; /* Border kanan antar sel */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-weight: normal; /* Default normal, header akan override */
-  color: #333; /* Warna teks lebih gelap */
-  box-sizing: border-box; /* Include padding in width/height */
+  @apply p-3 border-r border-gray-200 flex items-center justify-center text-center;
 }
 
 .grid-header-item:last-child,
 .grid-cell-item:last-child {
-  border-right: none; /* Hapus border kanan pada sel terakhir di setiap baris */
+  @apply border-r-0;
 }
 
-/* Gaya khusus untuk kolom nama siswa */
 .student-name {
-  font-weight: bold;
-  text-align: left;
-  justify-content: flex-start;
-  background-color: #eef2f5; /* Warna berbeda untuk nama siswa */
-  position: sticky; /* Sticky column */
-  left: 0;
-  z-index: 2; /* Di atas header jika perlu */
-  padding-left: 15px; /* Padding kiri untuk nama siswa */
+  @apply font-bold text-left justify-start bg-gray-100;
+  @apply sticky left-0 z-20 pl-4;
 }
 
-/* Gaya untuk input field di dalam sel grid */
 .grade-input-field {
-  width: calc(100% - 10px); /* Kurangi sedikit untuk padding visual */
-  padding: 8px; /* Padding lebih besar */
-  border: 1px solid #c0c0c0; /* Border lebih solid */
-  border-radius: 5px; /* Rounded corners */
-  text-align: center;
-  box-sizing: border-box;
-  font-size: 14px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  @apply w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-center;
+  @apply focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none;
+  @apply transition-all duration-200;
 }
 
-.grade-input-field:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-    outline: none;
-}
-
-
-/* --- Modal Styles --- */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; /* Pastikan di atas semua elemen lain */
-}
-
-.modal-content {
-  background-color: #ffffff;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
-  width: 90%;
-  position: relative;
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end; /* Tombol ke kanan */
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.modal-actions .submit-button {
-  width: auto; /* Override full width */
-  padding: 10px 20px;
-}
-
-.cancel-button {
-  width: auto;
-  padding: 10px 20px;
-  background-color: #6c757d; /* Abu-abu */
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.cancel-button:hover {
-  background-color: #5a6268;
-}
-
-/* Styles for CP input grid (using the new structure) */
+/* CP Input Grids */
 .cp-table-wrapper {
-  /* Inherits from .grades-table-wrapper */
+  @apply border border-gray-300 rounded-lg overflow-hidden shadow-md mt-6;
 }
 
 .cp-grid-header {
-  grid-template-columns: minmax(150px, 1fr) repeat(auto-fit, minmax(180px, 1fr)); /* Kolom lebih lebar untuk CP */
+  @apply grid bg-gradient-to-r from-purple-100 to-purple-50;
+  grid-template-columns: minmax(150px, 1fr) repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .cp-grid-row {
-  grid-template-columns: minmax(150px, 1fr) repeat(auto-fit, minmax(180px, 1fr)); /* Kolom lebih lebar untuk CP */
+  grid-template-columns: minmax(150px, 1fr) repeat(auto-fit, minmax(180px, 1fr));
 }
 
-/* Gaya khusus untuk header CP */
 .cp-header {
-  white-space: normal; /* Izinkan teks membungkus */
-  word-break: break-word; /* Pecah kata panjang */
-  font-size: 13px; /* Ukuran font lebih kecil untuk header CP */
-  padding: 10px 5px; /* Sesuaikan padding */
+  @apply text-xs p-2;
+  white-space: normal;
+  word-break: break-word;
 }
 
-/* Gaya untuk select status CP */
 .cp-status-select {
-  width: 100%;
-  padding: 8px; /* Padding lebih besar */
-  border: 1px solid #c0c0c0;
-  border-radius: 5px;
-  margin-bottom: 5px; /* Jarak antara select dan textarea */
-  box-sizing: border-box;
-  font-size: 14px;
+  @apply w-full px-2 py-2 border-2 border-gray-300 rounded-lg mb-2;
+  @apply focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:outline-none;
 }
 
-/* Gaya untuk textarea catatan CP */
 .cp-catatan-textarea {
-  width: 100%;
-  min-height: 70px; /* Tinggi minimum lebih besar */
-  padding: 8px; /* Padding lebih besar */
-  border: 1px solid #c0c0c0;
-  border-radius: 5px;
-  resize: vertical; /* Hanya bisa diresize vertikal */
-  box-sizing: border-box;
-  font-size: 13px;
+  @apply w-full min-h-[70px] px-2 py-2 border-2 border-gray-300 rounded-lg resize-y;
+  @apply focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:outline-none;
 }
 
-/* New styles for charts */
-.charts-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  margin-top: 20px;
-  justify-content: center;
+/* ===========================
+   CP MANAGEMENT STYLES
+   =========================== */
+
+.cp-card {
+  @apply text-white p-6 rounded-xl mb-6 shadow-lg;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.chart-card {
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  flex: 1; /* Allow cards to grow and shrink */
-  min-width: 350px; /* Minimum width for chart cards */
-  max-width: 500px; /* Max width for chart cards */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.cp-card h4 {
+  @apply text-xl font-semibold mb-2;
 }
 
-.chart-card h5 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #555;
-  text-align: center;
+.cp-card p {
+  @apply text-sm opacity-90;
 }
 
-/* Specific headers for Wali Kelas Grade View table */
-.grades-subject-header,
-.grades-type-header {
-  white-space: nowrap; /* Prevent wrapping for subject/type headers */
-  overflow: hidden;
-  text-overflow: ellipsis; /* Add ellipsis if text overflows */
+.cp-section-header {
+  @apply flex items-center mb-4 pb-3 border-b-2 border-indigo-500;
 }
 
-.grades-average {
-  font-weight: bold;
-  background-color: #eef2f5; /* Highlight average column */
+.cp-section-header i {
+  @apply mr-3 text-indigo-600;
 }
 
-/* Styling for sortable headers */
-.sortable {
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+.cp-section-header h5 {
+  @apply text-xl font-semibold text-gray-800;
 }
 
-.sortable:hover {
-  background-color: #dbe2e7; /* Lighter hover for sortable headers */
+.cp-mapel-card {
+  @apply border border-gray-200 rounded-xl p-6 mb-6 bg-gray-50;
+  @apply transition-all duration-300 hover:shadow-lg;
 }
 
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .dashboard-container {
-    flex-direction: column;
-  }
-
-  .app-sidebar {
-    width: 100%;
-    border-radius: 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-
-  .app-nav-list {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .app-nav-list li {
-    margin: 5px;
-  }
-
-  .app-nav-button {
-    width: auto;
-    text-align: center;
-  }
-
-  .logout-button-sidebar {
-    margin-top: 10px;
-  }
-
-  .main-content-area {
-    padding: 10px; /* Kurangi padding di mobile */
-  }
-
-  .dashboard-header-main {
-    margin: -10px -10px 10px -10px; /* Sesuaikan negatif margin */
-    padding: 15px;
-    border-radius: 0; /* Hapus rounded corner di mobile untuk header */
-  }
-
-  .dashboard-feature-content {
-    border-radius: 8px; /* Tetap rounded di mobile */
-    padding: 15px; /* Kurangi padding konten fitur di mobile */
-  }
-
-  /* Responsive for the new grid structure */
-  .grades-table-wrapper {
-    overflow-x: auto; /* Ensure horizontal scroll on small screens */
-  }
-
-  /* grid-template-columns will be set dynamically by JS for comprehensive table */
-  /* For input/CP tables, minmax(150px, 1fr) repeat(auto-fit, minmax(100px, 1fr)); */
-  .grades-grid-header,
-  .grades-grid-row {
-    /* Default for smaller screens, overridden by inline style if dynamic columns are calculated */
-    grid-template-columns: minmax(120px, 1fr) repeat(auto-fit, minmax(80px, 1fr));
-  }
-
-  .cp-grid-header,
-  .cp-grid-row {
-    grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr)); /* Kolom lebih kecil untuk CP di mobile */
-  }
-
-  .charts-container {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .chart-card {
-    min-width: unset; /* Reset min-width for mobile */
-    width: 100%; /* Take full width on mobile */
-  }
-
-  /* Adjust padding for grid items on smaller screens */
-  .grid-header-item,
-  .grid-cell-item {
-    padding: 8px 5px;
-  }
+.cp-empty-state {
+  @apply text-center p-10 text-gray-500 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300;
 }
 
-/* Modal Delete Confirmation Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.cp-empty-state i {
+  @apply text-5xl mb-4 text-gray-400;
 }
 
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.cp-fase-badge {
+  @apply inline-block px-2 py-1 rounded text-xs font-bold text-white;
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+.cp-fase-badge.fase-a {
+  @apply bg-green-600;
 }
 
-@keyframes slideOutDown {
-  from {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(15px) scale(0.98);
-  }
+.cp-fase-badge.fase-b {
+  @apply bg-yellow-500 text-gray-900;
 }
 
-.animate-fadeIn {
-  animation: fadeIn 0.15s ease-out forwards;
+.cp-fase-badge.fase-c {
+  @apply bg-red-600;
 }
 
-.animate-slideInUp {
-  animation: slideInUp 0.15s ease-out forwards;
-}
-
-.animate-fadeOut {
-  animation: fadeOut 0.15s ease-in forwards;
-}
-
-.animate-slideOutDown {
-  animation: slideOutDown 0.15s ease-in forwards;
-}
-
-/* Prevent white flash during DOM updates */
-* {
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-transform-style: preserve-3d;
-  transform-style: preserve-3d;
-}
-
-/* Smooth transitions for background */
-body,
-.bg-gradient-to-br,
-.bg-white {
-  transition: all 0.1s ease-out;
-}
-
-/* Force hardware acceleration for smooth animations */
-.fixed,
-.modal-overlay,
-[class*="animate-"],
-[class*="bg-gradient"],
-.rounded-2xl {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: transform, opacity;
-}
-
-/* Login Page Styles */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-body {
-  font-family: 'Poppins', sans-serif;
-}
-
-.login-card {
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
-}
-
-.role-btn {
-  transition: all 0.3s ease;
-}
-
-.role-btn.active {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-}
-
-/* Capaian Pembelajaran Management Styles */
 .textarea-large {
   height: 150px;
 }
 
 .import-section {
-  margin-bottom: 2rem;
+  @apply mb-8;
 }
 
 .mapel-section {
-  margin-bottom: 2rem;
-}
-
-.mapel-title {
-  margin-bottom: 1rem;
-  color: #2c3e50;
+  @apply mb-8;
 }
 
 .col-fase {
@@ -869,103 +510,125 @@ body {
   width: 20%;
 }
 
-.empty-row {
-  background-color: #f8f9fa;
+/* ===========================
+   ANIMATIONS
+   =========================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
-.empty-cell {
-  text-align: center;
-  color: #6c757d;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-/* Enhanced CP Management Styles */
-.cp-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.cp-card h4 {
-  margin: 0 0 10px 0;
-  font-size: 18px;
-  font-weight: 600;
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.cp-card p {
-  margin: 0;
-  opacity: 0.9;
-  font-size: 14px;
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
 }
 
-.cp-section-header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #007bff;
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
 }
 
-.cp-section-header i {
-  margin-right: 10px;
+.animate-slideInUp {
+  animation: slideInUp 0.3s ease-out;
 }
 
-.cp-section-header h5 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 18px;
-  font-weight: 600;
+.animate-slideInDown {
+  animation: slideInDown 0.3s ease-out;
 }
 
-.cp-mapel-card {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  background-color: #fafafa;
-  transition: box-shadow 0.3s ease;
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 768px) {
+  .dashboard-container {
+    @apply flex-col;
+  }
+
+  .main-content-area {
+    @apply p-4;
+  }
+
+  .dashboard-header-main {
+    @apply p-4 mb-4;
+  }
+
+  .dashboard-feature-content {
+    @apply p-4;
+  }
+
+  .chart-card {
+    @apply min-w-0 w-full;
+  }
+
+  .charts-container {
+    @apply flex-col;
+  }
+
+  .grid-header-item,
+  .grid-cell-item {
+    @apply p-2 text-xs;
+  }
+
+  .grades-grid-header,
+  .grades-grid-row {
+    grid-template-columns: minmax(120px, 1fr) repeat(auto-fit, minmax(80px, 1fr));
+  }
+
+  .cp-grid-header,
+  .cp-grid-row {
+    grid-template-columns: 120px repeat(auto-fit, minmax(100px, 1fr));
+  }
 }
 
-.cp-mapel-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+/* ===========================
+   LOGIN PAGE STYLES
+   =========================== */
+
+.login-card {
+  @apply shadow-2xl;
 }
 
-.cp-empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #6c757d;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  border: 2px dashed #dee2e6;
+.role-btn {
+  @apply transition-all duration-300;
 }
 
-.cp-empty-state i {
-  width: 48px;
-  height: 48px;
-  margin-bottom: 15px;
-  color: #6c757d;
-}
-
-.cp-fase-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: bold;
-  color: white;
-}
-
-.cp-fase-badge.fase-a {
-  background-color: #28a745;
-}
-
-.cp-fase-badge.fase-b {
-  background-color: #ffc107;
-  color: #212529;
-}
-
-.cp-fase-badge.fase-c {
-  background-color: #dc3545;
+.role-btn.active {
+  @apply transform -translate-y-1 shadow-lg;
 }

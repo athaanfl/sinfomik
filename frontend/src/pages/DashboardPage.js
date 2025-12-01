@@ -290,20 +290,47 @@ function DashboardPage({ userRole, username, userId, onLogout }) {
 
             {/* PERBARUI: Main content area dengan class conditional */}
             <div className={`main-content-area ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-                {/* ... (Isi konten utama tidak berubah) ... */}
                 <div className="dashboard-header">
-                    <h1 className="text-2xl font-bold text-gray-800">
-                        Dashboard {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
-                    </h1>
-                    <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white font-medium">
-                            {username.charAt(0).toUpperCase()}
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                                    <i className={`fas ${userRole === 'admin' ? 'fa-shield-alt' : userRole === 'guru' ? 'fa-chalkboard-teacher' : 'fa-user-graduate'} text-white`}></i>
+                                </div>
+                                Dashboard {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
+                            </h1>
+                            <p className="text-gray-600 flex items-center gap-2">
+                                <i className="fas fa-calendar-alt text-indigo-600"></i>
+                                <span className="font-medium">
+                                    {activeTASemester 
+                                        ? `${activeTASemester.tahun_ajaran} - Semester ${activeTASemester.semester}` 
+                                        : 'Tahun Ajaran Belum Aktif'}
+                                </span>
+                            </p>
                         </div>
-                        <span className="font-medium hidden sm:block">{username}</span>
+                        <div className="flex items-center gap-4">
+                            <div className="hidden md:flex items-center gap-3 bg-white/80 backdrop-blur-sm px-4 py-3 rounded-xl shadow-md border border-gray-100">
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                                    {username.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-800">{username}</p>
+                                    <p className="text-xs text-gray-500 capitalize">{userRole}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={onLogout}
+                                className="hidden md:flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-all duration-200 font-medium border border-red-200"
+                                title="Logout"
+                            >
+                                <i className="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div className="dashboard-feature-content">
+                <div className="feature-container">
                     {renderContentComponent()}
                 </div>
             </div>

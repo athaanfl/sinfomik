@@ -1,7 +1,14 @@
 // frontend/src/features/guru/rekapNilai.js
 import React, { useState, useEffect } from 'react';
 import * as guruApi from '../../api/guru';
-import * as adminApi from '../../api/admin'; // Perlu getTipeNilai dari adminApi
+import Button from '../../components/Button';
+import Table from '../../components/Table';
+import ModuleContainer from '../../components/ModuleContainer';
+import PageHeader from '../../components/PageHeader';
+import FormSection from '../../components/FormSection';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import StatusMessage from '../../components/StatusMessage';
+import EmptyState from '../../components/EmptyState';
 
 const RekapNilai = ({ activeTASemester, userId }) => {
   const [assignments, setAssignments] = useState([]);
@@ -56,8 +63,8 @@ const RekapNilai = ({ activeTASemester, userId }) => {
     fetchRekap();
   }, [selectedAssignment, activeTASemester, userId]);
 
-  if (loading) return <p>Memuat data rekap nilai...</p>;
-  if (error) return <p className="message error">Error: {error}</p>;
+  if (loading) return <LoadingSpinner message="Memuat data rekap nilai..." />;
+  if (error) return <StatusMessage type="error" message={error} />;
 
   const currentAssignment = assignments.find(
     assign => `${assign.id_kelas}-${assign.id_mapel}` === selectedAssignment
@@ -100,85 +107,149 @@ const RekapNilai = ({ activeTASemester, userId }) => {
   });
   const rekapTableData = Object.values(processedRekap);
 
-  return (
-    <div className="feature-content">
-      <h2>Rekap Nilai Siswa</h2>
-      {message && <div className={`message ${messageType}`}>{message}</div>}
+  // Prepare columns for Table component
+  const columns = [
+    {
+      key: 'nama_siswa',
+      label: 'Nama Siswa',
+      className: 'font-medium text-gray-900',
+    },
+    ...uniqueGradeTypes.map(tipe => ({
+      key: tipe,
+      label: tipe,
+      className: 'text-center',
+      render: (row) => (
+        <span className={`inline-flex items-center justify-center w-16 px-2 py-1 rounded ${
+          typeof row[tipe] === 'number' 
+            ? row[tipe] >= 75 
+              ? 'bg-green-100 text-green-800 font-semibold'
+              : row[tipe] >= 60
+              ? 'bg-yellow-100 text-yellow-800'
+              : 'bg-red-100 text-red-800 font-semibold'
+            : 'text-gray-400'
+        }`}>
+          {typeof row[tipe] === 'number' ? row[tipe] : '-'}
+        </span>
+      ),
+    })),
+    {
+      key: 'nilai_akhir',
+      label: 'Nilai Akhir',
+      className: 'text-center font-semibold',
+      render: (row) => {
+        // Calculate TP average
+        const tpGrades = uniqueGradeTypes
+          .filter(tipe => tipe.startsWith('TP'))
+          .map(tipe => row[tipe])
+          .filter(n => typeof n === 'number');
+        const tpAverage = tpGrades.length > 0 ? tpGrades.reduce((sum, n) => sum + n, 0) / tpGrades.length : 0;
+        
+        // Get UAS value
+        const uasValue = row['UAS'];
+        
+        // Calculate final grade (70% TP + 30% UAS)
+        let finalGrade = '-';
+        if (tpGrades.length > 0 && typeof uasValue === 'number') {
+          finalGrade = (tpAverage * 0.7 + uasValue * 0.3).toFixed(2);
+        }
+        
+        return (
+          <span className={`inline-flex items-center justify-center w-20 px-3 py-1 rounded-full font-bold ${
+            finalGrade !== '-'
+              ? parseFloat(finalGrade) >= 75 
+                ? 'bg-green-500 text-white'
+                : parseFloat(finalGrade) >= 60
+                ? 'bg-yellow-500 text-white'
+                : 'bg-red-500 text-white'
+              : 'text-gray-400'
+          }`}>
+            {finalGrade}
+          </span>
+        );
+      },
+    },
+  ];
 
-      {!activeTASemester && <p className="message warning">Tahun Ajaran & Semester aktif belum diatur. Harap hubungi Admin.</p>}
+  return (
+    <ModuleContainer>
+      <PageHeader
+        icon="clipboard-list"
+        title="Rekap Nilai Siswa"
+        subtitle={activeTASemester ? `${activeTASemester.tahun_ajaran} - ${activeTASemester.semester}` : 'Belum ada tahun ajaran aktif'}
+        badge={currentAssignment ? `${currentAssignment.nama_kelas} - ${currentAssignment.nama_mapel}` : null}
+      />
+
+      {message && <StatusMessage type={messageType} message={message} />}
+
+      {!activeTASemester && (
+        <StatusMessage
+          type="warning"
+          message="Tahun Ajaran & Semester aktif belum diatur. Harap hubungi Admin."
+        />
+      )}
 
       {assignments.length > 0 ? (
-        <div className="form-group">
-          <label>Pilih Kelas dan Mata Pelajaran:</label>
-          <select value={selectedAssignment} onChange={(e) => setSelectedAssignment(e.target.value)}>
-            {assignments.map(assign => (
-              <option key={`${assign.id_kelas}-${assign.id_mapel}`} value={`${assign.id_kelas}-${assign.id_mapel}`}>
-                {assign.nama_kelas} - {assign.nama_mapel}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : (
-        <p className="message warning">Anda belum ditugaskan mengajar mata pelajaran di kelas manapun untuk semester aktif ini. Silakan hubungi Admin.</p>
-      )}
-
-      {currentAssignment && (
         <>
-          <h3>Rekap Nilai {currentAssignment.nama_mapel} di Kelas {currentAssignment.nama_kelas}</h3>
-          {rekapTableData.length > 0 ? (
-            <>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Nama Siswa</th>
-                    {uniqueGradeTypes.map(tipe => (
-                      <th key={tipe}>{tipe}</th>
-                    ))}
-                    <th>Nilai Akhir</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rekapTableData.map(row => {
-                    // Calculate TP average
-                    const tpGrades = uniqueGradeTypes
-                      .filter(tipe => tipe.startsWith('TP'))
-                      .map(tipe => row[tipe])
-                      .filter(n => typeof n === 'number');
-                    const tpAverage = tpGrades.length > 0 ? tpGrades.reduce((sum, n) => sum + n, 0) / tpGrades.length : 0;
-                    
-                    // Get UAS value
-                    const uasValue = row['UAS'];
-                    
-                    // Calculate final grade (70% TP + 30% UAS)
-                    let finalGrade = '-';
-                    if (tpGrades.length > 0 && typeof uasValue === 'number') {
-                      finalGrade = (tpAverage * 0.7 + uasValue * 0.3).toFixed(2);
-                    }
-                    
-                    return (
-                      <tr key={row.id_siswa}>
-                        <td>{row.nama_siswa}</td>
-                        {uniqueGradeTypes.map(tipe => (
-                          <td key={tipe}>{typeof row[tipe] === 'number' ? row[tipe] : '-'}</td>
-                        ))}
-                        <td>{finalGrade}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <div className="calculation-info">
-                <small>
-                  <strong>Keterangan:</strong> Nilai Akhir = 70% rata-rata TP + 30% UAS
-                </small>
+          <FormSection title="Pilih Kelas dan Mata Pelajaran">
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kelas dan Mata Pelajaran
+                </label>
+                <select
+                  value={selectedAssignment}
+                  onChange={(e) => setSelectedAssignment(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors bg-white"
+                >
+                  {assignments.map(assign => (
+                    <option key={`${assign.id_kelas}-${assign.id_mapel}`} value={`${assign.id_kelas}-${assign.id_mapel}`}>
+                      {assign.nama_kelas} - {assign.nama_mapel}
+                    </option>
+                  ))}
+                </select>
               </div>
-            </>
-          ) : (
-            <p>Belum ada nilai yang diinput untuk kombinasi ini.</p>
+            </div>
+          </FormSection>
+
+          {currentAssignment && (
+            <div className="card-body">
+              <div className="mb-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200">
+                <h3 className="text-lg font-semibold text-indigo-900 mb-2">
+                  <i className="fas fa-chart-line mr-2"></i>
+                  Rekap Nilai {currentAssignment.nama_mapel} di Kelas {currentAssignment.nama_kelas}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  <i className="fas fa-info-circle mr-1"></i>
+                  <strong>Keterangan:</strong> Nilai Akhir = 70% rata-rata TP + 30% UAS
+                </p>
+              </div>
+
+              {rekapTableData.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <Table
+                    columns={columns}
+                    data={rekapTableData}
+                    keyField="id_siswa"
+                  />
+                </div>
+              ) : (
+                <EmptyState
+                  icon="clipboard-list"
+                  title="Belum Ada Nilai"
+                  message="Belum ada nilai yang diinput untuk kombinasi kelas dan mata pelajaran ini."
+                />
+              )}
+            </div>
           )}
         </>
+      ) : (
+        <EmptyState
+          icon="chalkboard-teacher"
+          title="Belum Ada Penugasan"
+          message="Anda belum ditugaskan mengajar mata pelajaran di kelas manapun untuk semester aktif ini. Silakan hubungi Admin."
+        />
       )}
-    </div>
+    </ModuleContainer>
   );
 };
 

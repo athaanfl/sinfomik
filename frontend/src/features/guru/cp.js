@@ -1,20 +1,28 @@
 // frontend/src/features/guru/cp.js
 import React, { useState, useEffect, useCallback } from 'react';
-import * as guruApi from '../../api/guru'; // Import API guru
-import * as adminApi from '../../api/admin'; // Perlu getMataPelajaran dari adminApi jika guruApi tidak mengekspornya
+import * as guruApi from '../../api/guru';
+import Button from '../../components/Button';
+import Table from '../../components/Table';
+import ModuleContainer from '../../components/ModuleContainer';
+import PageHeader from '../../components/PageHeader';
+import FormSection from '../../components/FormSection';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import StatusMessage from '../../components/StatusMessage';
+import EmptyState from '../../components/EmptyState';
 
 const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
-  const [assignments, setAssignments] = useState([]); // Penugasan guru (kelas-mapel)
+  const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState('');
   const [studentsInClass, setStudentsInClass] = useState([]);
-  const [capaianPembelajaran, setCapaianPembelajaran] = useState([]); // CP untuk mapel terpilih
-  const [siswaCapaianStatus, setSiswaCapaianStatus] = useState({}); // {siswaId_cpId: status}
-  const [siswaCapaianCatatan, setSiswaCapaianCatatan] = useState({}); // {siswaId_cpId: catatan}
+  const [capaianPembelajaran, setCapaianPembelajaran] = useState([]);
+  const [siswaCapaianStatus, setSiswaCapaianStatus] = useState({});
+  const [siswaCapaianCatatan, setSiswaCapaianCatatan] = useState({});
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const statusOptions = ['Tercapai', 'Belum Tercapai', 'Perlu Bimbingan', 'Sangat Baik'];
 
@@ -104,6 +112,7 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
     e.preventDefault();
     setMessage('');
     setMessageType('');
+    
     if (!selectedAssignment || !activeTASemester || studentsInClass.length === 0 || capaianPembelajaran.length === 0) {
       setMessage('Harap pilih kelas/mapel dan pastikan ada siswa serta Capaian Pembelajaran.');
       setMessageType('error');
@@ -114,7 +123,9 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
     let successCount = 0;
     let failCount = 0;
 
+    setIsSubmitting(true);
     const cpPromises = [];
+    
     studentsInClass.forEach(student => {
       capaianPembelajaran.forEach(cp => {
         const status = siswaCapaianStatus[`${student.id_siswa}_${cp.id_cp}`];
@@ -144,101 +155,172 @@ const PenilaianCapaianPembelajaran = ({ activeTASemester, userId }) => {
     try {
       await Promise.all(cpPromises);
       if (successCount > 0) {
-        setMessage(`Berhasil menyimpan ${successCount} Capaian Pembelajaran. ${failCount} gagal.`);
+        setMessage(`Berhasil menyimpan ${successCount} Capaian Pembelajaran${failCount > 0 ? `, ${failCount} gagal` : ''}.`);
         setMessageType('success');
-        fetchCpsAndStudentsStatus(); // Refresh untuk menampilkan data terbaru
+        fetchCpsAndStudentsStatus();
       } else if (failCount > 0) {
         setMessage(`Gagal menyimpan ${failCount} Capaian Pembelajaran. Periksa konsol untuk detail.`);
         setMessageType('error');
       } else {
         setMessage('Tidak ada Capaian Pembelajaran yang diinput atau diubah.');
-        setMessageType('info');
+        setMessageType('warning');
       }
     } catch (err) {
       setMessage(`Terjadi kesalahan umum saat menyimpan Capaian Pembelajaran: ${err.message}`);
       setMessageType('error');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  if (loading) return <p>Memuat data capaian pembelajaran...</p>;
-  if (error) return <p className="message error">Error: {error}</p>;
+  const clearMessage = () => {
+    setMessage('');
+    setMessageType('');
+  };
+
+  if (loading) return <LoadingSpinner message="Memuat data capaian pembelajaran..." />;
+  if (error) return (
+    <ModuleContainer>
+      <StatusMessage type="error" message={error} />
+    </ModuleContainer>
+  );
 
   const currentAssignment = assignments.find(
     assign => `${assign.id_kelas}-${assign.id_mapel}` === selectedAssignment
   );
 
   return (
-    <div className="feature-content">
-      <h2>Penilaian Capaian Pembelajaran Siswa</h2>
-      {message && <div className={`message ${messageType}`}>{message}</div>}
+    <ModuleContainer>
+      <PageHeader 
+        icon="clipboard-check"
+        title="Penilaian Capaian Pembelajaran"
+        subtitle="Evaluasi pencapaian kompetensi siswa berdasarkan capaian pembelajaran"
+        badge={activeTASemester ? activeTASemester.nama_ta_semester : null}
+      />
 
-      {!activeTASemester && <p className="message warning">Tahun Ajaran & Semester aktif belum diatur. Harap hubungi Admin.</p>}
+      <StatusMessage 
+        type={messageType} 
+        message={message}
+        onClose={clearMessage}
+        autoClose={messageType === 'success'}
+      />
+
+      {!activeTASemester && (
+        <StatusMessage 
+          type="warning" 
+          message="Tahun Ajaran & Semester aktif belum diatur. Harap hubungi Admin." 
+        />
+      )}
 
       {assignments.length > 0 ? (
-        <div className="form-group">
-          <label>Pilih Kelas dan Mata Pelajaran:</label>
-          <select value={selectedAssignment} onChange={(e) => setSelectedAssignment(e.target.value)}>
-            {assignments.map(assign => (
-              <option key={`${assign.id_kelas}-${assign.id_mapel}`} value={`${assign.id_kelas}-${assign.id_mapel}`}>
-                {assign.nama_kelas} - {assign.nama_mapel}
-              </option>
-            ))}
-          </select>
-        </div>
+        <FormSection title="Pilih Kelas dan Mata Pelajaran" icon="chalkboard-teacher">
+          <div className="form-group">
+            <label>
+              <i className="fas fa-filter mr-2 text-gray-500"></i>
+              Kelas dan Mata Pelajaran
+            </label>
+            <select 
+              value={selectedAssignment} 
+              onChange={(e) => setSelectedAssignment(e.target.value)}
+              className="w-full"
+            >
+              {assignments.map(assign => (
+                <option key={`${assign.id_kelas}-${assign.id_mapel}`} value={`${assign.id_kelas}-${assign.id_mapel}`}>
+                  {assign.nama_kelas} - {assign.nama_mapel}
+                </option>
+              ))}
+            </select>
+          </div>
+        </FormSection>
       ) : (
-        <p className="message warning">Anda belum ditugaskan mengajar mata pelajaran di kelas manapun untuk semester aktif ini. Silakan hubungi Admin.</p>
+        <EmptyState 
+          icon="chalkboard-teacher"
+          message="Anda belum ditugaskan mengajar mata pelajaran di kelas manapun untuk semester aktif ini."
+          submessage="Silakan hubungi Admin untuk penugasan kelas dan mata pelajaran."
+        />
       )}
 
       {currentAssignment && (
-        <>
-          <h3>Penilaian CP untuk {currentAssignment.nama_mapel} di Kelas {currentAssignment.nama_kelas}</h3>
+        <FormSection 
+          title={`Penilaian CP: ${currentAssignment.nama_mapel} - ${currentAssignment.nama_kelas}`}
+          icon="clipboard-list"
+          variant="info"
+        >
           {capaianPembelajaran.length > 0 && studentsInClass.length > 0 ? (
-            <form onSubmit={handleSubmitCapaian} className="form-container-small">
-              {/* Mengubah struktur grid */}
-              <div className="grades-table-wrapper cp-table-wrapper"> {/* Wrapper baru untuk tabel grid */}
-                <div className="grades-grid-header cp-grid-header"> {/* Baris header grid */}
-                  <div className="grid-header-item">Nama Siswa</div>
-                  {capaianPembelajaran.map(cp => (
-                    <div key={cp.id_cp} className="grid-header-item cp-header">
-                      {cp.fase ? `${cp.fase}: ` : ''}{cp.deskripsi_cp}
+            <form onSubmit={handleSubmitCapaian} className="space-y-6">
+              <div className="overflow-x-auto">
+                <div className="grades-table-wrapper cp-table-wrapper">
+                  <div className="grades-grid-header cp-grid-header">
+                    <div className="grid-header-item sticky left-0 bg-indigo-600 z-10">
+                      <i className="fas fa-user-graduate mr-2"></i>
+                      Nama Siswa
                     </div>
-                  ))}
-                </div>
-                
-                {studentsInClass.map(student => (
-                  <div key={student.id_siswa} className="grades-grid-row cp-grid-row"> {/* Setiap baris siswa adalah baris grid */}
-                    <div className="grid-cell-item student-name">{student.nama_siswa}</div>
                     {capaianPembelajaran.map(cp => (
-                      <div key={`${student.id_siswa}-${cp.id_cp}`} className="grid-cell-item">
-                        <select
-                          value={siswaCapaianStatus[`${student.id_siswa}_${cp.id_cp}`] || ''}
-                          onChange={(e) => handleStatusChange(student.id_siswa, cp.id_cp, e.target.value)}
-                          className="cp-status-select"
-                        >
-                          <option value="">Pilih Status</option>
-                          {statusOptions.map(option => (
-                            <option key={option} value={option}>{option}</option>
-                          ))}
-                        </select>
-                        <textarea
-                          placeholder="Catatan spesifik CP"
-                          value={siswaCapaianCatatan[`${student.id_siswa}_${cp.id_cp}`] || ''}
-                          onChange={(e) => handleCatatanChange(student.id_siswa, cp.id_cp, e.target.value)}
-                          className="cp-catatan-textarea"
-                        />
+                      <div key={cp.id_cp} className="grid-header-item cp-header">
+                        <div className="font-semibold">{cp.fase || 'CP'}</div>
+                        <div className="text-xs font-normal mt-1">{cp.deskripsi_cp}</div>
                       </div>
                     ))}
                   </div>
-                ))}
-              </div> {/* Akhir grades-table-wrapper */}
-              <button type="submit" className="submit-button">Simpan Capaian Pembelajaran</button>
+                  
+                  {studentsInClass.map((student, index) => (
+                    <div key={student.id_siswa} className={`grades-grid-row cp-grid-row ${index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}>
+                      <div className="grid-cell-item student-name sticky left-0 z-10 font-medium bg-inherit">
+                        <i className="fas fa-user text-indigo-500 mr-2"></i>
+                        {student.nama_siswa}
+                      </div>
+                      {capaianPembelajaran.map(cp => (
+                        <div key={`${student.id_siswa}-${cp.id_cp}`} className="grid-cell-item">
+                          <select
+                            value={siswaCapaianStatus[`${student.id_siswa}_${cp.id_cp}`] || ''}
+                            onChange={(e) => handleStatusChange(student.id_siswa, cp.id_cp, e.target.value)}
+                            className="cp-status-select mb-2"
+                            disabled={isSubmitting}
+                          >
+                            <option value="">Pilih Status</option>
+                            {statusOptions.map(option => (
+                              <option key={option} value={option}>{option}</option>
+                            ))}
+                          </select>
+                          <textarea
+                            placeholder="Catatan (opsional)"
+                            value={siswaCapaianCatatan[`${student.id_siswa}_${cp.id_cp}`] || ''}
+                            onChange={(e) => handleCatatanChange(student.id_siswa, cp.id_cp, e.target.value)}
+                            className="cp-catatan-textarea"
+                            disabled={isSubmitting}
+                            rows="2"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <Button
+                  type="submit"
+                  variant="success"
+                  icon="save"
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Capaian Pembelajaran'}
+                </Button>
+              </div>
             </form>
           ) : (
-            <p>Tidak ada siswa di kelas ini atau Capaian Pembelajaran belum terdaftar untuk mata pelajaran ini.</p>
+            <EmptyState 
+              icon="clipboard-list"
+              message={capaianPembelajaran.length === 0 
+                ? "Capaian Pembelajaran belum terdaftar untuk mata pelajaran ini" 
+                : "Tidak ada siswa di kelas ini"}
+              submessage="Silakan hubungi Admin untuk menambahkan data yang diperlukan."
+            />
           )}
-        </>
+        </FormSection>
       )}
-    </div>
+    </ModuleContainer>
   );
 };
 

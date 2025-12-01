@@ -1,4 +1,3 @@
-// frontend/src/features/guru/analytics.js
 import React, { useState, useEffect } from 'react';
 import { fetchGuruAnalytics, fetchStudentAnalytics } from '../../api/analytics';
 import { 
@@ -7,8 +6,16 @@ import {
 } from 'recharts';
 import { ALLOWED_MAPEL_WALI, SCHOOL_CLASSES, normalizeName } from '../../config/constants';
 
+// Template Components
+import ModuleContainer from '../../components/ModuleContainer';
+import PageHeader from '../../components/PageHeader';
+import FormSection from '../../components/FormSection';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import StatusMessage from '../../components/StatusMessage';
+import EmptyState from '../../components/EmptyState';
+
 const GuruAnalytics = ({ idGuru }) => {
-    const [activeTab, setActiveTab] = useState('subject'); // 'subject', 'student'
+    const [activeTab, setActiveTab] = useState('subject');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -27,7 +34,6 @@ const GuruAnalytics = ({ idGuru }) => {
     // Extract unique mapel and kelas from guru data
     useEffect(() => {
         if (guruData.length > 0) {
-            // Build unique lists
             const mapelMap = new Map();
             guruData.forEach(item => {
                 if (!mapelMap.has(item.id_mapel)) {
@@ -44,7 +50,6 @@ const GuruAnalytics = ({ idGuru }) => {
             const uniqueMapel = Array.from(mapelMap.values());
             const uniqueKelas = Array.from(kelasMap.values());
 
-            // Apply school-level filters
             const allowedMapelSet = new Set(ALLOWED_MAPEL_WALI.map(normalizeName));
             const allowedClassSet = new Set(SCHOOL_CLASSES.map(normalizeName));
 
@@ -133,108 +138,262 @@ const GuruAnalytics = ({ idGuru }) => {
         return Object.values(grouped);
     };
 
+    // Calculate stats
+    const calculateStats = () => {
+        if (activeTab === 'subject' && guruData.length > 0) {
+            const values = guruData.map(d => parseFloat(d.rata_rata_kelas || 0)).filter(v => v > 0);
+            if (values.length === 0) return null;
+            
+            return {
+                totalClasses: new Set(guruData.map(d => d.id_kelas)).size,
+                highest: Math.max(...values).toFixed(2),
+                average: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2),
+                totalStudents: guruData.reduce((sum, d) => sum + (d.jumlah_siswa || 0), 0)
+            };
+        }
+        
+        if (activeTab === 'student' && studentData && studentData.data) {
+            const values = studentData.data.map(d => parseFloat(d.rata_keseluruhan || 0)).filter(v => v > 0);
+            if (values.length === 0) return null;
+            
+            return {
+                average: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2),
+                highest: Math.max(...values).toFixed(2),
+                lowest: Math.min(...values).toFixed(2),
+                totalRecords: studentData.data.length
+            };
+        }
+        
+        return null;
+    };
+
+    const stats = calculateStats();
+
     return (
-        <div className="p-6 bg-white rounded-lg shadow">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">📊 Analytics Dashboard - Guru</h2>
+        <ModuleContainer>
+            <PageHeader
+                icon="chart-line"
+                title="Analytics Dashboard Guru"
+                subtitle="Pantau performa kelas yang Anda ajar dan progress siswa"
+            />
+
+            {/* Stats Cards */}
+            {stats && (
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    {activeTab === 'subject' ? (
+                        <>
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border-2 border-blue-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Total Kelas</p>
+                                        <p className="text-3xl font-bold text-blue-700">{stats.totalClasses}</p>
+                                    </div>
+                                    <div className="bg-blue-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-chalkboard text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border-2 border-green-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Tertinggi</p>
+                                        <p className="text-3xl font-bold text-green-700">{stats.highest}</p>
+                                    </div>
+                                    <div className="bg-green-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-trophy text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-xl border-2 border-purple-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Rata-rata</p>
+                                        <p className="text-3xl font-bold text-purple-700">{stats.average}</p>
+                                    </div>
+                                    <div className="bg-purple-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-calculator text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-5 rounded-xl border-2 border-indigo-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Total Siswa</p>
+                                        <p className="text-3xl font-bold text-indigo-700">{stats.totalStudents}</p>
+                                    </div>
+                                    <div className="bg-indigo-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-users text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-xl border-2 border-blue-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Rata-rata</p>
+                                        <p className="text-3xl font-bold text-blue-700">{stats.average}</p>
+                                    </div>
+                                    <div className="bg-blue-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-calculator text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-xl border-2 border-green-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Tertinggi</p>
+                                        <p className="text-3xl font-bold text-green-700">{stats.highest}</p>
+                                    </div>
+                                    <div className="bg-green-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-arrow-up text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-red-50 to-red-100 p-5 rounded-xl border-2 border-red-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Terendah</p>
+                                        <p className="text-3xl font-bold text-red-700">{stats.lowest}</p>
+                                    </div>
+                                    <div className="bg-red-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-arrow-down text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-xl border-2 border-purple-200 shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">Total Data</p>
+                                        <p className="text-3xl font-bold text-purple-700">{stats.totalRecords}</p>
+                                    </div>
+                                    <div className="bg-purple-500 text-white p-3 rounded-lg">
+                                        <i className="fas fa-database text-2xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* Tabs */}
-            <div className="mb-6 border-b border-gray-200">
-                <div className="flex space-x-4">
+            <div className="mb-6 border-b-2 border-gray-200">
+                <div className="flex space-x-2">
                     <button
                         onClick={() => setActiveTab('subject')}
-                        className={`px-4 py-2 font-medium transition-colors ${
+                        className={`px-6 py-3 font-semibold transition-all ${
                             activeTab === 'subject'
-                                ? 'border-b-2 border-blue-500 text-blue-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'border-b-4 border-blue-500 text-blue-600 bg-blue-50'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
                     >
-                        📚 Mata Pelajaran Saya
+                        <i className="fas fa-book-open mr-2"></i>
+                        Mata Pelajaran Saya
                     </button>
                     <button
                         onClick={() => setActiveTab('student')}
-                        className={`px-4 py-2 font-medium transition-colors ${
+                        className={`px-6 py-3 font-semibold transition-all ${
                             activeTab === 'student'
-                                ? 'border-b-2 border-blue-500 text-blue-600'
-                                : 'text-gray-500 hover:text-gray-700'
+                                ? 'border-b-4 border-purple-500 text-purple-600 bg-purple-50'
+                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                         }`}
                     >
-                        👤 Progress Siswa
+                        <i className="fas fa-user-graduate mr-2"></i>
+                        Progress Siswa
                     </button>
                 </div>
             </div>
 
-            {/* Error message */}
+            {/* Error Message */}
             {error && (
-                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {error}
-                </div>
+                <StatusMessage
+                    type="error"
+                    message={error}
+                    onClose={() => setError(null)}
+                />
             )}
 
+            {/* Loading State */}
+            {loading && <LoadingSpinner text="Memuat data analytics..." />}
+
             {/* Subject Analytics Tab */}
-            {activeTab === 'subject' && (
+            {activeTab === 'subject' && !loading && (
                 <div>
-                    <div className="mb-4 flex gap-4 items-center">
-                        <select
-                            value={selectedMapel}
-                            onChange={(e) => setSelectedMapel(e.target.value)}
-                            className="px-4 py-2 border rounded"
-                        >
-                            <option value="all">📚 Semua Mata Pelajaran</option>
-                            {mataPelajaranList.map((mapel, idx) => (
-                                <option key={idx} value={mapel.id}>{mapel.nama}</option>
-                            ))}
-                        </select>
-                        <select
-                            value={selectedKelas}
-                            onChange={(e) => setSelectedKelas(e.target.value)}
-                            className="px-4 py-2 border rounded"
-                        >
-                            <option value="all">🏫 Semua Kelas</option>
-                            {kelasList.map((kelas, idx) => (
-                                <option key={idx} value={kelas.id}>{kelas.nama}</option>
-                            ))}
-                        </select>
-                        <button
-                            onClick={loadGuruAnalytics}
-                            disabled={loading}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-                        >
-                            {loading ? 'Loading...' : 'Refresh Data'}
-                        </button>
-                    </div>
+                    <FormSection title="Filter Kelas yang Diajar" icon="filter" variant="info">
+                        <div className="flex gap-4 items-end">
+                            <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <i className="fas fa-book mr-2 text-blue-500"></i>
+                                    Mata Pelajaran
+                                </label>
+                                <select
+                                    value={selectedMapel}
+                                    onChange={(e) => setSelectedMapel(e.target.value)}
+                                    className="input-field w-full"
+                                >
+                                    <option value="all">Semua Mata Pelajaran</option>
+                                    {mataPelajaranList.map((mapel, idx) => (
+                                        <option key={idx} value={mapel.id}>{mapel.nama}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <i className="fas fa-school mr-2 text-blue-500"></i>
+                                    Kelas
+                                </label>
+                                <select
+                                    value={selectedKelas}
+                                    onChange={(e) => setSelectedKelas(e.target.value)}
+                                    className="input-field w-full"
+                                >
+                                    <option value="all">Semua Kelas</option>
+                                    {kelasList.map((kelas, idx) => (
+                                        <option key={idx} value={kelas.id}>{kelas.nama}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button
+                                onClick={loadGuruAnalytics}
+                                disabled={loading}
+                                className="btn-primary"
+                            >
+                                <i className="fas fa-sync-alt mr-2"></i>
+                                Refresh Data
+                            </button>
+                        </div>
+                    </FormSection>
 
                     {guruData.length > 0 ? (
                         <>
-                            {/* Summary Cards */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                                <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                                    <p className="text-sm text-gray-600">Total Kelas Diajar</p>
-                                    <p className="text-2xl font-bold text-blue-600">
-                                        {new Set(guruData.map(d => d.id_kelas)).size}
-                                    </p>
-                                </div>
-                                <div className="p-4 bg-green-50 border border-green-200 rounded">
-                                    <p className="text-sm text-gray-600">Rata-rata Tertinggi</p>
-                                    <p className="text-2xl font-bold text-green-600">
-                                        {Math.max(...guruData.map(d => d.rata_rata_kelas || 0)).toFixed(2)}
-                                    </p>
-                                </div>
-                                <div className="p-4 bg-purple-50 border border-purple-200 rounded">
-                                    <p className="text-sm text-gray-600">Total Siswa</p>
-                                    <p className="text-2xl font-bold text-purple-600">
-                                        {guruData.reduce((sum, d) => sum + (d.jumlah_siswa || 0), 0)}
-                                    </p>
-                                </div>
-                            </div>
-
                             {/* Chart */}
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold mb-4">Trend Nilai Kelas yang Diajar</h3>
+                            <div className="mb-6 bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm">
+                                <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                                    <i className="fas fa-chart-line text-blue-500 mr-2"></i>
+                                    Trend Nilai Kelas yang Diajar
+                                </h3>
                                 <ResponsiveContainer width="100%" height={400}>
                                     <BarChart data={prepareChartData(guruData)}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="period" angle={-45} textAnchor="end" height={100} style={{ fontSize: '12px' }} />
-                                        <YAxis domain={[0, 100]} label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }} />
+                                        <XAxis 
+                                            dataKey="period" 
+                                            angle={-45} 
+                                            textAnchor="end" 
+                                            height={100} 
+                                            style={{ fontSize: '12px' }}
+                                        />
+                                        <YAxis 
+                                            domain={[0, 100]} 
+                                            label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }}
+                                        />
                                         <Tooltip />
                                         <Legend />
                                         {guruData.length > 0 && Object.keys(prepareChartData(guruData)[0] || {})
@@ -251,37 +410,29 @@ const GuruAnalytics = ({ idGuru }) => {
                             </div>
 
                             {/* Detail Table */}
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full bg-white border">
-                                    <thead className="bg-gray-100">
+                            <div className="overflow-x-auto bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+                                <table className="min-w-full">
+                                    <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                                         <tr>
-                                            <th className="px-4 py-2 border">Mata Pelajaran</th>
-                                            <th className="px-4 py-2 border">Kelas</th>
-                                            <th className="px-4 py-2 border">Periode</th>
-                                            <th className="px-4 py-2 border">Rata-rata Kelas</th>
-                                            <th className="px-4 py-2 border">Jumlah Siswa</th>
-                                            <th className="px-4 py-2 border">Terendah</th>
-                                            <th className="px-4 py-2 border">Tertinggi</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2">Mata Pelajaran</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2">Kelas</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2">Periode</th>
+                                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">Rata-rata Kelas</th>
+                                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">Jumlah Siswa</th>
+                                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">Terendah</th>
+                                            <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">Tertinggi</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="divide-y divide-gray-200">
                                         {guruData.map((item, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50">
-                                                <td className="px-4 py-2 border">{item.nama_mapel}</td>
-                                                <td className="px-4 py-2 border">{item.nama_kelas}</td>
-                                                <td className="px-4 py-2 border">
-                                                    {item.tahun_ajaran} {item.semester}
-                                                </td>
-                                                <td className="px-4 py-2 border font-semibold">
-                                                    {item.rata_rata_kelas || '-'}
-                                                </td>
-                                                <td className="px-4 py-2 border">{item.jumlah_siswa || 0}</td>
-                                                <td className="px-4 py-2 border text-red-600">
-                                                    {item.nilai_terendah || '-'}
-                                                </td>
-                                                <td className="px-4 py-2 border text-green-600">
-                                                    {item.nilai_tertinggi || '-'}
-                                                </td>
+                                            <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4 text-sm text-gray-900">{item.nama_mapel}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-900">{item.nama_kelas}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{item.tahun_ajaran} {item.semester}</td>
+                                                <td className="px-6 py-4 text-center text-sm font-bold text-blue-600">{item.rata_rata_kelas || '-'}</td>
+                                                <td className="px-6 py-4 text-center text-sm text-gray-700">{item.jumlah_siswa || 0}</td>
+                                                <td className="px-6 py-4 text-center text-sm font-semibold text-red-600">{item.nilai_terendah || '-'}</td>
+                                                <td className="px-6 py-4 text-center text-sm font-semibold text-green-600">{item.nilai_tertinggi || '-'}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -289,65 +440,104 @@ const GuruAnalytics = ({ idGuru }) => {
                             </div>
                         </>
                     ) : (
-                        <div className="text-center py-8 text-gray-500">
-                            <p>Belum ada data analytics untuk mata pelajaran yang Anda ajar.</p>
-                            <p className="text-sm mt-2">Silakan input nilai terlebih dahulu.</p>
-                        </div>
+                        <EmptyState
+                            icon="book-open"
+                            title="Belum Ada Data Analytics"
+                            description="Belum ada data analytics untuk mata pelajaran yang Anda ajar. Silakan input nilai terlebih dahulu."
+                        />
                     )}
                 </div>
             )}
 
             {/* Student Analytics Tab */}
-            {activeTab === 'student' && (
+            {activeTab === 'student' && !loading && (
                 <div>
-                    <div className="mb-4 flex gap-4 items-center">
-                        <input
-                            type="number"
-                            placeholder="Masukkan ID Siswa"
-                            value={studentId}
-                            onChange={(e) => setStudentId(e.target.value)}
-                            className="px-4 py-2 border rounded"
-                        />
-                        <select
-                            value={selectedMapelStudent}
-                            onChange={(e) => setSelectedMapelStudent(e.target.value)}
-                            className="px-4 py-2 border rounded"
-                        >
-                            <option value="all">📚 Semua Mata Pelajaran</option>
-                            {mataPelajaranList.map((mapel, idx) => (
-                                <option key={idx} value={mapel.id}>{mapel.nama}</option>
-                            ))}
-                        </select>
-                        <button
-                            onClick={loadStudentAnalytics}
-                            disabled={loading}
-                            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-                        >
-                            {loading ? 'Loading...' : 'Lihat Progress'}
-                        </button>
-                    </div>
+                    <FormSection title="Cari Progress Siswa" icon="search" variant="warning">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <i className="fas fa-id-card mr-2 text-purple-500"></i>
+                                    ID Siswa
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="Masukkan ID Siswa"
+                                    value={studentId}
+                                    onChange={(e) => setStudentId(e.target.value)}
+                                    className="input-field w-full"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <i className="fas fa-book mr-2 text-purple-500"></i>
+                                    Mata Pelajaran
+                                </label>
+                                <select
+                                    value={selectedMapelStudent}
+                                    onChange={(e) => setSelectedMapelStudent(e.target.value)}
+                                    className="input-field w-full"
+                                >
+                                    <option value="all">Semua Mata Pelajaran</option>
+                                    {mataPelajaranList.map((mapel, idx) => (
+                                        <option key={idx} value={mapel.id}>{mapel.nama}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
+                                <button
+                                    onClick={loadStudentAnalytics}
+                                    disabled={loading}
+                                    className="btn-primary w-full"
+                                >
+                                    <i className="fas fa-search mr-2"></i>
+                                    Lihat Progress
+                                </button>
+                            </div>
+                        </div>
+                    </FormSection>
 
                     {studentData && (
                         <>
-                            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded">
-                                <h3 className="font-semibold text-lg">{studentData.student.nama_siswa}</h3>
-                                <p className="text-sm text-gray-600">
-                                    ID: {studentData.student.id_siswa} | 
-                                    Angkatan: {studentData.student.tahun_ajaran_masuk}
-                                </p>
+                            <div className="mb-6 p-5 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-purple-500 text-white p-4 rounded-full">
+                                        <i className="fas fa-user-graduate text-2xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-800">{studentData.student.nama_siswa}</h3>
+                                        <p className="text-sm text-gray-600">
+                                            <i className="fas fa-id-badge mr-2"></i>
+                                            ID: {studentData.student.id_siswa} | 
+                                            <i className="fas fa-calendar ml-3 mr-2"></i>
+                                            Angkatan: {studentData.student.tahun_ajaran_masuk}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             {studentData.data && studentData.data.length > 0 ? (
                                 <>
-                                    <div className="mb-6">
-                                        <h3 className="text-lg font-semibold mb-4">
+                                    {/* Chart */}
+                                    <div className="mb-6 bg-white p-6 rounded-xl border-2 border-gray-200 shadow-sm">
+                                        <h3 className="text-lg font-semibold mb-4 text-gray-800">
+                                            <i className="fas fa-chart-line text-purple-500 mr-2"></i>
                                             Progress Akademik Siswa
                                         </h3>
                                         <ResponsiveContainer width="100%" height={400}>
                                             <BarChart data={prepareChartData(studentData.data)}>
                                                 <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey="period" angle={-45} textAnchor="end" height={100} style={{ fontSize: '12px' }} />
-                                                <YAxis domain={[0, 100]} label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }} />
+                                                <XAxis 
+                                                    dataKey="period" 
+                                                    angle={-45} 
+                                                    textAnchor="end" 
+                                                    height={100} 
+                                                    style={{ fontSize: '12px' }}
+                                                />
+                                                <YAxis 
+                                                    domain={[0, 100]} 
+                                                    label={{ value: 'Nilai Rata-rata', angle: -90, position: 'insideLeft' }}
+                                                />
                                                 <Tooltip />
                                                 <Legend />
                                                 {studentData.data.length > 0 && 
@@ -363,31 +553,28 @@ const GuruAnalytics = ({ idGuru }) => {
                                         </ResponsiveContainer>
                                     </div>
 
-                                    <div className="overflow-x-auto">
-                                        <table className="min-w-full bg-white border">
-                                            <thead className="bg-gray-100">
+                                    {/* Data Table */}
+                                    <div className="overflow-x-auto bg-white rounded-xl border-2 border-gray-200 shadow-sm">
+                                        <table className="min-w-full">
+                                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                                                 <tr>
-                                                    <th className="px-4 py-2 border">Mata Pelajaran</th>
-                                                    <th className="px-4 py-2 border">Periode</th>
-                                                    <th className="px-4 py-2 border">Kelas</th>
-                                                    <th className="px-4 py-2 border">Rata TP</th>
-                                                    <th className="px-4 py-2 border">UAS</th>
-                                                    <th className="px-4 py-2 border">Nilai Akhir</th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2">Mata Pelajaran</th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2">Periode</th>
+                                                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700 border-b-2">Kelas</th>
+                                                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">Rata TP</th>
+                                                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">UAS</th>
+                                                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700 border-b-2">Nilai Akhir</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
+                                            <tbody className="divide-y divide-gray-200">
                                                 {studentData.data.map((item, idx) => (
-                                                    <tr key={idx} className="hover:bg-gray-50">
-                                                        <td className="px-4 py-2 border">{item.nama_mapel}</td>
-                                                        <td className="px-4 py-2 border">
-                                                            {item.tahun_ajaran} {item.semester}
-                                                        </td>
-                                                        <td className="px-4 py-2 border">{item.nama_kelas}</td>
-                                                        <td className="px-4 py-2 border">{item.rata_tp || '-'}</td>
-                                                        <td className="px-4 py-2 border">{item.nilai_uas || '-'}</td>
-                                                        <td className="px-4 py-2 border font-semibold">
-                                                            {item.rata_keseluruhan}
-                                                        </td>
+                                                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-6 py-4 text-sm text-gray-900">{item.nama_mapel}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-700">{item.tahun_ajaran} {item.semester}</td>
+                                                        <td className="px-6 py-4 text-sm text-gray-700">{item.nama_kelas}</td>
+                                                        <td className="px-6 py-4 text-center text-sm text-gray-700">{item.rata_tp || '-'}</td>
+                                                        <td className="px-6 py-4 text-center text-sm text-gray-700">{item.nilai_uas || '-'}</td>
+                                                        <td className="px-6 py-4 text-center text-sm font-bold text-purple-600">{item.rata_keseluruhan}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -395,15 +582,17 @@ const GuruAnalytics = ({ idGuru }) => {
                                     </div>
                                 </>
                             ) : (
-                                <p className="text-gray-500 text-center py-8">
-                                    Belum ada data nilai untuk siswa ini.
-                                </p>
+                                <EmptyState
+                                    icon="clipboard-list"
+                                    title="Belum Ada Data Nilai"
+                                    description="Siswa ini belum memiliki data nilai."
+                                />
                             )}
                         </>
                     )}
                 </div>
             )}
-        </div>
+        </ModuleContainer>
     );
 };
 
