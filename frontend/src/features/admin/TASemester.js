@@ -105,49 +105,7 @@ const TASemesterManagement = ({ activeTASemester, setActiveTASemester }) => {
     });
   };
 
-  const columns = [
-    {
-      header: 'ID',
-      accessor: 'id_ta_semester',
-      className: 'text-gray-500'
-    },
-    {
-      header: 'Tahun Ajaran',
-      accessor: 'tahun_ajaran',
-      className: 'font-medium text-gray-900'
-    },
-    {
-      header: 'Semester',
-      accessor: 'semester',
-      className: 'text-gray-500'
-    },
-    {
-      header: 'Status',
-      accessor: (row) => (
-        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-          row.is_aktif 
-            ? 'bg-green-100 text-green-800' 
-            : 'bg-gray-100 text-gray-800'
-        }`}>
-          {row.is_aktif ? 'Aktif' : 'Tidak Aktif'}
-        </span>
-      )
-    },
-    {
-      header: 'Aksi',
-      accessor: (row) => (
-        !row.is_aktif && (
-          <Button
-            variant="text"
-            icon="check-circle"
-            onClick={() => handleSetActive(row.id_ta_semester)}
-          >
-            Set Aktif
-          </Button>
-        )
-      )
-    }
-  ];
+  // Tidak perlu columns, kita akan render tabel manual untuk kontrol lebih baik
 
   return (
     <ModuleContainer>
@@ -228,10 +186,49 @@ const TASemesterManagement = ({ activeTASemester, setActiveTASemester }) => {
               Daftar Tahun Ajaran & Semester
             </h4>
           </div>
-          <Table
-            columns={columns}
-            data={taSemesters}
-          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tahun Ajaran</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {taSemesters.map((row, index) => (
+                  <tr key={row.id_ta_semester} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.id_ta_semester}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{row.tahun_ajaran}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{row.semester}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        row.is_aktif 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {row.is_aktif ? 'Aktif' : 'Tidak Aktif'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {!row.is_aktif && (
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          icon="check-circle"
+                          onClick={() => handleSetActive(row.id_ta_semester)}
+                        >
+                          Set Aktif
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
