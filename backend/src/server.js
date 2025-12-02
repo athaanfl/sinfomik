@@ -5,7 +5,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv'); // Import dotenv untuk membaca .env
 const path = require('path');
-const { connectDb } = require('./config/db'); // Import fungsi koneksi DB
+const { connectDb } = require('./config/db'); // SQLite connector
+const { connectMySQLDb } = require('./config/mysql'); // MySQL connector
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const guruRoutes = require('./routes/guruRoutes');
@@ -81,7 +82,14 @@ app.use(express.json({ limit: '10mb' })); // Limit request body size
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Koneksi ke database saat aplikasi dimulai
-connectDb();
+if ((process.env.DB_TYPE || 'sqlite').toLowerCase() === 'mysql') {
+    connectMySQLDb().catch(err => {
+        console.error('Failed to connect MySQL:', err);
+        process.exit(1);
+    });
+} else {
+    connectDb();
+}
 
 // ===============================
 // ROUTES

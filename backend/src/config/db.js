@@ -9,6 +9,10 @@ const DB_FILE = path.resolve(__dirname, '../../academic_dashboard.db');
 let db;
 
 function connectDb() {
+    if ((process.env.DB_TYPE || 'sqlite').toLowerCase() === 'mysql') {
+        console.log('Skipping SQLite connect: DB_TYPE is mysql');
+        return null;
+    }
     // Gunakan sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE untuk membaca/menulis dan membuat jika tidak ada
     db = new sqlite3.Database(DB_FILE, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
         if (err) {
@@ -29,6 +33,9 @@ function connectDb() {
 }
 
 function getDb() {
+    if ((process.env.DB_TYPE || 'sqlite').toLowerCase() === 'mysql') {
+        throw new Error('getDb() (SQLite) called while DB_TYPE=mysql. Use MySQL pool via config/mysql.js');
+    }
     if (!db) {
         connectDb();
     }

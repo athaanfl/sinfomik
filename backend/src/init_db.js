@@ -365,6 +365,8 @@ async function insertDummyData(db) {
         if (nilaiCount === 0) {
             const allStudents = await allQuery("SELECT id_siswa FROM Siswa");
             const allGuruMapelKelas = await allQuery("SELECT id_guru, id_mapel, id_kelas, id_ta_semester FROM GuruMataPelajaranKelas");
+            const allKelas = await allQuery("SELECT id_kelas, nama_kelas, id_ta_semester FROM Kelas");
+            const allSubjects = await allQuery("SELECT id_mapel, nama_mapel FROM MataPelajaran");
 
             const activeTASemester = allTASemesters.find(t => t.is_aktif);
             const kelasXA_2024_id = allKelas.find(k => k.nama_kelas === 'X A' && k.id_ta_semester === activeTASemester?.id_ta_semester)?.id_kelas;
