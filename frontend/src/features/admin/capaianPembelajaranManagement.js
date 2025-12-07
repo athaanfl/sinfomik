@@ -1064,17 +1064,16 @@ const CapaianPembelajaranManagement = () => {
       )}
 
       {/* Delete Confirmation Dialog */}
-      {deleteConfirm.show && (
-        <ConfirmDialog
-          title="Delete Learning Achievement"
-          message={`Are you sure you want to delete this learning achievement: "${deleteConfirm.cp?.deskripsi_cp?.substring(0, 50)}..."? This action cannot be undone.`}
-          confirmText="Delete"
-          cancelText="Cancel"
-          onConfirm={confirmDelete}
-          onCancel={() => setDeleteConfirm({ show: false, cp: null })}
-          variant="danger"
-        />
-      )}
+      <ConfirmDialog
+        isOpen={deleteConfirm.show}
+        title="Delete Learning Achievement"
+        message={`Are you sure you want to delete this learning achievement: "${deleteConfirm.cp?.deskripsi_cp?.substring(0, 50)}..."? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirm({ show: false, cp: null })}
+        variant="danger"
+      />
     </ModuleContainer>
   );
 };

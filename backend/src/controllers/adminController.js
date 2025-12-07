@@ -856,17 +856,29 @@ exports.deleteCapaianPembelajaran = (req, res) => {
     const { id } = req.params; // id_cp
     const db = getDb();
 
-    // Cek ketergantungan
-    db.get("SELECT COUNT(*) AS count FROM SiswaCapaianPembelajaran WHERE id_cp = ?", [id], (err, row) => {
-        if (err) return res.status(500).json({ message: err.message });
-        if (row.count > 0) {
-            return res.status(409).json({ message: 'Tidak dapat menghapus Capaian Pembelajaran. Masih ada data pencapaian siswa terkait.' });
-        }
+    // Hapus data terkait terlebih dahulu (CASCADE DELETE manual)
+    db.serialize(() => {
+        // 1. Hapus data pencapaian siswa terkait CP ini
+        db.run("DELETE FROM SiswaCapaianPembelajaran WHERE id_cp = ?", [id], (err) => {
+            if (err) {
+                console.error('Error deleting related student achievements:', err);
+                return res.status(500).json({ message: 'Gagal menghapus data pencapaian siswa terkait: ' + err.message });
+            }
 
-        db.run("DELETE FROM CapaianPembelajaran WHERE id_cp = ?", [id], function(err) {
-            if (err) return res.status(400).json({ message: err.message });
-            if (this.changes === 0) return res.status(404).json({ message: 'Capaian Pembelajaran tidak ditemukan.' });
-            res.json({ message: 'Capaian Pembelajaran berhasil dihapus.' });
+            // 2. Hapus Capaian Pembelajaran itu sendiri
+            db.run("DELETE FROM CapaianPembelajaran WHERE id_cp = ?", [id], function(err) {
+                if (err) {
+                    console.error('Error deleting CP:', err);
+                    return res.status(400).json({ message: err.message });
+                }
+                if (this.changes === 0) {
+                    return res.status(404).json({ message: 'Capaian Pembelajaran tidak ditemukan.' });
+                }
+                res.json({ 
+                    message: 'Capaian Pembelajaran dan semua data terkait berhasil dihapus.',
+                    deletedCP: true
+                });
+            });
         });
     });
 };
