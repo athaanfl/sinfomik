@@ -1,6 +1,8 @@
 ﻿// frontend/src/features/admin/capaianPembelajaranManagement.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 import Button from '../../components/Button';
 import Table from '../../components/Table';
 import ModuleContainer from '../../components/ModuleContainer';
@@ -34,7 +36,7 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
+      const response = await fetch(`${API_BASE_URL}/api/excel/atp/${id_mapel}/${fase}`, {
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
         }
@@ -78,7 +80,7 @@ const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`http://localhost:5000/api/excel/atp/${id_mapel}/${fase}`, {
+      const response = await fetch(`${API_BASE_URL}/api/excel/atp/${id_mapel}/${fase}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -548,7 +550,7 @@ const ImportExcel = ({ onImportSuccess }) => {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/excel/import-cp', {
+      const response = await fetch(`${API_BASE_URL}/api/excel/import-cp`, {
         method: 'POST',
         headers: {
           'Authorization': token ? `Bearer ${token}` : '',
