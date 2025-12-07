@@ -1,5 +1,5 @@
 const xlsx = require('xlsx');
-const { getDb } = require('../config/db');
+const { getDb } = require('../config/dbWrapper');
 const fs = require('fs');
 const path = require('path');
 

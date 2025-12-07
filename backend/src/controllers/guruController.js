@@ -1,5 +1,5 @@
 // backend/src/controllers/guruController.js
-const { getDb } = require('../config/db');
+const { getDb } = require('../config/dbWrapper');
 const { format } = require('date-fns'); // For date formatting
 const { createHash } = require('crypto'); // Untuk hashing SHA256
 const bcrypt = require('bcryptjs'); // Untuk bcrypt hashing

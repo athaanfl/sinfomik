@@ -1,5 +1,5 @@
 // backend/src/controllers/adminController.js
-const { getDb } = require('../config/db');
+const { getDb } = require('../config/dbWrapper');
 const { createHash } = require('crypto'); // Untuk hashing SHA256 (sesuai data dummy Python)
 const { format } = require('date-fns'); // Untuk format tanggal
 
@@ -19,7 +19,8 @@ exports.getAllStudents = (req, res) => {
             s.nama_siswa,
             s.tanggal_lahir,
             s.jenis_kelamin,
-            s.tahun_ajaran_masuk,
+            s.nisn,
+            s.email,
             k.id_kelas AS kelas_aktif_id,
             k.nama_kelas AS kelas_aktif_nama,
             tas_k.tahun_ajaran AS kelas_aktif_tahun_ajaran,
@@ -52,11 +53,11 @@ exports.getAllStudents = (req, res) => {
 };
 
 exports.addStudent = (req, res) => {
-    const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk } = req.body;
+    const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, nisn, email } = req.body;
     const db = getDb();
 
-    db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?, ?)",
-        [id_siswa, nama_siswa, tanggal_lahir || null, jenis_kelamin || null, null, tahun_ajaran_masuk || null],
+    db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, nisn, email, username, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [id_siswa, nama_siswa, tanggal_lahir || null, jenis_kelamin || null, nisn || null, email || null, `siswa${id_siswa}`, '$2a$10$default'],
         function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
@@ -71,10 +72,10 @@ exports.addStudent = (req, res) => {
 
 exports.updateStudent = (req, res) => {
     const { id } = req.params;
-    const { nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk } = req.body;
+    const { nama_siswa, tanggal_lahir, jenis_kelamin, nisn, email } = req.body;
     const db = getDb();
-    const query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, tahun_ajaran_masuk = ? WHERE id_siswa = ?";
-    const params = [nama_siswa, tanggal_lahir || null, jenis_kelamin || null, tahun_ajaran_masuk || null, id];
+    const query = "UPDATE Siswa SET nama_siswa = ?, tanggal_lahir = ?, jenis_kelamin = ?, nisn = ?, email = ? WHERE id_siswa = ?";
+    const params = [nama_siswa, tanggal_lahir || null, jenis_kelamin || null, nisn || null, email || null, id];
 
     db.run(query, params, function(err) {
         if (err) return res.status(400).json({ message: err.message });

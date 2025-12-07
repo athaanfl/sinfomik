@@ -1,5 +1,5 @@
 // backend/src/controllers/analyticsController.js
-const { getDb } = require('../config/db');
+const { getDb } = require('../config/dbWrapper');
 
 /**
  * ANALYTICS ENDPOINT 1: School-Wide Analytics
