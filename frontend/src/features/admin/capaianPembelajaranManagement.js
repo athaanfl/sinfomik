@@ -1,8 +1,6 @@
 ﻿// frontend/src/features/admin/capaianPembelajaranManagement.js
 import React, { useState, useEffect } from 'react';
 import * as adminApi from '../../api/admin';
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 import Button from '../../components/Button';
 import Table from '../../components/Table';
 import ModuleContainer from '../../components/ModuleContainer';
@@ -12,6 +10,8 @@ import ConfirmDialog from '../../components/ConfirmDialog';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import StatusMessage from '../../components/StatusMessage';
 import EmptyState from '../../components/EmptyState';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 // Komponen Modal ATP Viewer (dengan Edit Mode)
 const AtpViewerModal = ({ id_mapel, fase, nama_mapel, onClose }) => {
