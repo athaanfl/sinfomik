@@ -25,7 +25,6 @@ jobs:
           cd frontend
           npm install
           CI=false REACT_APP_API_BASE_URL=https://sinfomik-backend-gzcng8eucydhgucz.southeastasia-01.azurewebsites.net npm run build
-          cp public/staticwebapp.config.json build/
       
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
