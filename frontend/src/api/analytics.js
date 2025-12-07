@@ -1,5 +1,5 @@
 // frontend/src/api/analytics.js
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000';
 
 // Helper to add JWT token to requests
 const fetchWithAuth = async (url, options = {}) => {
@@ -44,7 +44,7 @@ const fetchWithAuth = async (url, options = {}) => {
  */
 export const fetchSchoolAnalytics = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_BASE_URL}/analytics/school${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/api/analytics/school${queryString ? `?${queryString}` : ''}`;
     return fetchWithAuth(url);
 };
 
@@ -58,7 +58,7 @@ export const fetchAngkatanAnalytics = async (tahunAjaranMasuk, params = {}) => {
     // URL encode the tahun ajaran to handle the slash character
     const encodedTahunAjaran = encodeURIComponent(tahunAjaranMasuk);
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_BASE_URL}/analytics/angkatan/${encodedTahunAjaran}${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/api/analytics/angkatan/${encodedTahunAjaran}${queryString ? `?${queryString}` : ''}`;
     return fetchWithAuth(url);
 };
 
@@ -67,7 +67,7 @@ export const fetchAngkatanAnalytics = async (tahunAjaranMasuk, params = {}) => {
  * @returns {Promise<Array>} List of angkatan
  */
 export const fetchAngkatanList = async () => {
-    const url = `${API_BASE_URL}/analytics/angkatan-list`;
+    const url = `${API_BASE_URL}/api/analytics/angkatan-list`;
     return fetchWithAuth(url);
 };
 
@@ -85,7 +85,7 @@ export const fetchStudentAnalytics = async (idSiswa, params = {}) => {
     }
     
     const queryString = new URLSearchParams(cleanParams).toString();
-    const url = `${API_BASE_URL}/analytics/student/${idSiswa}${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/api/analytics/student/${idSiswa}${queryString ? `?${queryString}` : ''}`;
     return fetchWithAuth(url);
 };
 
@@ -97,7 +97,7 @@ export const fetchStudentAnalytics = async (idSiswa, params = {}) => {
  */
 export const fetchGuruAnalytics = async (idGuru, params = {}) => {
     const queryString = new URLSearchParams(params).toString();
-    const url = `${API_BASE_URL}/analytics/guru/${idGuru}${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE_URL}/api/analytics/guru/${idGuru}${queryString ? `?${queryString}` : ''}`;
     return fetchWithAuth(url);
 };
 
@@ -113,6 +113,6 @@ export const compareStudents = async (idSiswaList, params = {}) => {
         id_siswa_list: idSiswaList.join(',')
     };
     const queryString = new URLSearchParams(allParams).toString();
-    const url = `${API_BASE_URL}/analytics/compare-students?${queryString}`;
+    const url = `${API_BASE_URL}/api/analytics/compare-students?${queryString}`;
     return fetchWithAuth(url);
 };
