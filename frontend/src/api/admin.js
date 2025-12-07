@@ -304,3 +304,119 @@ export const promoteStudents = async (student_ids, target_kelas_id, target_ta_se
     body: JSON.stringify({ student_ids, target_kelas_id, target_ta_semester_id }),
   });
 };
+
+// --- API untuk Import/Export Siswa ---
+export const downloadStudentTemplate = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/excel/students/template`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to download template');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Template_Import_Siswa.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    return { success: true, message: 'Template berhasil diunduh' };
+  } catch (error) {
+    console.error('Error downloading template:', error);
+    throw error;
+  }
+};
+
+export const importStudents = async (file) => {
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/api/excel/students/import`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal import siswa');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error importing students:', error);
+    throw error;
+  }
+};
+
+// --- API untuk Excel Import Enrollment ---
+export const downloadEnrollmentTemplate = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/excel/enrollment/template`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error('Gagal download template');
+    }
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Template_Import_Enrollment.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Error downloading enrollment template:', error);
+    throw error;
+  }
+};
+
+export const importEnrollment = async (file) => {
+  try {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${API_BASE_URL}/api/excel/enrollment/import`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Gagal import enrollment');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error importing enrollment:', error);
+    throw error;
+  }
+};

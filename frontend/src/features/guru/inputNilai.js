@@ -27,6 +27,9 @@ const InputNilai = ({ activeTASemester, userId }) => {
   const [messageType, setMessageType] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [showAddTpModal, setShowAddTpModal] = useState(false);
+  const [newTpName, setNewTpName] = useState('');
+  const [manualTpList, setManualTpList] = useState([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -132,34 +135,80 @@ const InputNilai = ({ activeTASemester, userId }) => {
 
       const tpData = await guruApi.getTpByMapelFaseKelas(mapelId, fase, kelasId, semesterNumber);
       
+      let tpNumbers = [];
+      const descriptions = {};
+      const newKkm = { UAS: 75, FINAL: 75 };
+      
+      // Load TP dari ATP Excel
       if (tpData.success && tpData.tp_list && tpData.tp_list.length > 0) {
-        const tpNumbers = tpData.tp_list.map((_, index) => index + 1);
-        setTpColumns(tpNumbers);
+        tpNumbers = tpData.tp_list.map((_, index) => index + 1);
         
-        const descriptions = {};
         tpData.tp_list.forEach((tp, index) => {
           descriptions[index + 1] = tp.tujuan_pembelajaran;
-        });
-        setTpDescriptions(descriptions);
-        
-        const newKkm = { UAS: 75, FINAL: 75 };
-        tpData.tp_list.forEach((tp, index) => {
+          
           if (tp.kktp && !isNaN(parseFloat(tp.kktp))) {
             newKkm[`TP${index + 1}`] = parseFloat(tp.kktp);
           } else {
             newKkm[`TP${index + 1}`] = 75;
           }
         });
-        setKkm(newKkm);
+      }
+      
+      // Load TP manual dari database dan gabungkan
+      const penugasanData = await guruApi.getPenugasanByGuruMapelKelas(
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester
+      );
+      
+      if (penugasanData && penugasanData.id_penugasan) {
+        const manualTpData = await guruApi.getManualTp(
+          penugasanData.id_penugasan,
+          activeTASemester.id_ta_semester
+        );
         
+        if (manualTpData.success && manualTpData.manual_tp.length > 0) {
+          const manualTpColumns = manualTpData.manual_tp.map(tp => tp.tp_number);
+          setManualTpList(manualTpData.manual_tp);
+          
+          // Gabungkan dengan TP dari ATP, hilangkan duplikat
+          tpNumbers = [...new Set([...tpNumbers, ...manualTpColumns])].sort((a, b) => a - b);
+          
+          // Set nama dan KKM untuk TP manual
+          manualTpData.manual_tp.forEach(tp => {
+            descriptions[tp.tp_number] = tp.tp_name;
+            if (!newKkm[`TP${tp.tp_number}`]) {
+              newKkm[`TP${tp.tp_number}`] = 75;
+            }
+          });
+        }
+      }
+      
+      // Set final values
+      setTpColumns(tpNumbers.length > 0 ? tpNumbers : [1]);
+      setTpDescriptions(descriptions);
+      setKkm(newKkm);
+      
+      // Show success message
+      if (tpData.success && tpData.tp_list && tpData.tp_list.length > 0) {
         const semesterText = tpData.semester_text || 'Semua';
-        setMessage(`✅ Berhasil memuat ${tpData.total_tp} TP dari ATP ${tpData.mapel} Fase ${fase} - Semester ${semesterText} untuk ${tpData.nama_kelas}`);
+        const manualCount = tpNumbers.length - tpData.tp_list.length;
+        const manualText = manualCount > 0 ? ` (+${manualCount} TP manual)` : '';
+        setMessage(`✅ Berhasil memuat ${tpData.total_tp} TP dari ATP ${tpData.mapel} Fase ${fase} - Semester ${semesterText} untuk ${tpData.nama_kelas}${manualText}`);
         setMessageType('success');
         
         setTimeout(() => {
           setMessage('');
           setMessageType('');
         }, 5000);
+      } else if (tpNumbers.length > 0) {
+        setMessage(`✅ Berhasil memuat ${tpNumbers.length} TP manual`);
+        setMessageType('success');
+        setTimeout(() => {
+          setMessage('');
+          setMessageType('');
+        }, 3000);
       } else {
         setMessage('ℹ️ Tidak ada TP untuk semester ini. Silakan tambah TP manual.');
         setMessageType('info');
@@ -175,18 +224,76 @@ const InputNilai = ({ activeTASemester, userId }) => {
     }
   };
 
-  const addTpColumn = () => {
-    const nextTpNumber = Math.max(...tpColumns) + 1;
-    setTpColumns([...tpColumns, nextTpNumber]);
-    setKkm(prev => ({
-      ...prev,
-      [`TP${nextTpNumber}`]: 75
-    }));
+  const addTpColumn = async () => {
+    if (!newTpName.trim()) {
+      setMessage('❌ Nama TP harus diisi');
+      setMessageType('error');
+      setTimeout(() => { setMessage(''); setMessageType(''); }, 3000);
+      return;
+    }
+    
+    try {
+      const nextTpNumber = Math.max(...tpColumns) + 1;
+      const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+      
+      // Get id_penugasan
+      const penugasanData = await guruApi.getPenugasanByGuruMapelKelas(
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester
+      );
+      
+      if (!penugasanData || !penugasanData.id_penugasan) {
+        throw new Error('Penugasan tidak ditemukan');
+      }
+      
+      // Save to database
+      await guruApi.addManualTp(
+        penugasanData.id_penugasan,
+        activeTASemester.id_ta_semester,
+        nextTpNumber,
+        newTpName.trim()
+      );
+      
+      // Update UI
+      setTpColumns([...tpColumns, nextTpNumber]);
+      setTpDescriptions(prev => ({ ...prev, [nextTpNumber]: newTpName.trim() }));
+      setKkm(prev => ({ ...prev, [`TP${nextTpNumber}`]: 75 }));
+      setManualTpList(prev => [...prev, { tp_number: nextTpNumber, tp_name: newTpName.trim() }]);
+      
+      setShowAddTpModal(false);
+      setNewTpName('');
+      setMessage(`✅ TP ${nextTpNumber} "${newTpName}" berhasil ditambahkan`);
+      setMessageType('success');
+      setTimeout(() => { setMessage(''); setMessageType(''); }, 3000);
+    } catch (err) {
+      setMessage(`❌ ${err.message}`);
+      setMessageType('error');
+      setTimeout(() => { setMessage(''); setMessageType(''); }, 3000);
+    }
   };
 
-  const removeTpColumn = (tpNumber) => {
+  const removeTpColumn = async (tpNumber) => {
     if (tpNumber === 1) return;
-    setTpColumns(tpColumns.filter(tp => tp !== tpNumber));
+    
+    // Check if it's a manual TP
+    const manualTp = manualTpList.find(tp => tp.tp_number === tpNumber);
+    
+    if (manualTp) {
+      try {
+        await guruApi.deleteManualTp(manualTp.id_manual_tp);
+        setManualTpList(prev => prev.filter(tp => tp.tp_number !== tpNumber));
+      } catch (err) {
+        setMessage(`❌ ${err.message}`);
+        setMessageType('error');
+        setTimeout(() => { setMessage(''); setMessageType(''); }, 3000);
+        return;
+      }
+    }
+    
+    const newTpColumns = tpColumns.filter(tp => tp !== tpNumber);
+    setTpColumns(newTpColumns);
     
     const newGradesInput = { ...gradesInput };
     Object.keys(newGradesInput).forEach(key => {
@@ -199,6 +306,17 @@ const InputNilai = ({ activeTASemester, userId }) => {
     const newKkm = { ...kkm };
     delete newKkm[`TP${tpNumber}`];
     setKkm(newKkm);
+    
+    const newDescriptions = { ...tpDescriptions };
+    delete newDescriptions[tpNumber];
+    setTpDescriptions(newDescriptions);
+    
+    setMessage(`✅ TP ${tpNumber} berhasil dihapus`);
+    setMessageType('success');
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 3000);
   };
 
   useEffect(() => {
@@ -605,7 +723,7 @@ const InputNilai = ({ activeTASemester, userId }) => {
                       variant="outline"
                       icon="plus"
                       size="sm"
-                      onClick={addTpColumn}
+                      onClick={() => setShowAddTpModal(true)}
                     >
                       Tambah TP (Manual)
                     </Button>
@@ -839,6 +957,54 @@ const InputNilai = ({ activeTASemester, userId }) => {
           title="Belum Ada Penugasan"
           message="Anda belum ditugaskan mengajar mata pelajaran di kelas manapun untuk semester aktif ini. Silakan hubungi Admin."
         />
+      )}
+
+      {/* Modal Add TP Manual */}
+      {showAddTpModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <i className="fas fa-plus-circle mr-2 text-indigo-600"></i>
+              Tambah TP Manual
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nama/Deskripsi TP
+              </label>
+              <input
+                type="text"
+                value={newTpName}
+                onChange={(e) => setNewTpName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Misal: Menjelaskan konsep pecahan"
+                autoFocus
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Nomor TP akan otomatis: TP {Math.max(...tpColumns) + 1}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowAddTpModal(false);
+                  setNewTpName('');
+                }}
+                fullWidth
+              >
+                Batal
+              </Button>
+              <Button
+                variant="primary"
+                icon="check"
+                onClick={addTpColumn}
+                fullWidth
+              >
+                Tambah
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </ModuleContainer>
   );

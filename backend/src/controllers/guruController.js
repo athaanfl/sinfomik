@@ -32,6 +32,33 @@ exports.getGuruAssignments = (req, res) => {
     });
 };
 
+// --- Get Penugasan by Guru, Mapel, Kelas (using GuruMataPelajaranKelas as penugasan ID) ---
+exports.getPenugasanByGuruMapelKelas = (req, res) => {
+    const { id_guru, id_mapel, id_kelas, id_ta_semester } = req.params;
+    const db = getDb();
+    
+    // Use combination as unique ID: guru-mapel-kelas-semester
+    const id_penugasan = `${id_guru}-${id_mapel}-${id_kelas}-${id_ta_semester}`;
+    
+    db.get(`
+        SELECT id_guru, id_mapel, id_kelas, id_ta_semester
+        FROM GuruMataPelajaranKelas
+        WHERE id_guru = ? AND id_mapel = ? AND id_kelas = ? AND id_ta_semester = ?
+    `, [id_guru, id_mapel, id_kelas, id_ta_semester], (err, row) => {
+        if (err) return res.status(500).json({ message: err.message });
+        if (!row) {
+            return res.status(404).json({ message: 'Penugasan tidak ditemukan' });
+        }
+        res.json({
+            id_penugasan,
+            id_guru,
+            id_mapel,
+            id_kelas,
+            id_ta_semester
+        });
+    });
+};
+
 // --- Get Students in a Specific Class ---
 exports.getStudentsInClass = (req, res) => {
     const { id_kelas, id_ta_semester } = req.params;
@@ -133,6 +160,7 @@ exports.getRekapNilai = (req, res) => {
     
     db.all(`
         SELECT
+            s.id_siswa,
             s.nama_siswa,
             n.jenis_nilai,
             n.urutan_tp,
@@ -402,5 +430,72 @@ exports.changePassword = async (req, res) => {
             }
             res.json({ message: 'Password berhasil diubah' });
         });
+    });
+};
+
+// --- Manual TP Management ---
+
+// Get manual TP by assignment
+exports.getManualTp = (req, res) => {
+    const { id_penugasan, id_ta_semester } = req.params;
+    const db = getDb();
+    
+    db.all(`
+        SELECT id_manual_tp, tp_number, tp_name, created_at
+        FROM manual_tp
+        WHERE id_penugasan = ? AND id_ta_semester = ?
+        ORDER BY tp_number
+    `, [id_penugasan, id_ta_semester], (err, rows) => {
+        if (err) return res.status(500).json({ message: err.message });
+        res.json({ success: true, manual_tp: rows || [] });
+    });
+};
+
+// Add manual TP
+exports.addManualTp = (req, res) => {
+    const { id_penugasan, id_ta_semester, tp_number, tp_name } = req.body;
+    const db = getDb();
+    
+    if (!id_penugasan || !id_ta_semester || !tp_number || !tp_name) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'id_penugasan, id_ta_semester, tp_number, dan tp_name harus diisi' 
+        });
+    }
+    
+    db.run(`
+        INSERT INTO manual_tp (id_penugasan, id_ta_semester, tp_number, tp_name)
+        VALUES (?, ?, ?, ?)
+    `, [id_penugasan, id_ta_semester, tp_number, tp_name], function(err) {
+        if (err) {
+            if (err.message.includes('UNIQUE constraint')) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'TP dengan nomor tersebut sudah ada' 
+                });
+            }
+            return res.status(500).json({ success: false, message: err.message });
+        }
+        res.status(201).json({ 
+            success: true, 
+            message: 'TP manual berhasil ditambahkan',
+            id_manual_tp: this.lastID 
+        });
+    });
+};
+
+// Delete manual TP
+exports.deleteManualTp = (req, res) => {
+    const { id_manual_tp } = req.params;
+    const db = getDb();
+    
+    db.run(`
+        DELETE FROM manual_tp WHERE id_manual_tp = ?
+    `, [id_manual_tp], function(err) {
+        if (err) return res.status(500).json({ success: false, message: err.message });
+        if (this.changes === 0) {
+            return res.status(404).json({ success: false, message: 'TP manual tidak ditemukan' });
+        }
+        res.json({ success: true, message: 'TP manual berhasil dihapus' });
     });
 };

@@ -151,6 +151,17 @@ function initializeDatabase() {
             FOREIGN KEY (id_ta_semester) REFERENCES TahunAjaranSemester(id_ta_semester),
             UNIQUE (id_guru, id_mapel, id_kelas, id_ta_semester, jenis_nilai, urutan_tp)
         );
+
+        CREATE TABLE IF NOT EXISTS manual_tp (
+            id_manual_tp INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_penugasan TEXT NOT NULL,
+            id_ta_semester INTEGER NOT NULL,
+            tp_number INTEGER NOT NULL,
+            tp_name TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(id_penugasan, id_ta_semester, tp_number),
+            FOREIGN KEY (id_ta_semester) REFERENCES TahunAjaranSemester(id_ta_semester) ON DELETE CASCADE
+        );
     `;
 
     db.exec(createTablesSQL, (err) => {

@@ -403,5 +403,26 @@ export const exportFinalGrades = async (id_guru, id_mapel, id_kelas, id_ta_semes
   }
 };
 
+// --- API untuk Manual TP ---
+export const getManualTp = async (id_penugasan, id_ta_semester) => {
+  return fetchData(`${API_BASE_URL}/api/guru/manual-tp/${id_penugasan}/${id_ta_semester}`);
+};
+
+export const addManualTp = async (id_penugasan, id_ta_semester, tp_number, tp_name) => {
+  return fetchData(`${API_BASE_URL}/api/guru/manual-tp`, {
+    method: 'POST',
+    body: JSON.stringify({ id_penugasan, id_ta_semester, tp_number, tp_name })
+  });
+};
+
+export const deleteManualTp = async (id_manual_tp) => {
+  return fetchData(`${API_BASE_URL}/api/guru/manual-tp/${id_manual_tp}`, {
+    method: 'DELETE'
+  });
+};
+
+export const getPenugasanByGuruMapelKelas = async (id_guru, id_mapel, id_kelas, id_ta_semester) => {
+  return fetchData(`${API_BASE_URL}/api/guru/penugasan/${id_guru}/${id_mapel}/${id_kelas}/${id_ta_semester}`);
+};
 
 

@@ -31,4 +31,12 @@ router.post('/siswa-cp', guruController.addOrUpdateSiswaCapaianPembelajaran); //
 router.get('/wali-kelas-grades/:id_guru/:id_ta_semester', guruController.getWaliKelasGrades);
 router.get('/wali-kelas-class-list/:id_guru/:id_ta_semester', guruController.getWaliKelasClassList);
 
+// --- Manual TP Routes ---
+router.get('/manual-tp/:id_penugasan/:id_ta_semester', guruController.getManualTp);
+router.post('/manual-tp', guruController.addManualTp);
+router.delete('/manual-tp/:id_manual_tp', guruController.deleteManualTp);
+
+// --- Penugasan Route ---
+router.get('/penugasan/:id_guru/:id_mapel/:id_kelas/:id_ta_semester', guruController.getPenugasanByGuruMapelKelas);
+
 module.exports = router;

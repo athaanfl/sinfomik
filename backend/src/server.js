@@ -36,7 +36,7 @@ app.use(helmet({
 // In development, allow localhost:3000
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-        ? [FRONTEND_URL, 'https://*.railway.app'] // Allow Railway domains
+        ? [FRONTEND_URL, 'https://*.azurewebsites.net', 'https://sinfomik-backend-gzcng8eucydhgucz.southeastasia-01.azurewebsites.net'] // Allow Azure domains
         : ['http://localhost:3000', 'http://localhost:3001'], // Development
     credentials: true,
     exposedHeaders: ['Content-Disposition']

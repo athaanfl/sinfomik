@@ -166,6 +166,7 @@ const StudentManagement = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, student: null });
+  const [isImporting, setIsImporting] = useState(false);
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -246,6 +247,40 @@ const StudentManagement = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      await adminApi.downloadStudentTemplate();
+      showMessage('✅ Template berhasil diunduh!');
+    } catch (err) {
+      showMessage(`❌ Gagal download template: ${err.message}`, 'error');
+    }
+  };
+
+  const handleImportExcel = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    showMessage('⏳ Mengupload dan memproses file...', 'info');
+
+    try {
+      const result = await adminApi.importStudents(file);
+      
+      if (result.details && result.details.errors && result.details.errors.length > 0) {
+        showMessage(`⚠️ ${result.message}\nError: ${result.details.errors.slice(0, 3).join(', ')}`, 'warning');
+      } else {
+        showMessage(`✅ ${result.message}`);
+      }
+      
+      fetchStudents(); // Refresh list
+    } catch (err) {
+      showMessage(`❌ ${err.message}`, 'error');
+    } finally {
+      setIsImporting(false);
+      event.target.value = ''; // Reset file input
+    }
+  };
+
   return (
     <ModuleContainer>
       <PageHeader
@@ -266,6 +301,52 @@ const StudentManagement = () => {
         icon="user-plus"
         variant="success"
       >
+        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h4 className="font-semibold text-blue-900 mb-3">
+            <i className="fas fa-file-excel mr-2"></i>
+            Import Data Siswa dari Excel
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Button
+              variant="success"
+              icon="download"
+              onClick={handleDownloadTemplate}
+              fullWidth
+            >
+              Download Template Excel
+            </Button>
+            
+            <div>
+              <Button
+                variant="primary"
+                icon="upload"
+                disabled={isImporting}
+                loading={isImporting}
+                fullWidth
+                onClick={() => document.getElementById('excel-upload-student').click()}
+              >
+                {isImporting ? 'Mengupload...' : 'Upload & Import Excel'}
+              </Button>
+              <input
+                id="excel-upload-student"
+                type="file"
+                accept=".xlsx, .xls"
+                onChange={handleImportExcel}
+                disabled={isImporting}
+                style={{ display: 'none' }}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 mt-3">
+            <i className="fas fa-info-circle mr-1"></i>
+            Download template, isi data siswa, lalu upload kembali untuk import massal
+          </p>
+        </div>
+
+        <h4 className="font-semibold text-gray-700 mb-3 mt-6">
+          <i className="fas fa-keyboard mr-2"></i>
+          Atau Tambah Manual:
+        </h4>
         <form onSubmit={handleAddStudent} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="form-group">
               <label>ID Siswa (NISN)</label>

@@ -236,6 +236,8 @@ const TASemesterManagement = ({ activeTASemester, setActiveTASemester }) => {
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
         message={confirmDialog.message}
+        confirmText="Ya, Aktifkan"
+        variant="info"
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
       />

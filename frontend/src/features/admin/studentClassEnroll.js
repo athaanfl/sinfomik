@@ -25,6 +25,7 @@ const StudentClassEnroll = ({ activeTASemester }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, student: null });
+  const [isImporting, setIsImporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -168,6 +169,38 @@ const StudentClassEnroll = ({ activeTASemester }) => {
       showMessage(`Failed to remove student: ${err.message}`, 'error');
     } finally {
       setDeleteConfirm({ show: false, student: null });
+    }
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      await adminApi.downloadEnrollmentTemplate();
+      showMessage('Template berhasil didownload!', 'success');
+    } catch (err) {
+      showMessage('Gagal download template: ' + err.message, 'error');
+    }
+  };
+
+  const handleImportExcel = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const result = await adminApi.importEnrollment(file);
+      showMessage(result.message, 'success');
+      
+      if (result.details && result.details.errors.length > 0) {
+        console.log('Import errors:', result.details.errors);
+      }
+      
+      // Refresh data
+      fetchStudentsInKelas(selectedKelasId, activeTASemester?.id_ta_semester);
+      event.target.value = '';
+    } catch (err) {
+      showMessage('Gagal import: ' + err.message, 'error');
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -388,6 +421,47 @@ const StudentClassEnroll = ({ activeTASemester }) => {
                   </select>
                 </div>
               </FormSection>
+
+              {/* Import Excel Section */}
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <i className="fas fa-file-excel text-green-600 mr-2 text-xl"></i>
+                  Import Enrollment dari Excel
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Button
+                    variant="primary"
+                    icon="download"
+                    onClick={handleDownloadTemplate}
+                    fullWidth
+                  >
+                    Download Template Excel
+                  </Button>
+                  <div>
+                    <input
+                      id="excel-upload-enrollment"
+                      type="file"
+                      accept=".xlsx, .xls"
+                      onChange={handleImportExcel}
+                      style={{ display: 'none' }}
+                    />
+                    <Button
+                      variant="success"
+                      icon="upload"
+                      onClick={() => document.getElementById('excel-upload-enrollment').click()}
+                      loading={isImporting}
+                      disabled={isImporting}
+                      fullWidth
+                    >
+                      {isImporting ? 'Mengimport...' : 'Upload & Import Excel'}
+                    </Button>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mt-3">
+                  <i className="fas fa-info-circle mr-1"></i>
+                  Download template, isi NISN dan Nama Kelas, lalu upload untuk enroll otomatis ke semester aktif
+                </p>
+              </div>
 
               {/* Current Students in Class */}
               <div>

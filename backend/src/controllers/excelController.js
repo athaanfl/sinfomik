@@ -40,9 +40,6 @@ exports.importCapaianPembelajaran = async (req, res) => {
             .replace(/^CAPAIAN PEMBELAJARAN\s+/i, '') // Remove prefix (case insensitive)
             .trim();
         
-        console.log('Title Row:', titleRow);
-        console.log('Extracted Mapel Name:', mapelName); 
-        
         // Dapatkan id_mapel
         try {
             const mapelRow = await new Promise((resolve, reject) => {
@@ -87,8 +84,6 @@ exports.importCapaianPembelajaran = async (req, res) => {
             // Baca header fase di baris 5 (index 4)
             const headerRow = data[4]; // ["Fase A" / "FASE A" / "A", "Fase B" / "B", "Fase C" / "C"]
             
-            console.log('Header Row (Baris 5):', headerRow);
-            
             // Mapping kolom ke fase berdasarkan header
             const faseMapping = {}; // { 'A': columnIndex, 'B': columnIndex, 'C': columnIndex }
             
@@ -106,8 +101,6 @@ exports.importCapaianPembelajaran = async (req, res) => {
                     }
                 }
             });
-            
-            console.log('Fase Mapping:', faseMapping);
             
             if (Object.keys(faseMapping).length === 0) {
                 throw new Error('Tidak ditemukan header fase (A/B/C) di baris 5. Pastikan ada kolom dengan header "Fase A", "Fase B", atau "Fase C"');
@@ -559,6 +552,426 @@ exports.getTpByMapelFaseKelas = async (req, res) => {
         console.error('Error reading TP:', err);
         res.status(500).json({ 
             message: 'Gagal membaca data TP', 
+            error: err.message 
+        });
+    }
+};
+
+/**
+ * Export template Excel untuk import siswa
+ * GET /api/excel/students/template
+ */
+exports.exportStudentTemplate = async (req, res) => {
+    try {
+        // Create workbook
+        const wb = xlsx.utils.book_new();
+        
+        // Header columns
+        const headers = ['NISN', 'Nama Siswa', 'Tanggal Lahir', 'Jenis Kelamin'];
+        
+        // Sample data for guidance
+        const sampleData = [
+            ['1234567890', 'Budi Santoso', '2010-05-15', 'L'],
+            ['1234567891', 'Siti Nurhaliza', '2010-08-20', 'P'],
+            ['1234567892', 'Ahmad Rizki', '2010-03-12', 'L']
+        ];
+        
+        // Instructions
+        const instructions = [
+            ['TEMPLATE IMPORT DATA SISWA'],
+            [''],
+            ['PETUNJUK PENGISIAN:'],
+            ['1. NISN: Nomor Induk Siswa (bisa angka atau kombinasi, bebas format)'],
+            ['2. Nama Siswa: Nama lengkap siswa'],
+            ['3. Tanggal Lahir: Format YYYY-MM-DD (contoh: 2010-05-15) atau kosongkan'],
+            ['4. Jenis Kelamin: L (Laki-laki) atau P (Perempuan)'],
+            [''],
+            ['CONTOH DATA:'],
+            headers,
+            ...sampleData,
+            [''],
+            ['Hapus baris contoh ini dan isi dengan data siswa Anda mulai dari baris ke-11'],
+            ['Pastikan kolom NISN dan Nama Siswa tidak kosong']
+        ];
+        
+        // Create worksheet
+        const ws = xlsx.utils.aoa_to_sheet(instructions);
+        
+        // Set column widths
+        ws['!cols'] = [
+            { wch: 15 }, // NISN
+            { wch: 30 }, // Nama Siswa
+            { wch: 15 }, // Tanggal Lahir
+            { wch: 15 }  // Jenis Kelamin
+        ];
+        
+        // Add worksheet to workbook
+        xlsx.utils.book_append_sheet(wb, ws, 'Template Siswa');
+        
+        // Generate buffer
+        const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+        
+        // Set response headers
+        res.setHeader('Content-Disposition', 'attachment; filename=Template_Import_Siswa.xlsx');
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        
+        res.send(buffer);
+        
+    } catch (err) {
+        console.error('Error generating student template:', err);
+        res.status(500).json({ 
+            message: 'Gagal membuat template', 
+            error: err.message 
+        });
+    }
+};
+
+/**
+ * Import students from Excel
+ * POST /api/excel/students/import
+ */
+exports.importStudents = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Mohon upload file Excel' });
+        }
+
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        
+        // Convert to JSON
+        const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+        
+        // Find header row (should contain 'NISN', 'Nama Siswa', etc.)
+        let headerRowIndex = -1;
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            if (Array.isArray(row) && row.length >= 2) {
+                const hasNisn = row.some(cell => cell && cell.toString().toUpperCase().includes('NISN'));
+                const hasNama = row.some(cell => cell && cell.toString().toUpperCase().includes('NAMA'));
+                // Must have both NISN and Nama columns (to avoid matching instruction rows)
+                if (hasNisn && hasNama) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        if (headerRowIndex === -1) {
+            return res.status(400).json({ 
+                message: 'Format Excel tidak valid. Header "NISN" tidak ditemukan.',
+                hint: 'Pastikan ada baris dengan kolom "NISN" di Excel Anda'
+            });
+        }
+        
+        const headers = data[headerRowIndex].map(h => h ? h.toString().trim().toUpperCase() : '');
+        
+        const nisnIndex = headers.findIndex(h => h.includes('NISN'));
+        const namaIndex = headers.findIndex(h => h.includes('NAMA'));
+        const tglLahirIndex = headers.findIndex(h => h.includes('TANGGAL') || h.includes('LAHIR'));
+        const jenisKelaminIndex = headers.findIndex(h => h.includes('JENIS') || h.includes('KELAMIN'));
+        
+        if (nisnIndex === -1 || namaIndex === -1) {
+            return res.status(400).json({ 
+                message: 'Kolom NISN dan Nama Siswa harus ada di Excel',
+                foundHeaders: headers,
+                detectedIndices: { nisnIndex, namaIndex }
+            });
+        }
+        
+        const db = getDb();
+        const results = {
+            success: 0,
+            skipped: 0,
+            failed: 0,
+            errors: []
+        };
+        
+        // Process data rows (skip header and instructions)
+        const dataRows = data.slice(headerRowIndex + 1);
+        
+        for (const row of dataRows) {
+            // Skip empty rows or example rows
+            if (!row[nisnIndex] || !row[namaIndex]) continue;
+            
+            const nisn = row[nisnIndex].toString().trim();
+            const nama = row[namaIndex].toString().trim();
+            const tglLahir = tglLahirIndex !== -1 && row[tglLahirIndex] ? row[tglLahirIndex].toString().trim() : null;
+            const jenisKelamin = jenisKelaminIndex !== -1 && row[jenisKelaminIndex] ? row[jenisKelaminIndex].toString().trim().toUpperCase() : 'L';
+            
+            // Validate NISN (allow any format, just not empty)
+            if (!nisn || nisn.length === 0) {
+                results.failed++;
+                results.errors.push(`NISN kosong untuk siswa: ${nama}`);
+                continue;
+            }
+            
+            // Validate jenis kelamin
+            const validJK = jenisKelamin === 'L' || jenisKelamin === 'P' ? jenisKelamin : 'L';
+            
+            try {
+                await new Promise((resolve, reject) => {
+                    // Check if student already exists
+                    db.get('SELECT id_siswa FROM Siswa WHERE id_siswa = ?', [nisn], (err, existing) => {
+                        if (err) return reject(err);
+                        
+                        if (existing) {
+                            // Skip if already exists
+                            results.skipped++;
+                            resolve();
+                        } else {
+                            // Insert new student
+                            db.run(
+                                `INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin)
+                                 VALUES (?, ?, ?, ?)`,
+                                [nisn, nama, tglLahir, validJK],
+                                function(err) {
+                                    if (err) {
+                                        results.failed++;
+                                        results.errors.push(`Gagal menambahkan ${nama} (${nisn}): ${err.message}`);
+                                        reject(err);
+                                    } else {
+                                        results.success++;
+                                        resolve();
+                                    }
+                                }
+                            );
+                        }
+                    });
+                });
+            } catch (err) {
+                // Error already logged
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Import selesai. ${results.success} siswa ditambahkan, ${results.skipped} sudah ada, ${results.failed} gagal.`,
+            details: results
+        });
+        
+    } catch (err) {
+        console.error('Error importing students:', err);
+        res.status(500).json({ 
+            message: 'Gagal memproses file Excel', 
+            error: err.message 
+        });
+    }
+};
+
+// Export Template Excel untuk Enroll Siswa ke Kelas
+exports.exportEnrollmentTemplate = async (req, res) => {
+    try {
+        const workbook = xlsx.utils.book_new();
+        
+        // Template data dengan instruksi
+        const templateData = [
+            ['TEMPLATE IMPORT ENROLLMENT SISWA KE KELAS'],
+            [],
+            ['PETUNJUK PENGISIAN:'],
+            ['1. NISN: Nomor Induk Siswa (harus sudah terdaftar di sistem)'],
+            ['2. Nama Kelas: Nama kelas tujuan (contoh: 10 IPA 1, 11 IPS 2)'],
+            [''],
+            ['CATATAN: Data akan otomatis masuk ke Tahun Ajaran Semester yang sedang aktif'],
+            ['Pastikan NISN dan Nama Kelas sudah ada di sistem'],
+            [],
+            ['CONTOH DATA (mulai dari baris ke-11):'],
+            ['NISN', 'Nama Kelas'],
+            ['123456789', '1 Darahadeh'],
+            ['987654321', '2 Daria'],
+        ];
+        
+        const worksheet = xlsx.utils.aoa_to_sheet(templateData);
+        
+        // Set column widths
+        worksheet['!cols'] = [
+            { wch: 20 },
+            { wch: 20 }
+        ];
+        
+        xlsx.utils.book_append_sheet(workbook, worksheet, 'Template Enrollment');
+        
+        const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Template_Import_Enrollment.xlsx');
+        res.send(buffer);
+        
+    } catch (err) {
+        console.error('Error generating enrollment template:', err);
+        res.status(500).json({ 
+            message: 'Gagal membuat template Excel', 
+            error: err.message 
+        });
+    }
+};
+
+// Import Enrollment Siswa ke Kelas dari Excel
+exports.importEnrollment = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'Mohon upload file Excel' });
+        }
+
+        const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
+        
+        // Get active TA Semester
+        const db = getDb();
+        const activeTASemester = await new Promise((resolve, reject) => {
+            db.get('SELECT id_ta_semester FROM TahunAjaranSemester WHERE is_aktif = 1', (err, row) => {
+                if (err) return reject(err);
+                resolve(row);
+            });
+        });
+
+        if (!activeTASemester) {
+            return res.status(400).json({ 
+                message: 'Tidak ada Tahun Ajaran Semester yang aktif. Silakan aktifkan terlebih dahulu.'
+            });
+        }
+
+        const idTASemester = activeTASemester.id_ta_semester;
+        
+        // Find header row (should contain 'NISN' and 'Nama Kelas')
+        let headerRowIndex = -1;
+        for (let i = 0; i < data.length; i++) {
+            const row = data[i];
+            if (Array.isArray(row) && row.length >= 2) {
+                const hasNISN = row.some(cell => cell && cell.toString().toUpperCase().includes('NISN'));
+                const hasKelas = row.some(cell => cell && cell.toString().toUpperCase().includes('KELAS'));
+                if (hasNISN && hasKelas) {
+                    headerRowIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        if (headerRowIndex === -1) {
+            return res.status(400).json({ 
+                message: 'Format Excel tidak valid. Header "NISN" dan "Nama Kelas" tidak ditemukan.',
+                hint: 'Pastikan ada baris dengan kolom "NISN" dan "Nama Kelas" di Excel Anda'
+            });
+        }
+        
+        const headers = data[headerRowIndex].map(h => h ? h.toString().trim().toUpperCase() : '');
+        
+        const nisnIndex = headers.findIndex(h => h.includes('NISN'));
+        const kelasIndex = headers.findIndex(h => h.includes('KELAS'));
+        
+        if (nisnIndex === -1 || kelasIndex === -1) {
+            return res.status(400).json({ 
+                message: 'Kolom NISN dan Nama Kelas harus ada di Excel',
+                foundHeaders: headers,
+                detectedIndices: { nisnIndex, kelasIndex }
+            });
+        }
+        
+        const results = {
+            success: 0,
+            skipped: 0,
+            failed: 0,
+            errors: []
+        };
+        
+        // Process data rows (skip header and instructions)
+        const dataRows = data.slice(headerRowIndex + 1);
+        
+        for (const row of dataRows) {
+            // Skip empty rows
+            if (!row[nisnIndex] || !row[kelasIndex]) continue;
+            
+            const nisn = row[nisnIndex].toString().trim();
+            const namaKelas = row[kelasIndex].toString().trim();
+            
+            // Validate
+            if (!nisn || nisn.length === 0) {
+                results.failed++;
+                results.errors.push(`NISN kosong`);
+                continue;
+            }
+            
+            if (!namaKelas || namaKelas.length === 0) {
+                results.failed++;
+                results.errors.push(`Nama kelas kosong untuk NISN: ${nisn}`);
+                continue;
+            }
+            
+            try {
+                await new Promise((resolve, reject) => {
+                    // Check if student exists
+                    db.get('SELECT id_siswa FROM Siswa WHERE id_siswa = ?', [nisn], (err, siswa) => {
+                        if (err) return reject(err);
+                        
+                        if (!siswa) {
+                            results.failed++;
+                            results.errors.push(`Siswa dengan NISN ${nisn} tidak ditemukan`);
+                            return resolve();
+                        }
+                        
+                        // Find class by name in active TA Semester
+                        db.get(
+                            'SELECT id_kelas FROM Kelas WHERE nama_kelas = ? AND id_ta_semester = ?',
+                            [namaKelas, idTASemester],
+                            (err, kelas) => {
+                                if (err) return reject(err);
+                                
+                                if (!kelas) {
+                                    results.failed++;
+                                    results.errors.push(`Kelas "${namaKelas}" tidak ditemukan di semester aktif untuk NISN: ${nisn}`);
+                                    return resolve();
+                                }
+                                
+                                // Check if already enrolled
+                                db.get(
+                                    'SELECT * FROM SiswaKelas WHERE id_siswa = ? AND id_kelas = ? AND id_ta_semester = ?',
+                                    [nisn, kelas.id_kelas, idTASemester],
+                                    (err, existing) => {
+                                        if (err) return reject(err);
+                                        
+                                        if (existing) {
+                                            results.skipped++;
+                                            return resolve();
+                                        }
+                                        
+                                        // Enroll student
+                                        db.run(
+                                            `INSERT INTO SiswaKelas (id_siswa, id_kelas, id_ta_semester)
+                                             VALUES (?, ?, ?)`,
+                                            [nisn, kelas.id_kelas, idTASemester],
+                                            function(err) {
+                                                if (err) {
+                                                    results.failed++;
+                                                    results.errors.push(`Gagal enroll NISN ${nisn} ke ${namaKelas}: ${err.message}`);
+                                                    return reject(err);
+                                                }
+                                                results.success++;
+                                                resolve();
+                                            }
+                                        );
+                                    }
+                                );
+                            }
+                        );
+                    });
+                });
+            } catch (err) {
+                // Error already handled in promise
+                continue;
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Import selesai: ${results.success} berhasil, ${results.skipped} sudah terdaftar, ${results.failed} gagal`,
+            details: results
+        });
+        
+    } catch (err) {
+        console.error('Error importing enrollment:', err);
+        res.status(500).json({ 
+            message: 'Gagal memproses file Excel', 
             error: err.message 
         });
     }

@@ -1,10 +1,17 @@
 // backend/src/config/db.js
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
 // Tentukan path absolut ke file database
-// Ini penting agar database ditemukan dengan benar terlepas dari direktori kerja
-const DB_FILE = path.resolve(__dirname, '../../academic_dashboard.db');
+// Support untuk Azure persistent storage
+const DB_FILE = process.env.DB_PATH || path.resolve(__dirname, '../../academic_dashboard.db');
+
+// Pastikan direktori database ada
+const dbDir = path.dirname(DB_FILE);
+if (!fs.existsSync(dbDir)) {
+    fs.mkdirSync(dbDir, { recursive: true });
+}
 
 let db;
 

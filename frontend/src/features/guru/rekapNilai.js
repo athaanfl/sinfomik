@@ -14,7 +14,9 @@ const RekapNilai = ({ activeTASemester, userId }) => {
   const [assignments, setAssignments] = useState([]);
   const [selectedAssignment, setSelectedAssignment] = useState('');
   const [rekapNilai, setRekapNilai] = useState([]);
+  const [allTpColumns, setAllTpColumns] = useState([]); // TP dari ATP
   const [loading, setLoading] = useState(true);
+  const [loadingRekap, setLoadingRekap] = useState(false);
   const [error, setError] = useState(null);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
@@ -40,28 +42,99 @@ const RekapNilai = ({ activeTASemester, userId }) => {
     }
   };
 
-  const fetchRekap = async () => {
-    if (selectedAssignment && activeTASemester && userId) {
-      const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
-      try {
-        const data = await guruApi.getRekapNilai(userId, mapelId, kelasId, activeTASemester.id_ta_semester);
-        setRekapNilai(data);
-      } catch (err) {
-        setError(err.message);
-        setRekapNilai([]);
-      }
-    } else {
-      setRekapNilai([]);
-    }
-  };
-
   useEffect(() => {
     fetchData();
   }, [activeTASemester, userId]);
 
   useEffect(() => {
+    const fetchRekap = async () => {
+      if (selectedAssignment && activeTASemester && userId) {
+        setLoadingRekap(true);
+        const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+        try {
+          // Load TP dari ATP dulu
+          await loadTpFromAtp(mapelId, kelasId);
+          
+          // Kemudian load nilai
+          const data = await guruApi.getRekapNilai(userId, mapelId, kelasId, activeTASemester.id_ta_semester);
+          setRekapNilai(data || []);
+        } catch (err) {
+          console.error('Error fetching rekap:', err);
+          setError(err.message);
+          setRekapNilai([]);
+        } finally {
+          setLoadingRekap(false);
+        }
+      } else {
+        setRekapNilai([]);
+        setAllTpColumns([]);
+        setLoadingRekap(false);
+      }
+    };
+    
     fetchRekap();
   }, [selectedAssignment, activeTASemester, userId]);
+
+  const loadTpFromAtp = async (mapelId, kelasId) => {
+    try {
+      const currentAssignment = assignments.find(
+        assign => `${assign.id_kelas}-${assign.id_mapel}` === selectedAssignment
+      );
+
+      if (!currentAssignment) {
+        return;
+      }
+
+      let fase = 'A';
+      const kelasName = currentAssignment?.nama_kelas || '';
+      const tingkatKelas = parseInt(kelasName.match(/^(\d+)/)?.[1] || '1');
+      
+      if (tingkatKelas >= 1 && tingkatKelas <= 2) fase = 'A';
+      else if (tingkatKelas >= 3 && tingkatKelas <= 4) fase = 'B';
+      else if (tingkatKelas >= 5 && tingkatKelas <= 6) fase = 'C';
+
+      let semesterNumber = null;
+      if (activeTASemester && activeTASemester.semester) {
+        semesterNumber = activeTASemester.semester.toLowerCase() === 'ganjil' ? 1 : 2;
+      }
+
+      const tpData = await guruApi.getTpByMapelFaseKelas(mapelId, fase, kelasId, semesterNumber);
+      
+      let tpNumbers = [];
+      
+      if (tpData.success && tpData.tp_list && tpData.tp_list.length > 0) {
+        tpNumbers = tpData.tp_list.map((_, index) => index + 1);
+      }
+      
+      // Load TP manual dari database
+      const [kelasId, mapelId] = selectedAssignment.split('-').map(Number);
+      const penugasanData = await guruApi.getPenugasanByGuruMapelKelas(
+        userId,
+        mapelId,
+        kelasId,
+        activeTASemester.id_ta_semester
+      );
+      
+      if (penugasanData && penugasanData.id_penugasan) {
+        const manualTpData = await guruApi.getManualTp(
+          penugasanData.id_penugasan,
+          activeTASemester.id_ta_semester
+        );
+        
+        if (manualTpData.success && manualTpData.manual_tp.length > 0) {
+          const manualTpColumns = manualTpData.manual_tp.map(tp => tp.tp_number);
+          // Gabungkan dengan TP dari ATP, hilangkan duplikat
+          const allTp = [...new Set([...tpNumbers, ...manualTpColumns])].sort((a, b) => a - b);
+          tpNumbers = allTp;
+        }
+      }
+      
+      setAllTpColumns(tpNumbers.length > 0 ? tpNumbers : []);
+    } catch (err) {
+      console.log('Error loading TP from ATP:', err.message);
+      setAllTpColumns([]);
+    }
+  };
 
   if (loading) return <LoadingSpinner message="Memuat data rekap nilai..." />;
   if (error) return <StatusMessage type="error" message={error} />;
@@ -73,24 +146,44 @@ const RekapNilai = ({ activeTASemester, userId }) => {
   // Mengolah data rekap untuk tampilan tabel pivot
   const processedRekap = {};
   const gradeTypes = new Set();
-  rekapNilai.forEach(item => {
-    if (!processedRekap[item.nama_siswa]) {
-      processedRekap[item.nama_siswa] = { id_siswa: item.id_siswa, nama_siswa: item.nama_siswa };
-    }
-    
-    // Create column name based on jenis_nilai and urutan_tp
-    let columnName;
-    if (item.jenis_nilai === 'TP') {
-      columnName = `TP${item.urutan_tp}`;
-    } else if (item.jenis_nilai === 'UAS') {
-      columnName = 'UAS';
-    } else {
-      columnName = item.jenis_nilai; // fallback
-    }
-    
-    processedRekap[item.nama_siswa][columnName] = item.nilai;
-    gradeTypes.add(columnName);
-  });
+  
+  // Tambahkan semua TP dari ATP ke gradeTypes (supaya kolom muncul meski belum ada nilai)
+  if (allTpColumns.length > 0) {
+    allTpColumns.forEach(tpNum => {
+      gradeTypes.add(`TP${tpNum}`);
+    });
+  }
+  
+  // Tambahkan UAS
+  gradeTypes.add('UAS');
+  
+  // Process nilai yang ada
+  if (Array.isArray(rekapNilai) && rekapNilai.length > 0) {
+    rekapNilai.forEach(item => {
+      if (!item || !item.id_siswa) return; // Skip invalid data
+      
+      // Use id_siswa as key instead of nama_siswa (more reliable)
+      if (!processedRekap[item.id_siswa]) {
+        processedRekap[item.id_siswa] = { 
+          id_siswa: item.id_siswa, 
+          nama_siswa: item.nama_siswa 
+        };
+      }
+      
+      // Create column name based on jenis_nilai and urutan_tp
+      let columnName;
+      if (item.jenis_nilai === 'TP') {
+        columnName = `TP${item.urutan_tp}`;
+      } else if (item.jenis_nilai === 'UAS') {
+        columnName = 'UAS';
+      } else {
+        columnName = item.jenis_nilai; // fallback
+      }
+      
+      processedRekap[item.id_siswa][columnName] = item.nilai;
+      gradeTypes.add(columnName); // Tetap add untuk handle TP manual yang belum di ATP
+    });
+  }
 
   const uniqueGradeTypes = Array.from(gradeTypes).sort((a, b) => {
     // Custom sort: TP1, TP2, TP3, ..., UAS
@@ -118,34 +211,38 @@ const RekapNilai = ({ activeTASemester, userId }) => {
       key: tipe,
       label: tipe,
       className: 'text-center',
-      render: (row) => (
-        <span className={`inline-flex items-center justify-center w-16 px-2 py-1 rounded ${
-          typeof row[tipe] === 'number' 
-            ? row[tipe] >= 75 
-              ? 'bg-green-100 text-green-800 font-semibold'
-              : row[tipe] >= 60
-              ? 'bg-yellow-100 text-yellow-800'
-              : 'bg-red-100 text-red-800 font-semibold'
-            : 'text-gray-400'
-        }`}>
-          {typeof row[tipe] === 'number' ? row[tipe] : '-'}
-        </span>
-      ),
+      render: (nilai, row) => {
+        // Table passes (value, row) as parameters
+        return (
+          <span className={`inline-flex items-center justify-center w-16 px-2 py-1 rounded ${
+            typeof nilai === 'number' 
+              ? nilai >= 75 
+                ? 'bg-green-100 text-green-800 font-semibold'
+                : nilai >= 60
+                ? 'bg-yellow-100 text-yellow-800'
+                : 'bg-red-100 text-red-800 font-semibold'
+              : 'text-gray-400'
+          }`}>
+            {typeof nilai === 'number' ? nilai : '-'}
+          </span>
+        );
+      },
     })),
     {
       key: 'nilai_akhir',
       label: 'Nilai Akhir',
       className: 'text-center font-semibold',
-      render: (row) => {
-        // Calculate TP average
+      render: (value, row) => {
+        // Table passes (value, row) - we need row object
+        // Calculate TP average with safe access
         const tpGrades = uniqueGradeTypes
           .filter(tipe => tipe.startsWith('TP'))
-          .map(tipe => row[tipe])
+          .map(tipe => row?.[tipe]) // Safe access
           .filter(n => typeof n === 'number');
         const tpAverage = tpGrades.length > 0 ? tpGrades.reduce((sum, n) => sum + n, 0) / tpGrades.length : 0;
         
-        // Get UAS value
-        const uasValue = row['UAS'];
+        // Get UAS value with safe access
+        const uasValue = row?.['UAS'];
         
         // Calculate final grade (70% TP + 30% UAS)
         let finalGrade = '-';
@@ -224,7 +321,9 @@ const RekapNilai = ({ activeTASemester, userId }) => {
                 </p>
               </div>
 
-              {rekapTableData.length > 0 ? (
+              {loadingRekap ? (
+                <LoadingSpinner text="Memuat rekap nilai..." />
+              ) : rekapTableData.length > 0 ? (
                 <div className="overflow-x-auto">
                   <Table
                     columns={columns}

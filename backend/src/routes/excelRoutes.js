@@ -20,4 +20,12 @@ router.put('/atp/:id_mapel/:fase', excelController.updateAtpByFase);
 // Route untuk mengambil TP berdasarkan mapel, fase, dan kelas
 router.get('/tp/:id_mapel/:fase/:id_kelas', excelController.getTpByMapelFaseKelas);
 
+// Routes untuk import siswa
+router.get('/students/template', excelController.exportStudentTemplate);
+router.post('/students/import', upload.single('file'), excelController.importStudents);
+
+// Routes untuk import enrollment siswa ke kelas
+router.get('/enrollment/template', excelController.exportEnrollmentTemplate);
+router.post('/enrollment/import', upload.single('file'), excelController.importEnrollment);
+
 module.exports = router;
