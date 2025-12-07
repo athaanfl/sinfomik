@@ -6,13 +6,11 @@
     import PWAInstallPrompt from './components/PWAInstallPrompt';
 
     function App() {
-      // State untuk melacak status login pengguna
-      const [isLoggedIn, setIsLoggedIn] = useState(false);
-      const [userRole, setUserRole] = useState(null); // 'admin', 'guru', 'siswa'
-      const [username, setUsername] = useState(null); // Nama pengguna yang login
-      const [userId, setUserId] = useState(null); // ID pengguna yang login
-
-      // Efek untuk memeriksa status login dari localStorage (jika ada)
+  // State untuk melacak status login pengguna
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userRole, setUserRole] = useState(null); // 'admin', 'guru'
+  const [username, setUsername] = useState(null); // Nama pengguna yang login
+  const [userId, setUserId] = useState(null); // ID pengguna yang login      // Efek untuk memeriksa status login dari localStorage (jika ada)
       useEffect(() => {
         const storedLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
         const storedUserRole = localStorage.getItem('userRole');
@@ -81,15 +79,6 @@
             {/* Route untuk dashboard Guru */}
             <Route path="/guru-dashboard" element={
               isLoggedIn && userRole === 'guru' ? (
-                <DashboardPage userRole={userRole} username={username} userId={userId} onLogout={handleLogout} />
-              ) : (
-                <Navigate to="/login" replace />
-              )
-            } />
-
-            {/* Route untuk dashboard Siswa */}
-            <Route path="/siswa-dashboard" element={
-              isLoggedIn && userRole === 'siswa' ? (
                 <DashboardPage userRole={userRole} username={username} userId={userId} onLogout={handleLogout} />
               ) : (
                 <Navigate to="/login" replace />
