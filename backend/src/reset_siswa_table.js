@@ -55,43 +55,76 @@ async function resetSiswaTable() {
             
             // Check if password_hash column exists
             const columns = await allQuery(db, "PRAGMA table_info(Siswa)");
+            console.log('Current columns:', columns.map(c => c.name).join(', '));
+            
             const hasPasswordHash = columns.some(col => col.name === 'password_hash');
             
             if (hasPasswordHash) {
                 console.log('⚠️  Found password_hash column in Siswa table. Removing it...');
                 
-                // Create temp table with correct schema
-                await runQuery(db, `
-                    CREATE TABLE Siswa_temp AS 
-                    SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
-                    FROM Siswa
-                `);
-                
-                // Drop old table
-                await runQuery(db, 'DROP TABLE Siswa');
-                
-                // Recreate table with correct schema
-                await runQuery(db, `
-                    CREATE TABLE Siswa (
-                        id_siswa INTEGER PRIMARY KEY,
-                        nama_siswa TEXT NOT NULL,
-                        tanggal_lahir TEXT,
-                        jenis_kelamin TEXT,
-                        tahun_ajaran_masuk TEXT
-                    )
-                `);
-                
-                // Copy data back
-                await runQuery(db, `
-                    INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk)
-                    SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
-                    FROM Siswa_temp
-                `);
-                
-                // Drop temp table
-                await runQuery(db, 'DROP TABLE Siswa_temp');
-                
-                console.log('✅ Siswa table schema fixed! password_hash column removed.');
+                try {
+                    // First, disable foreign key checks
+                    await runQuery(db, "PRAGMA foreign_keys = OFF");
+                    
+                    // Create temp table with correct schema
+                    console.log('  Creating temp table...');
+                    await runQuery(db, `
+                        CREATE TABLE Siswa_temp (
+                            id_siswa INTEGER PRIMARY KEY,
+                            nama_siswa TEXT NOT NULL,
+                            tanggal_lahir TEXT,
+                            jenis_kelamin TEXT,
+                            tahun_ajaran_masuk TEXT
+                        )
+                    `);
+                    
+                    // Copy data from old table
+                    console.log('  Copying data...');
+                    await runQuery(db, `
+                        INSERT INTO Siswa_temp (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk)
+                        SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
+                        FROM Siswa
+                    `);
+                    
+                    // Drop old table
+                    console.log('  Dropping old table...');
+                    await runQuery(db, 'DROP TABLE Siswa');
+                    
+                    // Recreate table with correct schema
+                    console.log('  Recreating table...');
+                    await runQuery(db, `
+                        CREATE TABLE Siswa (
+                            id_siswa INTEGER PRIMARY KEY,
+                            nama_siswa TEXT NOT NULL,
+                            tanggal_lahir TEXT,
+                            jenis_kelamin TEXT,
+                            tahun_ajaran_masuk TEXT
+                        )
+                    `);
+                    
+                    // Copy data back
+                    console.log('  Copying data back...');
+                    await runQuery(db, `
+                        INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk)
+                        SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
+                        FROM Siswa_temp
+                    `);
+                    
+                    // Drop temp table
+                    console.log('  Cleaning up...');
+                    await runQuery(db, 'DROP TABLE Siswa_temp');
+                    
+                    // Re-enable foreign keys
+                    await runQuery(db, "PRAGMA foreign_keys = ON");
+                    
+                    console.log('✅ Siswa table schema fixed! password_hash column removed.');
+                } catch (innerErr) {
+                    console.error('❌ Error during table recreation:', innerErr.message);
+                    try {
+                        await runQuery(db, "PRAGMA foreign_keys = ON");
+                    } catch (e) {}
+                    throw innerErr;
+                }
             } else {
                 console.log('✅ Siswa table schema is correct. No password_hash column found.');
             }
