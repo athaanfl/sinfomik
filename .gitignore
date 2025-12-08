@@ -49,6 +49,19 @@ temp/
 
 # Coverage directories
 coverage/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+backend/academic_dashboard.db
+backend/academic_dashboard_backup*.db
+backend/database.db
+backend/uploads/
+
+# Deployment files
+.deployment
+coverage/
 .nyc_output/
 
 # Uploads directory (optional - uncomment if you don't want to track uploads)

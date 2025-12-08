@@ -121,8 +121,8 @@ async function seedAnalyticsData() {
             const existing = await getQuery('SELECT id_siswa FROM Siswa WHERE id_siswa = ?', [student.id_siswa]);
             if (!existing) {
                 await runQuery(
-                    'INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?, ?)',
-                    [student.id_siswa, student.nama_siswa, student.tanggal_lahir, student.jenis_kelamin, 'dummy_hash', student.tahun_ajaran_masuk]
+                    'INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?)',
+                    [student.id_siswa, student.nama_siswa, student.tanggal_lahir, student.jenis_kelamin, student.tahun_ajaran_masuk]
                 );
                 console.log(`  ✅ Added: ${student.nama_siswa} (Angkatan ${student.tahun_ajaran_masuk})`);
             }
