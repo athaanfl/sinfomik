@@ -1,104 +1,106 @@
 // Script untuk reset Siswa table dan remove password_hash jika masih ada
-const { getDb } = require('./config/db');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
+
+// Determine database path - support both local and Azure
+const DB_PATH = process.env.DB_PATH || path.resolve(__dirname, '../../academic_dashboard.db');
+
+console.log(`📁 Using database: ${DB_PATH}`);
+
+// Utility functions for callbacks-based sqlite3
+function runQuery(db, sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function(err) {
+            if (err) reject(err);
+            else resolve(this);
+        });
+    });
+}
+
+function getQuery(db, sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.get(sql, params, (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+        });
+    });
+}
+
+function allQuery(db, sql, params = []) {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+}
 
 async function resetSiswaTable() {
-    const db = getDb();
-    
-    return new Promise((resolve, reject) => {
-        console.log('🔧 Checking Siswa table schema...');
-        
-        // Check if password_hash column exists
-        db.all("PRAGMA table_info(Siswa)", (err, columns) => {
-            if (err) {
-                console.error('Error checking table schema:', err);
-                return reject(err);
-            }
+    // Check if database file exists
+    if (!fs.existsSync(DB_PATH)) {
+        console.log('❌ Database file not found at:', DB_PATH);
+        console.log('ℹ️  Run init_db.js first to initialize database');
+        return;
+    }
+
+    const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READWRITE, async (err) => {
+        if (err) {
+            console.error('❌ Error connecting to database:', err.message);
+            process.exit(1);
+        }
+
+        try {
+            console.log('🔧 Checking Siswa table schema...');
             
+            // Check if password_hash column exists
+            const columns = await allQuery(db, "PRAGMA table_info(Siswa)");
             const hasPasswordHash = columns.some(col => col.name === 'password_hash');
             
             if (hasPasswordHash) {
                 console.log('⚠️  Found password_hash column in Siswa table. Removing it...');
                 
-                // SQLite doesn't support DROP COLUMN directly in older versions
-                // So we'll recreate the table without password_hash
-                db.serialize(() => {
-                    db.run('BEGIN TRANSACTION');
-                    
-                    // Create temp table with correct schema
-                    db.run(`
-                        CREATE TABLE Siswa_temp AS 
-                        SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
-                        FROM Siswa
-                    `, (err) => {
-                        if (err) {
-                            console.error('Error creating temp table:', err);
-                            db.run('ROLLBACK');
-                            return reject(err);
-                        }
-                        
-                        // Drop old table
-                        db.run('DROP TABLE Siswa', (err) => {
-                            if (err) {
-                                console.error('Error dropping old table:', err);
-                                db.run('ROLLBACK');
-                                return reject(err);
-                            }
-                            
-                            // Recreate table with correct schema
-                            db.run(`
-                                CREATE TABLE Siswa (
-                                    id_siswa INTEGER PRIMARY KEY,
-                                    nama_siswa TEXT NOT NULL,
-                                    tanggal_lahir TEXT,
-                                    jenis_kelamin TEXT,
-                                    tahun_ajaran_masuk TEXT
-                                )
-                            `, (err) => {
-                                if (err) {
-                                    console.error('Error recreating table:', err);
-                                    db.run('ROLLBACK');
-                                    return reject(err);
-                                }
-                                
-                                // Copy data back
-                                db.run(`
-                                    INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk)
-                                    SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
-                                    FROM Siswa_temp
-                                `, (err) => {
-                                    if (err) {
-                                        console.error('Error copying data:', err);
-                                        db.run('ROLLBACK');
-                                        return reject(err);
-                                    }
-                                    
-                                    // Drop temp table
-                                    db.run('DROP TABLE Siswa_temp', (err) => {
-                                        if (err) {
-                                            console.error('Error dropping temp table:', err);
-                                            db.run('ROLLBACK');
-                                            return reject(err);
-                                        }
-                                        
-                                        db.run('COMMIT', (err) => {
-                                            if (err) {
-                                                console.error('Error committing transaction:', err);
-                                                return reject(err);
-                                            }
-                                            console.log('✅ Siswa table schema fixed! password_hash column removed.');
-                                            resolve();
-                                        });
-                                    });
-                                });
-                            });
-                        });
-                    });
-                });
+                // Create temp table with correct schema
+                await runQuery(db, `
+                    CREATE TABLE Siswa_temp AS 
+                    SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
+                    FROM Siswa
+                `);
+                
+                // Drop old table
+                await runQuery(db, 'DROP TABLE Siswa');
+                
+                // Recreate table with correct schema
+                await runQuery(db, `
+                    CREATE TABLE Siswa (
+                        id_siswa INTEGER PRIMARY KEY,
+                        nama_siswa TEXT NOT NULL,
+                        tanggal_lahir TEXT,
+                        jenis_kelamin TEXT,
+                        tahun_ajaran_masuk TEXT
+                    )
+                `);
+                
+                // Copy data back
+                await runQuery(db, `
+                    INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk)
+                    SELECT id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk 
+                    FROM Siswa_temp
+                `);
+                
+                // Drop temp table
+                await runQuery(db, 'DROP TABLE Siswa_temp');
+                
+                console.log('✅ Siswa table schema fixed! password_hash column removed.');
             } else {
                 console.log('✅ Siswa table schema is correct. No password_hash column found.');
-                resolve();
             }
-        });
+        } catch (err) {
+            console.error('❌ Error:', err.message);
+            throw err;
+        } finally {
+            db.close();
+        }
     });
 }
 
@@ -114,5 +116,7 @@ if (require.main === module) {
             process.exit(1);
         });
 }
+
+module.exports = resetSiswaTable;
 
 module.exports = resetSiswaTable;
