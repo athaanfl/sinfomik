@@ -55,8 +55,8 @@ exports.addStudent = (req, res) => {
     const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk } = req.body;
     const db = getDb();
 
-    db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, password_hash, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?, ?)",
-        [id_siswa, nama_siswa, tanggal_lahir || null, jenis_kelamin || null, null, tahun_ajaran_masuk || null],
+    db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?)",
+        [id_siswa, nama_siswa, tanggal_lahir || null, jenis_kelamin || null, tahun_ajaran_masuk || null],
         function(err) {
             if (err) {
                 if (err.message.includes('UNIQUE constraint failed')) {
