@@ -22,6 +22,12 @@ const PORT = process.env.PORT || 5000; // Gunakan port dari .env atau default 50
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // ===============================
+// TRUST PROXY (for Azure App Service)
+// ===============================
+// Azure App Service uses a reverse proxy, so we need to trust the proxy
+app.set('trust proxy', 1);
+
+// ===============================
 // SECURITY MIDDLEWARE
 // ===============================
 
@@ -36,7 +42,7 @@ app.use(helmet({
 // In development, allow localhost:3000
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-        ? [FRONTEND_URL, 'https://*.azurewebsites.net', 'https://sinfomik-backend-gzcng8eucydhgucz.southeastasia-01.azurewebsites.net'] // Allow Azure domains
+        ? [FRONTEND_URL, 'https://*.azurewebsites.net', 'https://*.azurestaticapps.net', 'https://sinfomik-backend-gzcng8eucydhgucz.southeastasia-01.azurewebsites.net', 'https://salmon-glacier-082ece600.3.azurestaticapps.net'] // Allow Azure domains
         : ['http://localhost:3000', 'http://localhost:3001'], // Development
     credentials: true,
     exposedHeaders: ['Content-Disposition']

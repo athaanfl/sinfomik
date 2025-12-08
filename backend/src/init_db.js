@@ -473,5 +473,10 @@ async function insertDummyData(db) {
     }
 }
 
-// Panggil fungsi inisialisasi saat skrip dijalankan
-initializeDatabase();
+// Panggil fungsi inisialisasi saat skrip dijalankan langsung
+if (require.main === module) {
+    initializeDatabase();
+}
+
+// Export untuk dipanggil dari db.js
+module.exports = initializeDatabase;

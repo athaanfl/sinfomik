@@ -14,8 +14,11 @@ if (!fs.existsSync(dbDir)) {
 }
 
 let db;
+let isInitialized = false;
 
 function connectDb() {
+    const isNewDb = !fs.existsSync(DB_FILE);
+    
     // Gunakan sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE untuk membaca/menulis dan membuat jika tidak ada
     db = new sqlite3.Database(DB_FILE, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
         if (err) {
@@ -28,6 +31,17 @@ function connectDb() {
                     console.error("Error enabling foreign keys:", err.message);
                 } else {
                     console.log("Foreign keys enabled.");
+                    
+                    // Auto-initialize database if it's new or empty
+                    if (isNewDb && !isInitialized) {
+                        console.log('🔧 New database detected. Running initialization...');
+                        isInitialized = true;
+                        const initDb = require('../init_db');
+                        // init_db.js exports a function that initializes the database
+                        if (typeof initDb === 'function') {
+                            initDb();
+                        }
+                    }
                 }
             });
         }

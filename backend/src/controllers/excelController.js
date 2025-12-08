@@ -54,7 +54,16 @@ exports.importCapaianPembelajaran = async (req, res) => {
             });
 
             if (!mapelRow) {
-                throw new Error(`Mata pelajaran ${mapelName} tidak ditemukan`);
+                // Get available subjects for better error message
+                const availableMapel = await new Promise((resolve, reject) => {
+                    db.all("SELECT nama_mapel FROM MataPelajaran ORDER BY nama_mapel", [], (err, rows) => {
+                        if (err) reject(err);
+                        resolve(rows || []);
+                    });
+                });
+                
+                const mapelList = availableMapel.map(m => m.nama_mapel).join(', ');
+                throw new Error(`Mata pelajaran "${mapelName}" tidak ditemukan di database. Mata pelajaran yang tersedia: ${mapelList}. Pastikan nama mata pelajaran di Excel sesuai dengan database.`);
             }
 
             const id_mapel = mapelRow.id_mapel;
