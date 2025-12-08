@@ -54,7 +54,7 @@ exports.getAllStudents = (req, res) => {
 exports.addStudent = (req, res) => {
     const { id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk } = req.body;
     const db = getDb();
-
+//cuma ngetes aja
     db.run("INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk) VALUES (?, ?, ?, ?, ?)",
         [id_siswa, nama_siswa, tanggal_lahir || null, jenis_kelamin || null, tahun_ajaran_masuk || null],
         function(err) {
