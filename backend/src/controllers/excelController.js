@@ -731,9 +731,9 @@ exports.importStudents = async (req, res) => {
                         } else {
                             // Insert new student
                             db.run(
-                                `INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin)
-                                 VALUES (?, ?, ?, ?)`,
-                                [nisn, nama, tglLahir, validJK],
+                                `INSERT INTO Siswa (id_siswa, nama_siswa, tanggal_lahir, jenis_kelamin, tahun_ajaran_masuk)
+                                 VALUES (?, ?, ?, ?, ?)`,
+                                [nisn, nama, tglLahir, validJK, null],
                                 function(err) {
                                     if (err) {
                                         results.failed++;
